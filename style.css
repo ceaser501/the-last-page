@@ -8,8 +8,12 @@ body {
   color: #000;
 }
 
+/* 가랜드 */
 .garland-wrapper {
-  padding: 60px 20px 60px 100px;
+  padding: 60px 20px;
+  max-width: 1500px;
+  margin: 0 auto;
+  position: relative;
 }
 
 .garland-row {
@@ -17,6 +21,7 @@ body {
   max-width: 1400px;
   height: 350px;
   position: relative;
+  margin: 0 auto;
 }
 
 .garland-line {
@@ -30,6 +35,7 @@ body {
   z-index: 0;
 }
 
+/* 사진 */
 .photo {
   position: absolute;
   width: 160px;
@@ -68,7 +74,7 @@ body {
   opacity: 1;
 }
 
-/* ✅ 테이프 스타일 */
+/* 테이프 스타일 */
 .tape {
   position: absolute;
   top: -18px;
@@ -76,16 +82,62 @@ body {
   transform: translateX(-50%) rotate(-2deg);
   width: 50px;
   height: 20px;
-  background: repeating-linear-gradient(
-    45deg,
-    #fefefe,
-    #fefefe 2px,
-    #e4e4e4 2px,
-    #e4e4e4 4px
-  );
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+  background-color: rgb(240, 225, 200);
   z-index: 10;
   opacity: 0.8;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+
+  /* 좌우 지그재그 절단 효과 */
+  clip-path: polygon(
+    0% 0%,
+    10% 10%,
+    0% 20%,
+    10% 30%,
+    0% 40%,
+    10% 50%,
+    0% 60%,
+    10% 70%,
+    0% 80%,
+    10% 90%,
+    0% 100%,
+    100% 100%,
+    90% 90%,
+    100% 80%,
+    90% 70%,
+    100% 60%,
+    90% 50%,
+    100% 40%,
+    90% 30%,
+    100% 20%,
+    90% 10%,
+    100% 0%
+  );
+}
+
+.tape.orange {
+  background-color: #f2d9c6dc;
+}
+
+.tape.yellow {
+  background-color: rgba(255, 247, 174, 0.6);
+}
+
+.tape.blue {
+  background-color: rgba(173, 216, 230, 0.65);
+}
+
+.tape.green {
+  background-color: rgba(186, 239, 203, 0.65);
+}
+
+.tape.purple {
+  background-color: rgba(221, 191, 253, 0.65);
+}
+
+.tape.gray {
+  background-color: rgba(192, 192, 192, 0.5);
 }
 
 .tape::after {
@@ -130,5 +182,97 @@ body {
   font-size: 40px;
   color: white;
   text-shadow: 1px 1px 6px black;
+  pointer-events: none;
+}
+
+/* 메모 스티커 */
+.date-tape {
+  position: relative;
+  margin: 60px auto;
+  padding: 6px 12px;
+  background-color: repeating-linear-gradient(
+    45deg,
+    #fefefe,
+    #fefefe 2px,
+    #e4e4e4 2px,
+    #e4e4e4 4px
+  );
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  font-family: "Homemade Apple", cursive;
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+  transform: rotate(-2deg);
+  z-index: 5;
+  opacity: 0.9;
+}
+
+.date-tape::before,
+.date-tape::after {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.2);
+  top: -10px;
+  z-index: -1;
+}
+
+.date-tape::before {
+  left: -15px;
+  transform: rotate(-45deg);
+}
+
+.date-tape::after {
+  right: -15px;
+  transform: rotate(45deg);
+}
+
+.tape.diagonal {
+  position: absolute;
+  width: 60px;
+  height: 20px;
+  background-color: rgb(240, 225, 200);
+  opacity: 0.8;
+  z-index: 10;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  clip-path: polygon(
+    0% 0%,
+    10% 10%,
+    0% 20%,
+    10% 30%,
+    0% 40%,
+    10% 50%,
+    0% 60%,
+    10% 70%,
+    0% 80%,
+    10% 90%,
+    0% 100%,
+    100% 100%,
+    90% 90%,
+    100% 80%,
+    90% 70%,
+    100% 60%,
+    90% 50%,
+    100% 40%,
+    90% 30%,
+    100% 20%,
+    90% 10%,
+    100% 0%
+  );
+}
+
+.tape.ripped-real {
+  position: absolute;
+  width: 80px;
+  height: auto;
+  background: transparent;
+  background-image: url("./data/tape-ripped.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 10;
   pointer-events: none;
 }
