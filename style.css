@@ -276,3 +276,13 @@ body {
   z-index: 10;
   pointer-events: none;
 }
+
+/* admin buttion icon */
+#admin-icon {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 9999; /* 가장 앞에 보이도록 */
+}

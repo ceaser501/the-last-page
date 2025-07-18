@@ -114,6 +114,17 @@ function generateRow() {
   }
 
   if (row === 4) {
+    const loveSticker = document.createElement("img");
+    loveSticker.src = "./data/love.png";
+    loveSticker.alt = "heart Sticker";
+    loveSticker.style.position = "absolute";
+    loveSticker.style.top = "1360px";
+    loveSticker.style.left = "calc(21% - 60px)";
+    loveSticker.style.width = "100px";
+    loveSticker.style.transform = "rotate(0deg) translateY(-20px)";
+    loveSticker.style.zIndex = "6";
+    loveSticker.style.pointerEvents = "none";
+
     const dateTape = document.createElement("div");
     dateTape.className = "date-tape";
     dateTape.textContent = "2024.09.28 ~ 2026.04.12";
@@ -129,6 +140,8 @@ function generateRow() {
     dateTape.style.color = "#222";
     dateTape.style.transform = "translateX(180px) rotate(-2deg)";
     dateTape.style.maxWidth = "fit-content";
+
+    wrapper.appendChild(loveSticker);
     wrapper.appendChild(dateTape);
   }
 
