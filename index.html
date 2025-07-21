@@ -16,11 +16,146 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
+    <!-- flatpickr CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
   </head>
   <body>
+    <!-- 메인 영역 -->
     <div class="garland-wrapper" id="garland-wrapper"></div>
+
+    <!-- 상세 팝업 영역 -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none">
+      <div class="detail-popup">
+        <div class="popup-controls">
+          <button id="popup-slideshow-btn" title="슬라이드쇼">▶</button>
+          <button id="popup-fullscreen-btn" title="전체화면">⛶</button>
+          <button id="popup-close-btn" title="닫기">✕</button>
+        </div>
+
+        <button id="popup-prev-btn" class="popup-nav">‹</button>
+        <button id="popup-next-btn" class="popup-nav">›</button>
+
+        <div class="popup-left">
+          <div id="popup-main-image-container" src=""></div>
+          <div id="popup-thumbnails" class="thumbnail-list"></div>
+        </div>
+        <div class="popup-right">
+          <!-- 팝업 내부 우측 [음악 플레이어]-->
+          <div class="music-wrapper">
+            <div class="music-player-container">
+              <div id="player-bg-artwork"></div>
+              <div id="player-bg-layer"></div>
+              <div id="player-container">
+                <div id="player">
+                  <div id="player-track">
+                    <span id="album-name"></span>
+                    <span id="track-name"></span>
+                    <div id="track-time">
+                      <div id="current-time"></div>
+                      <div id="track-length"></div>
+                    </div>
+                    <div id="seek-bar-container">
+                      <div id="seek-time"></div>
+                      <div id="s-hover"></div>
+                      <div id="seek-bar"></div>
+                    </div>
+                  </div>
+                  <div id="player-content">
+                    <div id="album-art">
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/1.jpg"
+                        class="active"
+                        id="_1"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/2.jpg"
+                        id="_2"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/3.jpg"
+                        id="_3"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/4.jpg"
+                        id="_4"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/5.jpg"
+                        id="_5"
+                      />
+                      <div id="buffer-box">Buffering ...</div>
+                    </div>
+                    <div id="player-controls">
+                      <div class="control">
+                        <div class="button" id="play-previous">
+                          <i class="fas fa-backward"></i>
+                        </div>
+                      </div>
+                      <div class="control">
+                        <div class="button" id="play-pause-button">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="control">
+                        <div class="button" id="play-next">
+                          <i class="fas fa-forward"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 팝업 내부 우측 [제목]-->
+          <div id="popup-title" class="popup-meta-title"></div>
+          <!-- 팝업 내부 우측 [내용]-->
+          <div id="popup-description" class="popup-meta-description"></div>
+          <!-- 팝업 내부 우측 [달력/날짜]-->
+          <div id="popup-date" class="popup-meta">
+            <i class="icon">📅</i> ...
+          </div>
+          <!-- 팝업 내부 우측 [장소]-->
+          <div id="popup-location" class="popup-meta">
+            <i class="icon">📍</i> ...
+          </div>
+          <!-- 팝업 내부 우측 [태그]-->
+          <div id="popup-tags" class="popup-tags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
-    <script src="script.js"></script>
-    <script src="admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase 설정 -->
+    <script src="/config.js"></script>
+    <script>
+      window.supabaseClient = supabase.createClient(
+        window.SUPABASE_CONFIG.url,
+        window.SUPABASE_CONFIG.anonKey
+      );
+      window.sbClient = window.supabaseClient;
+    </script>
+
+    <!-- 기능별 스크립트 -->
+    <script src="/script.js"></script>
+    <script src="/admin.js"></script>
+    <script src="detail-popup.js"></script>
+    <!-- flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   </body>
 </html>

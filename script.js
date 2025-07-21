@@ -1,3 +1,4 @@
+const supabase = window.supabaseClient;
 const wrapper = document.getElementById("garland-wrapper");
 
 // 확장자 체크용 헬퍼
@@ -5,25 +6,44 @@ function isVideo(src) {
   return /\.(mp4|webm|ogg)$/i.test(src);
 }
 
-const mediaList = Array.from({ length: 30 }).map((_, i) => {
-  const index = i + 1;
-  const padded = String(index).padStart(2, "0");
+let mediaList = [];
+let rawMemories = [];
 
-  if (index === 3) {
-    return {
-      src: `./data/video${padded}.mp4`, // 실제 재생될 영상
-      thumbnail: `./data/video${padded}.jpg`, // 썸네일 이미지
-      type: "video",
-      index: i,
-    };
+async function loadMediaFromSupabase() {
+  const { data: memories, error } = await supabase
+    .from("memories")
+    .select("*, media_files(*)") // media_files 조인
+    .eq("is_public", true)
+    .order("order", { ascending: true });
+
+  if (error) {
+    console.error("Supabase fetch error:", error);
+    return;
   }
+  console.log("📦 memories data:", memories);
 
-  return {
-    src: `./data/img${padded}.jpg`,
-    type: "image",
-    index: i,
-  };
-});
+  rawMemories = memories; // 원본 저장
+  mediaList = memories.map((item, index) => {
+    const mainMedia = item.media_files.find((f) => f.is_main);
+    const subMediaList = item.media_files.filter((f) => !f.is_main);
+
+    return {
+      mainSrc: mainMedia?.media_url || "",
+      subSrcList: subMediaList.map((f) => f.media_url),
+      type: mainMedia?.media_url.match(/\.(mp4|webm|ogg)$/i)
+        ? "video"
+        : "image",
+      title: item.title,
+      thumbnail_title: item.thumbnail_title,
+      description: item.description,
+      date: item.date,
+      location: item.location,
+      index: index,
+    };
+  });
+
+  setupLazyRender(); // 기존 초기화 호출 위치에서 제거하고 여기서 실행
+}
 
 const rotateAngles = [-10, 15, -25, 5, 5, -8, 2, -13, -7, 2, -3];
 
@@ -163,11 +183,22 @@ function generateRow() {
 
   currentMedia.forEach((media, j) => {
     const i = pointer + j;
-    const photo = document.createElement("a");
+    const photo = document.createElement("div"); // fancybox popup 뜨게할거면 a로 바꿔야함
     photo.className = "photo";
-    photo.href = media.src;
-    photo.setAttribute("data-fancybox", "gallery");
-    photo.setAttribute("data-caption", `추억 ${i + 1}`);
+    // fancybox 안뜨게 임시 비활성화
+    //photo.href = media.mainSrc;
+    //photo.setAttribute("data-fancybox", "gallery");
+    /*
+    photo.setAttribute(
+      "data-caption",
+      `
+        <h3>${media.title}</h3>
+        <p>${media.description}</p>
+        <p><strong>날짜:</strong> ${media.date || ""}</p>
+        <p><strong>장소:</strong> ${media.location || ""}</p>
+      `
+    );
+    */
     photo.setAttribute("data-index", i);
 
     const rotate = rotateAngles[i % rotateAngles.length];
@@ -200,13 +231,19 @@ function generateRow() {
       const thumbnail = document.createElement("img");
       thumbnail.className = "photo-img";
 
+      // 영상 첫 프레임으로 썸네일 생성
       const videoForThumb = document.createElement("video");
-      videoForThumb.src = media.src;
+      videoForThumb.src = media.mainSrc;
+      videoForThumb.crossOrigin = "anonymous";
       videoForThumb.muted = true;
       videoForThumb.playsInline = true;
-      videoForThumb.currentTime = 1;
+      videoForThumb.preload = "auto";
 
-      videoForThumb.addEventListener("loadeddata", () => {
+      videoForThumb.addEventListener("loadedmetadata", () => {
+        videoForThumb.currentTime = 0.1; // 첫 프레임보다 약간 뒤로
+      });
+
+      videoForThumb.addEventListener("seeked", () => {
         const canvas = document.createElement("canvas");
         canvas.width = 160;
         canvas.height = 150;
@@ -224,13 +261,13 @@ function generateRow() {
       mediaNode.appendChild(playIcon);
     } else {
       mediaNode = document.createElement("img");
-      mediaNode.src = media.src;
+      mediaNode.src = media.mainSrc;
       mediaNode.className = "photo-img";
       mediaNode.loading = "lazy";
     }
 
     const caption = document.createElement("figcaption");
-    caption.innerText = `추억 ${i + 1}`;
+    caption.innerText = media.thumbnail_title || `추억 ${i + 1}`;
 
     // 테이프 배치 로직
 
@@ -268,6 +305,11 @@ function generateRow() {
 
     photo.appendChild(mediaNode);
     photo.appendChild(caption);
+
+    photo.addEventListener("click", () => {
+      openDetailPopup(rawMemories[i], rawMemories); // ← 원본 넘기기
+    });
+
     rowWrapper.appendChild(photo);
     observer.observe(photo);
   });
@@ -295,9 +337,11 @@ function setupLazyRender() {
   generateRow();
 }
 
-setupLazyRender();
+//setupLazyRender();
+loadMediaFromSupabase();
 
 // Fancybox 연결
+/*
 Fancybox.bind("[data-fancybox='gallery']", {
   animated: true,
   showClass: "f-fadeIn",
@@ -314,3 +358,4 @@ Fancybox.bind("[data-fancybox='gallery']", {
     autoStart: true,
   },
 });
+*/
