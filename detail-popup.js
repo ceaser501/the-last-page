@@ -8,6 +8,7 @@ let currentAllSrc = [];
 function openDetailPopup(media, mediaList) {
   console.log("✅ [디버그] 상세 팝업 호출됨:", media);
   console.log("✅ media.media_files:", media.media_files);
+  console.log("🎵 음악 정보:", media.music);
 
   currentMediaList = mediaList;
   currentIndex = mediaList.indexOf(media);
@@ -22,13 +23,77 @@ function openDetailPopup(media, mediaList) {
   // 텍스트 정보 세팅
   document.getElementById("popup-title").textContent = media.title || "";
   document.getElementById("popup-date").textContent = media.date || "";
-  document.getElementById("popup-location").textContent = media.location || "";
+  //document.getElementById("popup-location").textContent = media.location || "";
+
+  const locationText = (media.location || "").replace(/\n/g, " ").trim();
+
+  const locationEl = document.getElementById("popup-location");
+  locationEl.innerHTML = ""; // 기존 내용을 지우고
+
+  const iconImg = document.createElement("img");
+  iconImg.src = "data/location-marker.png";
+  iconImg.className = "location-icon";
+  iconImg.alt = "장소 아이콘";
+
+  const span = document.createElement("span");
+  span.textContent = locationText;
+
+  locationEl.appendChild(iconImg);
+  locationEl.appendChild(span);
+
   document.getElementById("popup-description").textContent =
     media.description || "";
 
   // 태그 노출
   const tagsContainer = document.getElementById("popup-tags");
   tagsContainer.innerHTML = ""; // 초기화
+
+  // 음악 정보 불러오기
+  fetchMusicByMemoryId(media.id).then((music) => {
+    if (music) {
+      // 음악 제목과 아티스트 설정
+      $("#track-name").text(music.music_title || "제목 없음");
+      $("#album-name").text(music.artist_name || "아티스트 없음");
+
+      // 자켓 이미지 설정
+      const albumImg = $("#album-art img");
+      if (albumImg.length > 0) {
+        const coverUrl = music.album_cover_url || "data/default-cover.jpg";
+        albumImg.attr("src", coverUrl).addClass("active");
+        $("#player-bg-artwork").css("background-image", `url(${coverUrl})`);
+      }
+
+      // 음악 재생 경로 설정
+      if (music && music.music_url) {
+        window.audio.src = music.music_url;
+        window.audio.load();
+
+        // ✅ duration 처리
+        window.audio.onloadedmetadata = () => {
+          const totalDurationEl = document.getElementById("track-length");
+          const duration = window.audio.duration;
+          const minutes = Math.floor(duration / 60);
+          const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
+          totalDurationEl.textContent = `${minutes}:${seconds}`;
+        };
+      } else {
+        console.warn(
+          "⛔ music_url이 비어 있거나 잘못됨:",
+          music ? music.music_url : "music 없음"
+        );
+      }
+
+      // 재생시간 설정
+      if (music && music.duration_seconds) {
+        const totalDurationEl = document.getElementById("track-length");
+        const minutes = Math.floor(music.duration_seconds / 60);
+        const seconds = String(music.duration_seconds % 60).padStart(2, "0");
+        totalDurationEl.textContent = `${minutes}:${seconds}`;
+      }
+    } else {
+      console.log("🎵 이 기억에는 음악이 등록되어 있지 않습니다.");
+    }
+  });
 
   if (media.tags) {
     const tagList = media.tags.split(" ").filter((t) => t.trim() !== "");
@@ -499,3 +564,43 @@ $(function () {
 
   initPlayer();
 });
+
+// memory-music 에서 데이터 불러오기
+async function fetchMusicByMemoryId(memoryId) {
+  const { data, error } = await supabase
+    .from("memory_music")
+    .select("*")
+    .eq("memory_id", memoryId)
+    .single();
+
+  if (error) {
+    console.error("🎵 음악 정보 불러오기 실패:", error);
+    return null;
+  }
+
+  let musicUrl = null;
+  let albumUrl = null;
+
+  // music_path가 있을 경우, bucket: media, folder: music
+  if (data.music_path) {
+    const { data: musicData } = supabase.storage
+      .from("media")
+      .getPublicUrl(data.music_path);
+    musicUrl = musicData?.publicUrl;
+  }
+
+  // album_path가 있을 경우, bucket: media, folder: album
+  if (data.album_path) {
+    const cleanPath = data.album_path.trim();
+    const { data: albumData } = supabase.storage
+      .from("media")
+      .getPublicUrl(cleanPath);
+    albumUrl = albumData?.publicUrl;
+  }
+
+  return {
+    ...data,
+    music_url: musicUrl,
+    album_cover_url: albumUrl,
+  };
+}

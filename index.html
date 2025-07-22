@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>폴라로이드 가랜드 포토월</title>
+    <title>Moments We Shared</title>
     <link
       href="https://fonts.googleapis.com/css?family=Cedarville+Cursive|Homemade+Apple"
       rel="stylesheet"
@@ -25,6 +25,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/public-config//config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/musicmetadata/2.0.2/musicmetadata.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
@@ -119,20 +120,22 @@
             </div>
           </div>
 
-          <!-- 팝업 내부 우측 [제목]-->
-          <div id="popup-title" class="popup-meta-title"></div>
-          <!-- 팝업 내부 우측 [내용]-->
-          <div id="popup-description" class="popup-meta-description"></div>
-          <!-- 팝업 내부 우측 [달력/날짜]-->
-          <div id="popup-date" class="popup-meta">
-            <i class="icon">📅</i> ...
+          <div class="info-texts">
+            <div id="popup-content-wrapper">
+              <!-- 팝업 내부 우측 [제목]-->
+              <div id="popup-title" class="popup-meta-title"></div>
+              <!-- 팝업 내부 우측 [내용]-->
+              <div id="popup-description" class="popup-meta-description"></div>
+              <!-- 팝업 내부 우측 [달력/날짜]-->
+              <div id="popup-date" class="popup-meta">
+                <i class="icon">📅</i>
+              </div>
+              <!-- 팝업 내부 우측 [장소]-->
+              <div id="popup-location" class="popup-meta"></div>
+              <!-- 팝업 내부 우측 [태그]-->
+              <div id="popup-tags" class="popup-tags"></div>
+            </div>
           </div>
-          <!-- 팝업 내부 우측 [장소]-->
-          <div id="popup-location" class="popup-meta">
-            <i class="icon">📍</i> ...
-          </div>
-          <!-- 팝업 내부 우측 [태그]-->
-          <div id="popup-tags" class="popup-tags"></div>
         </div>
       </div>
     </div>
@@ -142,7 +145,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Supabase 설정 -->
-    <script src="config.js"></script>
     <script>
       window.supabaseClient = supabase.createClient(
         window.SUPABASE_CONFIG.url,

@@ -312,19 +312,19 @@ body {
 
 h2 {
   margin-bottom: 20px;
-  font-size: 18px;
+  font-size: 20px;
   color: #333;
 }
 
 .form-group {
-  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
+  margin-bottom: 30px;
 }
 
 .form-group label {
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 15px;
+  margin-bottom: 8px;
   font-weight: 500;
 }
 
@@ -451,15 +451,17 @@ h2 {
 
 .detail-popup {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 24px;
+  max-width: 1200px;
   background: #fff;
   width: 75vw;
-  max-width: 1200px;
   max-height: 100vh;
   overflow: visible;
   border-radius: 12px;
   position: relative;
-  padding: 20px;
-  gap: 24px;
 }
 
 #popup-close-btn {
@@ -473,9 +475,21 @@ h2 {
 }
 
 .popup-left {
-  flex: 1;
   display: flex;
   flex-direction: column;
+
+  /* 유연한 크기 설정 */
+  flex: 0 1 auto; /* shrink 안 하고, grow는 auto */
+  max-width: 50%; /* 커져도 절반 이상은 안 됨 */
+}
+
+/* 큰 이미지일 경우 자동 줄어듦 */
+.popup-left img,
+.popup-left video {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 #popup-main-image {
@@ -483,6 +497,8 @@ h2 {
   max-height: 550px;
   border-radius: 8px;
   object-fit: contain;
+  width: auto;
+  height: auto;
 }
 
 .thumbnail-list {
@@ -501,7 +517,7 @@ h2 {
 }
 
 .popup-thumb.selected-thumb {
-  border: 3px solid #f88;
+  border: 3px solid #f88 !important;
 }
 
 /* 썸네일 기본 정렬 - 좌측 정렬 */
@@ -511,24 +527,25 @@ h2 {
   margin-top: 10px;
   flex-wrap: wrap;
   justify-content: flex-start;
-  max-width: calc(160px * 7 + 8px * 6); /* 썸네일 최대 7개 + 간격 */
+  max-width: 93%;
+  width: calc((60px + 8px) * 6 - 4px) !important; /* 썸네일 6개 + 간격 */
+}
+
+#popup-thumbnails img,
+.popup-thumb {
+  width: 50px;
+  height: 50px;
+  object-fit: cover; /* 비율 유지하면서 잘라냄 */
+  border-radius: 6px;
+  border: 2px solid #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 /* 썸네일이 1개일 때 중앙 정렬 */
 /* #popup-thumbnails.single {
   justify-content: center;
 } */
-
-.popup-right {
-  flex: 1;
-  font-size: 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start !important;
-  gap: 8px;
-  padding-right: 0px !important;
-  padding-top: 100px;
-}
 
 .popup-nav {
   position: absolute;
@@ -589,23 +606,49 @@ h2 {
   color: #e06d6d;
 }
 
-#popup-main-image:fullscreen {
-  width: 100vw;
-  height: 100vh;
+/* 전체화면 기능 */
+#popup-main-image-container:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: black; /* 전체화면 시 배경 어둡게 */
+}
+
+#popup-main-image-container:fullscreen img,
+#popup-main-image-container:fullscreen video {
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
-  background: black;
 }
 
 /* 팝업 내부 우측 정보영역 */
+#popup-content-wrapper {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.info-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+
+  max-height: 60vh; /* 높이 제한: 필요시 50~70vh로 조절 */
+  overflow-y: auto; /* 내부 스크롤 */
+  padding-right: 10px; /* 스크롤바가 겹치지 않게 여백 */
+}
+
 .popup-right {
-  flex: 1;
+  flex: 1 1 0; /* 나머지 공간을 채움 */
+  min-width: 0;
   font-family: "Segoe UI", sans-serif; /* 더 깔끔한 기본 폰트 */
   font-size: 15px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px;
-  padding-right: 20px;
+  padding-right: 0px;
 }
 
 /* 팝업 상세보기에서 음악플레이어 */
@@ -614,16 +657,20 @@ h2 {
 .popup-meta-title {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 6px;
+  margin-bottom: 15px;
   color: #333;
+
+  padding-bottom: 6px; /* 줄과의 간격 */
+  border-bottom: 1px solid #ccc; /* ✅ 실선 추가 */
 }
 
 /* 팝업 상세보기에서 내용 */
 .popup-meta-description {
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #555;
-  margin-bottom: 8px;
+  white-space: pre-line; /* 줄바꿈 처리 */
+  margin-bottom: 15px;
 }
 
 .popup-meta {
@@ -632,11 +679,18 @@ h2 {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 15px;
 }
 
 .popup-meta i.icon {
   font-style: normal;
   font-size: 16px;
+}
+
+.location-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
 }
 
 /* 팝업 상세보기에서 태그모양 style */
@@ -648,7 +702,7 @@ h2 {
 }
 
 .popup-tag {
-  background-color: #e0e0e0;
+  background-color: #ffe2e3;
   color: #333;
   font-size: 13px;
   border-radius: 20px;
@@ -717,9 +771,13 @@ h2 {
 
 .music-wrapper {
   margin-bottom: 20px;
+  width: fit-content;
   display: flex;
-  justify-content: right;
-  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .music-container {
@@ -764,7 +822,6 @@ h2 {
 }
 
 #player-container {
-  position: relative;
   top: 5%;
   right: 0;
   left: 0;
@@ -804,7 +861,6 @@ h2 {
 }
 
 #player-track {
-  position: absolute;
   top: 0;
   right: 15px;
   left: 15px;
@@ -847,7 +903,7 @@ h2 {
 
 #current-time,
 #track-length {
-  color: transparent;
+  color: #f86d92;
   font-size: 10px;
   background-color: #ffe8ee;
   border-radius: 10px;
@@ -913,7 +969,7 @@ h2 {
   position: relative;
   height: 85%;
   background-color: #fff;
-  box-shadow: 0 30px 80px #656565;
+  box-shadow: 0 30px 500px #656565;
   border-radius: 15px;
   z-index: 2;
 }

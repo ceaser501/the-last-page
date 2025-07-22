@@ -1,7 +1,37 @@
 /* sb 연동 */
 const sb = window.sbClient;
 
+// 업로드 중 오버레이
+const uploadOverlay = document.createElement("div");
+uploadOverlay.id = "upload-overlay";
+uploadOverlay.style.display = "none";
+uploadOverlay.style.position = "fixed";
+uploadOverlay.style.top = 0;
+uploadOverlay.style.left = 0;
+uploadOverlay.style.width = "100%";
+uploadOverlay.style.height = "100%";
+uploadOverlay.style.background = "rgba(0,0,0,0.4)";
+uploadOverlay.style.zIndex = 1001;
+uploadOverlay.style.display = "flex";
+uploadOverlay.style.alignItems = "center";
+uploadOverlay.style.justifyContent = "center";
+uploadOverlay.innerHTML = `
+  <div style="
+    background: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #333;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  ">
+    업로드 중입니다...
+  </div>
+`;
+document.body.appendChild(uploadOverlay);
+
 document.addEventListener("DOMContentLoaded", () => {
+  uploadOverlay.style.display = "none";
+
   // 아이콘 만들기
   const icon = document.createElement("div");
   icon.id = "admin-icon";
@@ -19,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   icon.style.alignItems = "center";
   icon.style.justifyContent = "center";
   icon.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
-  icon.title = "관리자 로그인";
+  icon.title = "태수만 로그인";
   icon.querySelector("i").style.color = "#333";
   icon.querySelector("i").style.fontSize = "18px";
   document.body.appendChild(icon);
@@ -38,12 +68,12 @@ document.addEventListener("DOMContentLoaded", () => {
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
                 background: white; padding: 20px; border-radius: 10px; width: 300px;
                 text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-      <h3>관리자 로그인</h3>
-      <input id="admin-id" placeholder="아이디" style="width: 80%; padding: 6px; margin: 8px 0;" /><br/>
-      <input id="admin-pw" type="password" placeholder="비밀번호" style="width: 80%; padding: 6px; margin-bottom: 10px;" /><br/>
+      <h3>태수만 로그인</h3>
+      <input id="admin-id" placeholder="아이디" style="width: 80%; padding: 6px; margin: 8px 0;" value="ceaser501" /><br/>
+      <input id="admin-pw" type="password" placeholder="비밀번호" style="width: 80%; padding: 6px; margin-bottom: 10px;" value="0928" /><br/>
       <button id="login-btn" style="padding: 6px 12px; margin-right: 10px;">로그인</button>
       <button id="cancel-btn" style="padding: 6px 12px;">취소</button>
-    </div>
+    </div>  
   `;
   document.body.appendChild(loginModal);
 
@@ -67,15 +97,53 @@ document.addEventListener("DOMContentLoaded", () => {
         box-sizing: border-box;
       ">
         <form id="memory-form">
-          <h2>📌 추억 업로드</h2>
+          <h2>💕 함께한 순간을 업로드 해 주세요</h2>
 
           <div class="form-group">
-            <label for="thumbnail-title">썸네일 제목 *</label>
+            <label for="thumbnail-title">썸네일 제목(필수)</label>
             <input type="text" id="thumbnail-title" required />
           </div>
 
           <div class="form-group">
-            <label for="media_files">파일 업로드 *</label>
+            <label for="title">제목(필수)</label>
+            <input type="text" id="title" required />
+          </div>
+
+          <div class="form-group">
+            <label for="description">내용(필수)</label>
+            <textarea id="description" rows="4" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="date">날짜(필수)</label>
+            <input type="date" id="date" required />
+          </div>
+
+          <div class="form-group">
+            <label for="location">장소(필수)</label>
+            <div class="address-group">
+              <div class="address-group" style="display: flex; gap: 10px; width: 100%; align-items: center;">
+              <input type="text" id="location" readonly required placeholder="주소 검색 클릭" />
+              <button type="button" onclick="execDaumPostcode()" style="
+                background-color: #f88;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              ">주소 검색</button>
+            </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="order">노출순서(필수)</label>
+            <input type="number" id="order" required />
+          </div>
+
+          <div class="form-group">
+            <label for="media_files">이미지 또는 영상 업로드(필수)</label>
             <input type="file" name="media_files" id="media_files" multiple accept="image/*,video/*" required />
           </div>
 
@@ -83,36 +151,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <input type="hidden" id="main-thumbnail-index" />
 
           <div class="form-group">
-            <label for="title">제목 *</label>
-            <input type="text" id="title" required />
-          </div>
-
-          <div class="form-group">
-            <label for="description">내용 *</label>
-            <textarea id="description" rows="4" required></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="date">날짜 *</label>
-            <input type="date" id="date" required />
-          </div>
-
-          <div class="form-group">
-            <label for="location">장소 *</label>
-            <div class="address-group">
-              <input type="text" id="location" readonly required placeholder="주소 검색 클릭" />
-              <button type="button" onclick="execDaumPostcode()">주소 검색</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="order">노출순서 *</label>
-            <input type="number" id="order" required />
+            <label for="music-upload">배경 음악 업로드(선택)</label>
+            <input type="file" id="music-upload" accept=".mp3" />
           </div>
 
           <div class="tag-wrapper">
             <div class="form-group" style="margin-bottom:0">
-              <label for="order">태그입력 *</label>
+              <label for="order">태그입력(선택)</label>
             </div>
             <div class="tag-input-container">
               <input type="text" id="tags-input" placeholder="# 태그 입력 (최대 5개)" />
@@ -122,9 +167,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <input type="checkbox" id="is-public" checked hidden />
 
-          <div class="form-actions">
-            <button type="submit">등록</button>
-            <button type="button" id="cancel-entry">닫기</button>
+          <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="submit" style="
+              background-color: #f88;
+              color: #fff;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 5px;
+              cursor: pointer;
+              font-size: 14px;
+            ">등록</button>
+
+            <button type="button" id="cancel-entry" style="
+              background-color: #eee;
+              color: #333;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 5px;
+              cursor: pointer;
+              font-size: 14px;
+            ">닫기</button>
           </div>
         </form>
       </div>
@@ -186,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   //  1. 안내문 텍스트 만들기
   const guideText = document.createElement("p");
-  guideText.textContent = "대표 이미지를 선택하세요";
+  guideText.textContent = "썸네일에 표시될 대표 이미지를 선택 해 주세요";
   guideText.style.fontSize = "14px";
   guideText.style.color = "#666";
   guideText.style.marginTop = "10px";
@@ -280,110 +342,302 @@ document.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const files = document.getElementById("media_files").files;
-      const mainIndex = parseInt(
-        document.getElementById("main-thumbnail-index").value || "0",
-        10
-      );
+      // ✅ 오버레이 표시
+      uploadOverlay.style.display = "flex";
 
-      if (!files || files.length === 0) {
-        alert("파일을 1개 이상 선택해주세요");
-        return;
-      }
+      try {
+        const files = document.getElementById("media_files").files;
+        const mainIndex = parseInt(
+          document.getElementById("main-thumbnail-index").value || "0",
+          10
+        );
 
-      // 1. memories insert
-      const metadata = {
-        thumbnail_title: document.getElementById("thumbnail-title").value,
-        title: document.getElementById("title").value,
-        description: document.getElementById("description").value,
-        date: document.getElementById("date").value,
-        location: document.getElementById("location").value,
-        order: parseInt(document.getElementById("order").value, 10),
-        is_public: document.getElementById("is-public").checked,
-        created_at: new Date().toISOString(),
-        tags: tags.map((t) => "#" + t).join(" "),
-      };
-
-      const { data: memoryInsert, error: memoryError } = await sb
-        .from("memories")
-        .insert([metadata])
-        .select("id")
-        .single();
-
-      if (memoryError || !memoryInsert) {
-        alert("메모리 저장 실패");
-        return;
-      }
-
-      const memory_id = memoryInsert.id;
-
-      // 2. 파일 업로드 후 URL 리스트 만들기
-      const uploadedList = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const ext = file.name.split(".").pop();
-        const fileName = `memory_${Date.now()}_${i}.${ext}`;
-        const filePath = `uploads/${fileName}`;
-
-        const { error: uploadError } = await sb.storage
-          .from("media")
-          .upload(filePath, file, {
-            contentType: file.type,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          alert(`파일 ${file.name} 업로드 실패`);
-          continue;
+        if (!files || files.length === 0) {
+          alert("파일을 1개 이상 선택해주세요");
+          return;
         }
 
-        const { data: publicData } = sb.storage
-          .from("media")
-          .getPublicUrl(filePath);
-        uploadedList.push({
-          media_url: publicData.publicUrl,
-          media_type: file.type.startsWith("video") ? "video" : "image",
-          is_main: i === mainIndex,
-          memory_id,
+        // 1. memories insert
+        const metadata = {
+          thumbnail_title: document.getElementById("thumbnail-title").value,
+          title: document.getElementById("title").value,
+          description: document.getElementById("description").value,
+          date: document.getElementById("date").value,
+          location: document.getElementById("location").value,
+          order: parseInt(document.getElementById("order").value, 10),
+          is_public: document.getElementById("is-public").checked,
           created_at: new Date().toISOString(),
-        });
-      }
+          tags: tags.map((t) => "#" + t).join(" "),
+        };
 
-      if (uploadedList.length === 0) {
-        alert("파일 업로드에 실패했습니다.");
-        return;
-      }
+        const { data: memoryInsert, error: memoryError } = await sb
+          .from("memories")
+          .insert([metadata])
+          .select("id")
+          .single();
 
-      // 3. media_files 일괄 insert
-      console.log("📦 uploadedList:", uploadedList);
-      const { error: insertError } = await sb
-        .from("media_files")
-        .insert(uploadedList);
-      if (insertError) {
-        console.error("📛 media_files insert error:", insertError);
-        alert("media_files 저장 실패");
-        return;
-      }
+        if (memoryError || !memoryInsert) {
+          alert("메모리 저장 실패");
+          return;
+        }
 
-      alert("등록 완료!");
-      formModal.style.display = "none";
+        const memory_id = memoryInsert.id;
 
-      // 메모리 새로 불러오기
-      if (typeof loadMediaFromSupabase === "function") {
-        document.getElementById("garland-wrapper").innerHTML = "";
-        pointer = 0;
-        row = 0;
-        mediaList = [];
-        loadMediaFromSupabase();
+        // 2. 파일 업로드 후 URL 리스트 만들기
+        const uploadedList = [];
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const ext = file.name.split(".").pop();
+          const fileName = `memory_${Date.now()}_${i}.${ext}`;
+          const filePath = `uploads/${fileName}`;
+
+          const { error: uploadError } = await sb.storage
+            .from("media")
+            .upload(filePath, file, {
+              contentType: file.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            alert(`파일 ${file.name} 업로드 실패`);
+            continue;
+          }
+
+          const { data: publicData } = sb.storage
+            .from("media")
+            .getPublicUrl(filePath);
+          uploadedList.push({
+            media_url: publicData.publicUrl,
+            media_type: file.type.startsWith("video") ? "video" : "image",
+            is_main: i === mainIndex,
+            memory_id,
+            created_at: new Date().toISOString(),
+          });
+        }
+
+        if (uploadedList.length === 0) {
+          alert("파일 업로드에 실패했습니다.");
+          return;
+        }
+
+        // 3. media_files 일괄 insert
+        console.log("📦 uploadedList:", uploadedList);
+        const { error: insertError } = await sb
+          .from("media_files")
+          .insert(uploadedList);
+        if (insertError) {
+          console.error("📛 media_files insert error:", insertError);
+          alert("media_files 저장 실패");
+          return;
+        }
+
+        alert("등록 완료!");
+        formModal.style.display = "none";
+
+        // 메모리 새로 불러오기
+        if (typeof loadMediaFromSupabase === "function") {
+          document.getElementById("garland-wrapper").innerHTML = "";
+          pointer = 0;
+          row = 0;
+          mediaList = [];
+          loadMediaFromSupabase();
+        }
+
+        // 배경 음악 파일 있으면 등록
+        const musicFile = document.getElementById("music-upload").files?.[0];
+        if (musicFile && musicFile.name.endsWith(".mp3")) {
+          const [artist = "", title = ""] = musicFile.name
+            .replace(".mp3", "")
+            .split(" - ");
+
+          musicmetadata(musicFile, async function (err, rawMetadata) {
+            let metadata = rawMetadata || {};
+            let duration = 0;
+
+            console.log("🎧 [DEBUG] metadata:", metadata);
+            console.log(
+              "🎧 [DEBUG] typeof metadata.artist:",
+              typeof metadata?.artist
+            );
+            console.log("🎧 [DEBUG] metadata.artist:", metadata?.artist);
+
+            if (Number.isFinite(metadata?.duration) && metadata.duration > 0) {
+              duration = Math.floor(metadata.duration);
+            } else {
+              duration = await getAudioDuration(musicFile); // 브라우저 audio 기반 추출
+            }
+
+            let albumPath = "album/default.jpg";
+
+            try {
+              // 🎵 파일명에서 추출
+              const baseName = musicFile.name.replace(/\.mp3$/i, "");
+              let [rawTitle = "", rawArtist = ""] = baseName.split(" - ");
+
+              // " (1)", " (2)" 제거
+              rawTitle = rawTitle
+                ?.replace(/\s*\(\d+\)\s*$/, "")
+                .replace(/\(\d+\)/g, "")
+                .trim();
+              rawArtist = rawArtist?.replace(/\s*\(\d+\)\s*$/, "").trim();
+
+              let artist = "알 수 없음";
+              if (typeof metadata.artist === "string") {
+                artist = metadata.artist.trim();
+              } else if (
+                metadata.artist?.text &&
+                typeof metadata.artist.text === "string"
+              ) {
+                artist = metadata.artist.text.trim();
+              } else if (Array.isArray(metadata.artist)) {
+                // 가끔 배열로 들어오는 경우 첫 항목 사용
+                artist = metadata.artist[0]?.trim?.() || rawArtist;
+              } else {
+                artist = rawArtist;
+              }
+
+              let title = "제목 없음";
+              if (typeof metadata.title === "string") {
+                title = metadata.title.replace(/\s*\(\d+\)\s*$/, "").trim();
+              } else if (
+                metadata.title?.text &&
+                typeof metadata.title.text === "string"
+              ) {
+                title = metadata.title.text
+                  .replace(/\s*\(\d+\)\s*$/, "")
+                  .trim();
+              } else {
+                title = rawTitle;
+              }
+
+              const picture = metadata?.picture?.[0];
+              if (picture?.data && picture?.format) {
+                const blob = new Blob([picture.data], { type: picture.format });
+                const jacketFilename = `jacket-${Date.now()}.jpg`;
+
+                const { data, error } = await sb.storage
+                  .from("media")
+                  .upload(`album/${jacketFilename}`, blob, {
+                    contentType: picture.format,
+                    upsert: true,
+                  });
+
+                if (!error && data?.path) {
+                  albumPath = data.path;
+                } else {
+                  console.warn("🟡 자켓 업로드 오류:", error);
+                }
+              }
+
+              await uploadMusicToDB({
+                musicFile,
+                memory_id,
+                artist,
+                title,
+                duration,
+                albumPath,
+              });
+            } catch (e) {
+              console.warn("🛑 앨범 업로드 중 오류:", e);
+              await uploadMusicToDB({
+                musicFile,
+                memory_id,
+                artist: "알 수 없음",
+                title: "제목 없음",
+                duration,
+                albumPath,
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.error("❌ 업로드 중 오류:", err);
+        alert("업로드 중 오류가 발생했습니다.");
+      } finally {
+        // ✅ 오버레이 숨김
+        uploadOverlay.style.display = "none";
       }
     });
 });
 
+async function uploadMusicToDB({
+  musicFile,
+  memory_id,
+  artist,
+  title,
+  duration,
+  albumPath,
+}) {
+  // 확장자 추출
+  const ext = musicFile.name.split(".").pop();
+  const fileName = `music_${Date.now()}.${ext}`;
+  const filePath = `music/${fileName}`; // 버킷 내부 경로
+
+  const { data: musicData, error: musicError } = await sb.storage
+    .from("media")
+    .upload(filePath, musicFile, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: "audio/mpeg",
+    });
+
+  const musicPath = musicData?.path;
+  if (!musicPath) {
+    alert("🎵 음악 업로드 실패");
+    console.error("업로드 실패 상세:", musicError);
+    return;
+  }
+
+  const { error: musicInsertError } = await sb.from("memory_music").insert({
+    memory_id,
+    artist_name:
+      typeof artist === "string"
+        ? artist.trim()
+        : typeof artist?.text === "string"
+        ? artist.text.trim()
+        : "알 수 없음",
+
+    music_title:
+      typeof title === "string"
+        ? title.replace(/\s*\(\d+\)\s*$/, "").trim()
+        : "제목 없음",
+
+    duration_seconds: duration,
+    music_path: musicPath,
+    album_path: albumPath,
+  });
+
+  if (musicInsertError) {
+    console.error("📛 음악 등록 오류:", musicInsertError.message);
+  } else {
+    console.log("🎵 음악 등록 성공");
+  }
+}
+
+/* Daum API 연동 */
 function execDaumPostcode() {
   new daum.Postcode({
     oncomplete: function (data) {
       document.getElementById("location").value = data.address;
     },
   }).open();
+}
+
+/* 배경음악 재생시간 */
+function getAudioDuration(file) {
+  return new Promise((resolve) => {
+    const audio = document.createElement("audio");
+    audio.preload = "metadata";
+    audio.src = URL.createObjectURL(file);
+
+    audio.onloadedmetadata = () => {
+      URL.revokeObjectURL(audio.src);
+      resolve(Math.floor(audio.duration)); // 초 단위
+    };
+
+    audio.onerror = () => {
+      resolve(0); // 추출 실패 시 fallback
+    };
+  });
 }
