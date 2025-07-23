@@ -120,28 +120,6 @@ function openDetailPopup(media, mediaList) {
   //     thumbList.classList.remove("single");
   //   }
 
-  // 본문 미디어 렌더링
-  function renderMainMedia(src) {
-    mainImgContainer.innerHTML = "";
-    if (!src) return;
-
-    if (src.match(/\.(mp4|webm|ogg)$/i)) {
-      const video = document.createElement("video");
-      video.src = src;
-      video.controls = true;
-      video.autoplay = true;
-      video.style.maxWidth = "100%";
-      video.style.borderRadius = "16px";
-      video.style.objectFit = "cover";
-      mainImgContainer.appendChild(video);
-    } else {
-      const img = document.createElement("img");
-      img.src = src;
-      img.id = "popup-main-image";
-      mainImgContainer.appendChild(img);
-    }
-  }
-
   // 썸네일 생성
   allSrc.forEach((src, idx) => {
     const thumb = document.createElement("img");
@@ -188,6 +166,31 @@ function openDetailPopup(media, mediaList) {
 
   renderMainMedia(allSrc[0]);
   overlay.style.display = "flex";
+}
+
+// 본문 미디어 렌더링
+function renderMainMedia(src) {
+  const mainImgContainer = document.getElementById(
+    "popup-main-image-container"
+  );
+  mainImgContainer.innerHTML = "";
+  if (!src) return;
+
+  if (src.match(/\.(mp4|webm|ogg)$/i)) {
+    const video = document.createElement("video");
+    video.src = src;
+    video.controls = true;
+    video.autoplay = true;
+    video.style.maxWidth = "100%";
+    video.style.borderRadius = "16px";
+    video.style.objectFit = "cover";
+    mainImgContainer.appendChild(video);
+  } else {
+    const img = document.createElement("img");
+    img.src = src;
+    img.id = "popup-main-image";
+    mainImgContainer.appendChild(img);
+  }
 }
 
 // 썸네일 하이라이트

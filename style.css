@@ -1,16 +1,11 @@
 body {
-  font-family: "Homemade Apple", cursive;
+  font-family: "Cedarville Cursive", cursive;
   font-size: 20px;
   /* background: url("https://images.pexels.com/photos/172277/pexels-photo-172277.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260"); */
   background: url("data/background.jpg") center center / cover no-repeat fixed;
   background-size: cover;
   background-repeat: repeat;
   color: #000;
-}
-
-.caption-text {
-  font-family: "Homemade Apple", "Cedarville Cursive", "Apple SD Gothic Neo",
-    sans-serif;
 }
 
 /* 가랜드 */
