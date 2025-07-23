@@ -275,9 +275,14 @@ document.addEventListener("DOMContentLoaded", () => {
   mainThumbInput.id = "main-thumbnail-index";
 
   fileInput.addEventListener("change", function (e) {
-    const files = Array.from(e.target.files);
+    // 001, 002, 003 파일이름 순서대로 순서저장
+    const files = Array.from(e.target.files).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true })
+    );
 
     previewContainer.innerHTML = ""; // 초기화
+    selectedIndex = 0; // 첫번째 기본 선택
+    document.getElementById("main-thumbnail-index").value = 0; // 초기 설정
 
     files.forEach((file, index) => {
       const reader = new FileReader();
@@ -299,14 +304,13 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           thumb.style.border = "3px solid #f99";
           selectedIndex = index; // 대표 인덱스 기억
+          document.getElementById("main-thumbnail-index").value = selectedIndex;
         });
 
         previewContainer.appendChild(thumb);
       };
       reader.readAsDataURL(file);
     });
-
-    selectedIndex = 0; // 첫번째 기본 선택
   });
 
   icon.addEventListener("click", () => (loginModal.style.display = "block"));
@@ -413,6 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
             is_main: i === mainIndex,
             memory_id,
             created_at: new Date().toISOString(),
+            file_order: i, // 이미지 노출 순서 저장
           });
         }
 

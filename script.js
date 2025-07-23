@@ -12,9 +12,9 @@ let rawMemories = [];
 async function loadMediaFromSupabase() {
   const { data: memories, error } = await supabase
     .from("memories")
-    .select("*, media_files(*)") // media_files 조인
+    .select("*, media_files(order:file_order, media_url, is_main)") // ✅ media_files 내부 정렬 적용
     .eq("is_public", true)
-    .order("order", { ascending: true });
+    .order("order", { ascending: true }); // memories 자체 정렬
 
   if (error) {
     console.error("Supabase fetch error:", error);
@@ -24,7 +24,7 @@ async function loadMediaFromSupabase() {
 
   rawMemories = memories; // 원본 저장
   mediaList = memories.map((item, index) => {
-    const mainMedia = item.media_files.find((f) => f.is_main);
+    const mainMedia = item.media_files.find((f) => !!f.is_main);
     const subMediaList = item.media_files.filter((f) => !f.is_main);
 
     return {
