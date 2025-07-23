@@ -8,6 +8,11 @@ body {
   color: #000;
 }
 
+.caption-text {
+  font-family: "Homemade Apple", "Cedarville Cursive", "Apple SD Gothic Neo",
+    sans-serif;
+}
+
 /* 가랜드 */
 .garland-wrapper {
   padding: 60px 20px;
