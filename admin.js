@@ -16,13 +16,11 @@ uploadOverlay.style.display = "flex";
 uploadOverlay.style.alignItems = "center";
 uploadOverlay.style.justifyContent = "center";
 uploadOverlay.innerHTML = `
-  <div style="
-    background: white;
+  <div class="modal-content" style="
     padding: 20px 30px;
-    border-radius: 10px;
     font-size: 15px;
-    color: #333;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 300px;
   ">
     업로드 중입니다...
   </div>
@@ -32,48 +30,31 @@ document.body.appendChild(uploadOverlay);
 document.addEventListener("DOMContentLoaded", () => {
   uploadOverlay.style.display = "none";
 
-  // 아이콘 만들기
-  const icon = document.createElement("div");
-  icon.id = "admin-icon";
-  icon.innerHTML = '<i class="fas fa-user"></i>';
-  icon.style.position = "fixed";
-  icon.style.top = "15px";
-  icon.style.right = "15px";
-  icon.style.cursor = "pointer";
-  icon.style.zIndex = 1000;
-  icon.style.width = "40px";
-  icon.style.height = "40px";
-  icon.style.borderRadius = "50%";
-  icon.style.backgroundColor = "#f0f0f0";
-  icon.style.display = "flex";
-  icon.style.alignItems = "center";
-  icon.style.justifyContent = "center";
-  icon.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
-  icon.title = "태수만 로그인";
-  icon.querySelector("i").style.color = "#333";
-  icon.querySelector("i").style.fontSize = "18px";
-  document.body.appendChild(icon);
-
   // 로그인 모달 생성
   const loginModal = document.createElement("div");
+  loginModal.className = "modal";
   loginModal.style.display = "none";
-  loginModal.style.position = "fixed";
-  loginModal.style.top = 0;
-  loginModal.style.left = 0;
-  loginModal.style.width = "100%";
-  loginModal.style.height = "100%";
-  loginModal.style.background = "rgba(0, 0, 0, 0.4)";
-  loginModal.style.zIndex = 999;
   loginModal.innerHTML = `
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: white; padding: 20px; border-radius: 10px; width: 300px;
-                text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-      <h3>태수만 로그인</h3>
-      <input id="admin-id" placeholder="아이디" style="width: 80%; padding: 6px; margin: 8px 0;" value="ceaser501" /><br/>
-      <input id="admin-pw" type="password" placeholder="비밀번호" style="width: 80%; padding: 6px; margin-bottom: 10px;" value="0928" /><br/>
-      <button id="login-btn" style="padding: 6px 12px; margin-right: 10px;">로그인</button>
-      <button id="cancel-btn" style="padding: 6px 12px;">취소</button>
-    </div>  
+    <div class="modal-content login-modal-content">
+      <h2>🔐 관리자 로그인</h2>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-id">아이디</label>
+          <input type="text" id="admin-id" value="ceaser501" required />
+        </div>
+
+        <div class="form-group">
+          <label for="admin-pw">비밀번호</label>
+          <input type="password" id="admin-pw" value="0928" required />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="cancel-btn" class="login-cancel">취소</button>
+          <button type="button" id="login-btn" class="login-submit">로그인</button>
+        </div>
+      </form>
+    </div>
   `;
   document.body.appendChild(loginModal);
 
@@ -313,30 +294,116 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  icon.addEventListener("click", () => (loginModal.style.display = "block"));
+  // UI 요소들
+  const loginBtn = document.getElementById("login-btn");
+  const signupBtn = document.getElementById("signup-btn");
+  const writePostBtn = document.getElementById("write-post-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  const beforeLogin = document.getElementById("before-login");
+  const afterLogin = document.getElementById("after-login");
+  
+  // 로그인 버튼 클릭 이벤트
+  loginBtn.addEventListener("click", () => {
+    loginModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
+  });
+  
+  // 글 등록 버튼 클릭 이벤트
+  writePostBtn.addEventListener("click", () => {
+    formModal.style.display = "block";
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
+  });
+  
+  // 로그아웃 버튼 클릭 이벤트
+  logoutBtn.addEventListener("click", () => {
+    // 로그아웃 확인
+    if (confirm("로그아웃 하시겠습니까?")) {
+      // UI를 초기 상태로 되돌리기
+      beforeLogin.style.display = "flex";
+      afterLogin.style.display = "none";
+      
+      // 모든 모달 닫기
+      if (formModal.style.display === "block") {
+        formModal.style.display = "none";
+        document.body.style.overflow = "auto";
+        document.body.classList.remove("modal-open");
+      }
+      
+      alert("로그아웃되었습니다.");
+    }
+  });
+
+  // 로그인 모달 닫기
+  function closeLoginModal() {
+    loginModal.style.display = "none";
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("modal-open");
+  }
+
+  // 취소 버튼
   loginModal
     .querySelector("#cancel-btn")
-    .addEventListener("click", () => (loginModal.style.display = "none"));
+    .addEventListener("click", closeLoginModal);
+
+  // 폼 모달 취소 버튼
   formModal
     .querySelector("#cancel-entry")
-    .addEventListener("click", () => (formModal.style.display = "none"));
+    .addEventListener("click", () => {
+      formModal.style.display = "none";
+      document.body.style.overflow = "auto";
+      document.body.classList.remove("modal-open");
+    });
 
+  // 배경 클릭으로 닫기
   loginModal.addEventListener("click", (e) => {
-    if (e.target === loginModal) loginModal.style.display = "none";
+    if (e.target === loginModal) closeLoginModal();
   });
+  
   formModal.addEventListener("click", (e) => {
-    if (e.target === formModal) formModal.style.display = "none";
+    if (e.target === formModal) {
+      formModal.style.display = "none";
+      document.body.style.overflow = "auto";
+      document.body.classList.remove("modal-open");
+    }
+  });
+
+  // ESC 키로 닫기
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (loginModal.style.display === "flex") closeLoginModal();
+      if (formModal.style.display === "block") {
+        formModal.style.display = "none";
+        document.body.style.overflow = "auto";
+        document.body.classList.remove("modal-open");
+      }
+    }
   });
 
   loginModal.querySelector("#login-btn").addEventListener("click", () => {
     const id = loginModal.querySelector("#admin-id").value.trim();
     const pw = loginModal.querySelector("#admin-pw").value.trim();
+    
+    if (!id || !pw) {
+      alert("아이디와 비밀번호를 입력해주세요.");
+      return;
+    }
+    
     if (id === "ceaser501" && pw === "0928") {
-      alert("로그인 성공");
-      loginModal.style.display = "none";
-      formModal.style.display = "block";
+      alert("✅ 로그인 성공!");
+      closeLoginModal();
+      
+      // UI 업데이트: 로그인 전 버튼들 숨기고 로그인 후 버튼들 표시
+      beforeLogin.style.display = "none";
+      afterLogin.style.display = "flex";
+      
+      // 글 등록 폼은 자동으로 열지 않음
+      
     } else {
-      alert("아이디 또는 비밀번호가 틀렸습니다.");
+      alert("❌ 아이디 또는 비밀번호가 틀렸습니다.");
+      loginModal.querySelector("#admin-pw").value = "";
+      loginModal.querySelector("#admin-pw").focus();
     }
   });
 

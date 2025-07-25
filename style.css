@@ -1,3 +1,61 @@
+:root {
+  /* 라이트 모드 색상 */
+  --bg-color: #fff;
+  --text-color: #000;
+  --popup-bg: #fff;
+  --popup-border: #ccc;
+  --modal-bg: rgba(0, 0, 0, 0.5);
+  --modal-content-bg: white;
+  --photo-bg: white;
+  --photo-shadow: rgba(0, 0, 0, 0.3);
+  --photo-hover-shadow: rgba(0, 0, 0, 0.6);
+  --tape-shadow: rgba(0, 0, 0, 0.15);
+  --input-border: #ccc;
+  --button-bg: #f88;
+  --button-text: white;
+  --cancel-bg: #999;
+  --thumbnail-border: #ccc;
+  --title-color: #333;
+  --description-color: #555;
+  --meta-color: #777;
+  --tag-bg: #ffe2e3;
+  --tag-color: #333;
+  --music-bg: #fff;
+  --music-border: #ccc;
+  --player-bg: #fff7f7;
+  --seek-bg: #ffe8ee;
+  --seek-color: #fd6d94;
+}
+
+[data-theme="dark"] {
+  /* 다크 모드 색상 */
+  --bg-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --popup-bg: #2a2a2a;
+  --popup-border: #444;
+  --modal-bg: rgba(0, 0, 0, 0.8);
+  --modal-content-bg: #2a2a2a;
+  --photo-bg: #333;
+  --photo-shadow: rgba(0, 0, 0, 0.8);
+  --photo-hover-shadow: rgba(0, 0, 0, 0.95);
+  --tape-shadow: rgba(0, 0, 0, 0.4);
+  --input-border: #555;
+  --button-bg: #f88;
+  --button-text: white;
+  --cancel-bg: #999;
+  --thumbnail-border: #555;
+  --title-color: #e0e0e0;
+  --description-color: #bbb;
+  --meta-color: #999;
+  --tag-bg: #4a3f3f;
+  --tag-color: #e0e0e0;
+  --music-bg: #2a2a2a;
+  --music-border: #444;
+  --player-bg: #333;
+  --seek-bg: #444;
+  --seek-color: #ff6b8a;
+}
+
 body {
   font-family: "Homemade Apple", cursive;
   -webkit-font-smoothing: antialiased;
@@ -7,7 +65,13 @@ body {
   background: url("data/background.jpg") center center / cover no-repeat fixed;
   background-size: cover;
   background-repeat: repeat;
-  color: #000;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    url("data/background.jpg");
 }
 
 h1,
@@ -46,18 +110,18 @@ h1,
 .photo {
   position: absolute;
   width: 160px;
-  background: white;
+  background: var(--photo-bg);
   text-align: center;
   font-size: 15px;
   padding: 10px;
   opacity: 0;
-  transition: opacity 1s ease, transform 1s ease;
+  transition: opacity 1s ease, transform 1s ease, background-color 0.3s ease;
   z-index: 1;
   cursor: pointer;
   transform: rotate(var(--rotate, 0deg)) scale(1);
   text-decoration: none;
-  color: black;
-  box-shadow: 5px 10px 30px rgba(0, 0, 0, 0.3);
+  color: var(--text-color);
+  box-shadow: 5px 10px 30px var(--photo-shadow);
 }
 
 .photo img.photo-img {
@@ -74,7 +138,7 @@ h1,
 .photo:hover {
   transform: rotate(0deg) scale(1.1) translateY(-5px);
   z-index: 10;
-  box-shadow: 5px 10px 100px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 5px 10px 100px var(--photo-hover-shadow) !important;
 }
 
 .photo.show {
@@ -92,8 +156,7 @@ h1,
   background-color: rgb(240, 225, 200);
   z-index: 10;
   opacity: 0.8;
-  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 1px 2px 4px var(--tape-shadow), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   border-radius: 2px;
 
   /* 좌우 지그재그 절단 효과 */
@@ -244,8 +307,7 @@ h1,
   z-index: 10;
   border-radius: 2px;
   pointer-events: none;
-  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 1px 2px 4px var(--tape-shadow), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   clip-path: polygon(
     0% 0%,
     10% 10%,
@@ -284,14 +346,335 @@ h1,
   pointer-events: none;
 }
 
-/* admin buttion icon */
+/* admin button icon */
 #admin-icon {
   position: fixed;
   top: 20px;
   right: 20px;
-  font-size: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background-color: var(--popup-bg);
+  border: 2px solid var(--popup-border);
   cursor: pointer;
-  z-index: 9999; /* 가장 앞에 보이도록 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
+}
+
+#admin-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: var(--button-bg);
+  color: white;
+}
+
+/* 다크모드 토글 스위치 */
+#dark-mode-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background-color: var(--popup-bg);
+  border: 2px solid var(--popup-border);
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* 우측 상단 버튼 컨테이너 */
+.top-right-buttons {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10000;
+}
+
+/* 팝업이 열렸을 때 버튼 비활성화 (다크모드 제외) */
+body.modal-open .auth-btn {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.modal-open #dark-mode-toggle {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+#dark-mode-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: #ddd;
+  border-color: #bbb;
+}
+
+#dark-mode-toggle:hover i {
+  color: #666;
+}
+
+/* 다크모드에서의 다크모드 버튼 호버 */
+[data-theme="dark"] #dark-mode-toggle:hover {
+  background-color: #444;
+  border-color: #555;
+}
+
+[data-theme="dark"] #dark-mode-toggle:hover i {
+  color: #ddd;
+}
+
+#dark-mode-toggle i {
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+/* 인증 버튼 컨테이너 */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 인증 버튼 공통 스타일 */
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  background-color: var(--popup-bg);
+  border: 2px solid var(--popup-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Primary 버튼 (로그인, 글등록) */
+.auth-btn.primary {
+  background-color: var(--button-bg);
+  color: white;
+  border: 2px solid var(--button-bg);
+}
+
+.auth-btn.primary:hover {
+  background-color: #e77;
+  border-color: #e77;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(231, 119, 119, 0.4);
+}
+
+/* Secondary 버튼 (회원가입, 로그아웃) */
+.auth-btn.secondary {
+  background-color: var(--popup-bg);
+  color: var(--text-color);
+  border: 2px solid var(--popup-border);
+}
+
+.auth-btn.secondary:hover {
+  background-color: var(--popup-border);
+  color: var(--text-color);
+  border-color: #999;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(153, 153, 153, 0.4);
+}
+
+/* 환영 메시지 스타일 */
+#welcome-message {
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+/* 회원가입 모달 스타일 */
+.signup-modal-content {
+  max-width: 450px;
+  width: 90vw;
+}
+
+.signup-modal-content h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 22px;
+}
+
+.signup-modal-content .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--title-color);
+}
+
+.signup-modal-content .form-group label input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  margin-bottom: 0;
+}
+
+.signup-modal-content input[type="text"],
+.signup-modal-content input[type="email"],
+.signup-modal-content input[type="password"],
+.signup-modal-content input[type="tel"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: var(--popup-bg);
+  color: var(--text-color);
+  transition: border-color 0.3s ease;
+}
+
+.signup-modal-content input:focus {
+  outline: none;
+  border-color: var(--button-bg);
+}
+
+.signup-modal-content .form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.signup-modal-content .form-actions button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+#signup-submit {
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+#signup-submit:hover {
+  background: #e77;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 119, 119, 0.4);
+  color: white;
+}
+
+#signup-cancel {
+  background: var(--cancel-bg);
+  color: white;
+}
+
+#signup-cancel:hover {
+  background: #777;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(119, 119, 119, 0.4);
+}
+
+/* 로그인 모달 스타일 */
+.login-modal-content {
+  max-width: 400px;
+  width: 90vw;
+  text-align: center;
+}
+
+.login-modal-content h2 {
+  margin-bottom: 25px;
+  font-size: 20px;
+  color: var(--title-color);
+}
+
+.login-modal-content .form-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.login-modal-content .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--title-color);
+}
+
+.login-modal-content input[type="text"],
+.login-modal-content input[type="password"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+  background-color: var(--popup-bg);
+  color: var(--text-color);
+  transition: border-color 0.3s ease;
+}
+
+.login-modal-content input:focus {
+  outline: none;
+  border-color: var(--button-bg);
+}
+
+.login-modal-content .form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.login-modal-content .form-actions button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.login-submit {
+  background: var(--button-bg);
+  color: white;
+  font-weight: 600;
+}
+
+.login-submit:hover {
+  background: #e77;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 119, 119, 0.4);
+  color: white;
+}
+
+.login-cancel {
+  background: var(--cancel-bg) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.login-cancel:hover {
+  background: #777 !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(119, 119, 119, 0.4) !important;
 }
 
 /* admin common style */
@@ -301,7 +684,7 @@ h1,
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--modal-bg);
   z-index: 999;
   display: flex;
   align-items: center;
@@ -309,18 +692,19 @@ h1,
 }
 
 .modal-content {
-  background: white;
+  background: var(--modal-content-bg);
   padding: 30px;
   border-radius: 12px;
   width: 400px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   font-family: "Segoe UI", sans-serif;
+  color: var(--text-color);
 }
 
 h2 {
   margin-bottom: 20px;
   font-size: 20px;
-  color: #333;
+  color: var(--title-color);
 }
 
 .form-group {
@@ -339,11 +723,13 @@ h2 {
 .form-group textarea,
 .form-group select {
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
   border-radius: 6px;
   font-size: 14px;
   width: 100%;
   box-sizing: border-box;
+  background-color: var(--popup-bg);
+  color: var(--text-color);
 }
 
 .address-group {
@@ -363,17 +749,34 @@ h2 {
 }
 
 .form-actions button {
-  padding: 8px 14px;
+  padding: 10px 20px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  background: #007aff;
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--button-bg);
+  color: var(--button-text);
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.form-actions button:hover {
+  background: #e77;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 119, 119, 0.4);
   color: white;
 }
 
 .form-actions button#cancel-entry {
-  background: #888;
+  background: var(--cancel-bg);
+  color: white;
+}
+
+.form-actions button#cancel-entry:hover {
+  background: #777;
+  color: white;
+  box-shadow: 0 4px 12px rgba(119, 119, 119, 0.4);
 }
 
 /* 썸네일 미리보기 */
@@ -394,9 +797,10 @@ h2 {
   max-width: 1000px;
   margin: auto;
   padding: 30px;
-  background: white;
+  background: var(--popup-bg);
   border-radius: 12px;
   position: relative;
+  color: var(--text-color);
 }
 
 .detail-left {
@@ -421,7 +825,7 @@ h2 {
   width: 60px;
   height: 60px;
   object-fit: cover;
-  border: 2px solid #ccc;
+  border: 2px solid var(--thumbnail-border);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -447,7 +851,7 @@ h2 {
   position: fixed;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--modal-bg);
   width: 100vw;
   height: 100vh;
   display: none;
@@ -463,12 +867,13 @@ h2 {
   padding: 20px;
   gap: 24px;
   max-width: 1200px;
-  background: #fff;
+  background: var(--popup-bg);
   width: 75vw;
   max-height: 100vh;
   overflow: visible;
   border-radius: 12px;
   position: relative;
+  color: var(--text-color);
 }
 
 #popup-close-btn {
@@ -544,7 +949,7 @@ h2 {
   height: 50px;
   object-fit: cover; /* 비율 유지하면서 잘라냄 */
   border-radius: 6px;
-  border: 2px solid #ccc;
+  border: 2px solid var(--thumbnail-border);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
@@ -603,7 +1008,7 @@ h2 {
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #444;
+  color: var(--meta-color);
   padding: 6px;
   transition: transform 0.2s, color 0.2s;
 }
@@ -665,24 +1070,24 @@ h2 {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 15px;
-  color: #333;
+  color: var(--title-color);
 
   padding-bottom: 6px; /* 줄과의 간격 */
-  border-bottom: 1px solid #ccc; /* ✅ 실선 추가 */
+  border-bottom: 1px solid var(--popup-border); /* ✅ 실선 추가 */
 }
 
 /* 팝업 상세보기에서 내용 */
 .popup-meta-description {
   font-size: 15px;
   line-height: 1.6;
-  color: #555;
+  color: var(--description-color);
   white-space: pre-line; /* 줄바꿈 처리 */
   margin-bottom: 15px;
 }
 
 .popup-meta {
   font-size: 14px;
-  color: #777;
+  color: var(--meta-color);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -706,15 +1111,50 @@ h2 {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
+  align-items: center;
 }
 
 .popup-tag {
-  background-color: #ffe2e3;
-  color: #333;
+  background-color: var(--tag-bg);
+  color: var(--tag-color);
   font-size: 13px;
   border-radius: 20px;
   padding: 4px 10px;
   font-family: sans-serif;
+}
+
+/* 수정 모드 input 스타일 */
+.popup-edit-input {
+  background: transparent;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text-color);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.popup-edit-input:focus {
+  outline: none;
+  border-color: var(--button-bg);
+  background: var(--popup-bg);
+}
+
+.popup-edit-textarea {
+  background: transparent;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 8px;
+  color: var(--text-color);
+  font-family: inherit;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+}
+
+.popup-edit-textarea:focus {
+  outline: none;
+  border-color: var(--button-bg);
+  background: var(--popup-bg);
 }
 
 /* (입력폼) 해시태그 */
@@ -724,10 +1164,10 @@ h2 {
 }
 
 .tag-input-container {
-  background: #f8f8f8;
+  background: var(--popup-bg);
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
 }
 
 #tags-input {
@@ -750,11 +1190,11 @@ h2 {
 .tag-badge {
   display: inline-flex;
   align-items: center;
-  background-color: #f0f0f0;
+  background-color: var(--tag-bg);
   border-radius: 20px;
   padding: 6px 12px;
   font-size: 14px;
-  color: #333;
+  color: var(--tag-color);
   position: relative;
 }
 
@@ -777,13 +1217,13 @@ h2 {
 /*********/
 
 .music-wrapper {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   width: fit-content;
   display: flex;
-  border: 1px solid #ccc;
+  border: 1px solid var(--music-border);
   border-radius: 20px;
-  padding: 20px;
-  background-color: #fff;
+  padding: 15px;
+  background-color: var(--music-bg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -872,7 +1312,7 @@ h2 {
   right: 15px;
   left: 15px;
   padding: 10px 16px 6px 100px;
-  background-color: #fff7f7;
+  background-color: var(--player-bg);
   border-radius: 15px 15px 0 0;
   transition: 0.3s ease top;
   z-index: 1;
@@ -883,13 +1323,13 @@ h2 {
 }
 
 #album-name {
-  color: #54576f;
+  color: var(--title-color);
   font-weight: bold;
   font-size: 13px;
 }
 
 #track-name {
-  color: #acaebd;
+  color: var(--meta-color);
   font-size: 11px;
   margin: 2px 0 8px 0;
 }
@@ -910,16 +1350,16 @@ h2 {
 
 #current-time,
 #track-length {
-  color: #f86d92;
+  color: var(--seek-color);
   font-size: 10px;
-  background-color: #ffe8ee;
+  background-color: var(--seek-bg);
   border-radius: 10px;
   transition: 0.3s ease all;
 }
 
 #track-time.active #current-time,
 #track-time.active #track-length {
-  color: #f86d92;
+  color: var(--seek-color);
   background-color: transparent;
 }
 
@@ -931,7 +1371,7 @@ h2 {
 }
 
 #seek-bar-container {
-  background-color: #ffe8ee;
+  background-color: var(--seek-bg);
   cursor: pointer;
 }
 
@@ -967,7 +1407,7 @@ h2 {
   bottom: 0;
   left: 0;
   width: 0;
-  background-color: #fd6d94;
+  background-color: var(--seek-color);
   transition: 0.2s ease width;
   z-index: 1;
 }
@@ -975,7 +1415,7 @@ h2 {
 #player-content {
   position: relative;
   height: 85%;
-  background-color: #fff;
+  background-color: var(--popup-bg);
   box-shadow: 0 30px 500px #656565;
   border-radius: 15px;
   z-index: 2;
@@ -1097,7 +1537,7 @@ h2 {
 }
 
 .music-player-container .button {
-  background-color: #fff;
+  background-color: var(--popup-bg);
   border-radius: 6px;
   cursor: pointer;
 
@@ -1120,7 +1560,7 @@ h2 {
 }
 
 .music-player-container .button:hover {
-  background-color: #d6d6de;
+  background-color: var(--seek-bg);
 }
 
 .music-player-container .button:hover i {
