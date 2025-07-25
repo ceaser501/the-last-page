@@ -23,7 +23,7 @@ function openDetailPopup(media, mediaList) {
   currentImageIndex = 0;
   currentMedia = media; // 현재 미디어 저장
   isEditMode = false; // 수정 모드 초기화
-  
+
   // 로그인 상태 확인하여 수정 버튼 표시/숨김
   const editBtn = document.getElementById("popup-edit-btn");
   const afterLogin = document.getElementById("after-login");
@@ -42,7 +42,8 @@ function openDetailPopup(media, mediaList) {
 
   // 텍스트 정보 세팅
   document.getElementById("popup-title").textContent = media.title || "";
-  document.getElementById("popup-thumbnail-title").textContent = media.thumbnail_title || "";
+  document.getElementById("popup-thumbnail-title").textContent =
+    media.thumbnail_title || "";
   document.getElementById("popup-date").textContent = media.date || "";
   //document.getElementById("popup-location").textContent = media.location || "";
 
@@ -572,7 +573,7 @@ async function fetchMusicByMemoryId(memoryId) {
 function toggleEditMode() {
   isEditMode = !isEditMode;
   const editBtn = document.getElementById("popup-edit-btn");
-  
+
   if (isEditMode) {
     editBtn.textContent = "✓"; // 저장 아이콘
     editBtn.title = "저장";
@@ -590,22 +591,21 @@ function enableEditMode() {
   const contentWrapper = document.getElementById("popup-content-wrapper");
   const wrapperWidth = contentWrapper.offsetWidth;
   const inputWidth = `calc(100% - 10px)`; // 스크롤 방지를 위한 여유
-  
-  
+
   // 제목을 input으로 변경
   const titleEl = document.getElementById("popup-title");
-  
+
   const titleWrapper = document.createElement("div");
   titleWrapper.style.marginBottom = "15px";
   titleWrapper.style.display = "flex";
   titleWrapper.style.alignItems = "center";
   titleWrapper.style.gap = "10px";
-  
+
   const titleLabel = document.createElement("label");
   titleLabel.textContent = "제목";
   titleLabel.style.fontWeight = "bold";
   titleLabel.style.minWidth = "50px";
-  
+
   const titleInput = document.createElement("input");
   titleInput.type = "text";
   titleInput.value = titleEl.textContent;
@@ -614,26 +614,26 @@ function enableEditMode() {
   titleInput.style.flex = "1";
   titleInput.style.fontSize = titleEl.style.fontSize || "inherit";
   titleInput.style.fontFamily = titleEl.style.fontFamily || "inherit";
-  
+
   titleWrapper.appendChild(titleLabel);
   titleWrapper.appendChild(titleInput);
   titleEl.parentNode.replaceChild(titleWrapper, titleEl);
-  
+
   // 설명을 textarea로 변경
   const descEl = document.getElementById("popup-description");
-  
+
   const descWrapper = document.createElement("div");
   descWrapper.style.marginBottom = "15px";
   descWrapper.style.display = "flex";
   descWrapper.style.alignItems = "flex-start";
   descWrapper.style.gap = "10px";
-  
+
   const descLabel = document.createElement("label");
   descLabel.textContent = "내용";
   descLabel.style.fontWeight = "bold";
   descLabel.style.minWidth = "50px";
   descLabel.style.marginTop = "5px";
-  
+
   const descTextarea = document.createElement("textarea");
   descTextarea.value = descEl.textContent;
   descTextarea.id = "popup-description-input";
@@ -643,36 +643,36 @@ function enableEditMode() {
   descTextarea.style.resize = "vertical";
   descTextarea.style.minHeight = "300px";
   descTextarea.style.maxHeight = "calc(80vh - 250px)";
-  
+
   descWrapper.appendChild(descLabel);
   descWrapper.appendChild(descTextarea);
   descEl.parentNode.replaceChild(descWrapper, descEl);
-  
+
   // 날짜를 input[type="date"]로 변경
   const dateEl = document.getElementById("popup-date");
   const dateText = dateEl.textContent.replace("📅", "").trim();
-  
+
   dateEl.innerHTML = "";
   dateEl.style.marginBottom = "15px";
   dateEl.style.display = "flex";
   dateEl.style.alignItems = "center";
   dateEl.style.gap = "10px";
-  
+
   const dateLabel = document.createElement("label");
   dateLabel.textContent = "날짜";
   dateLabel.style.fontWeight = "bold";
   dateLabel.style.minWidth = "50px";
-  
+
   const dateInput = document.createElement("input");
   dateInput.type = "date";
   dateInput.value = dateText;
   dateInput.id = "popup-date-input";
   dateInput.className = "popup-edit-input";
   dateInput.style.flex = "1";
-  
+
   dateEl.appendChild(dateLabel);
   dateEl.appendChild(dateInput);
-  
+
   // 장소를 input으로 변경
   const locationEl = document.getElementById("popup-location");
   const locationText = locationEl.querySelector("span")?.textContent || "";
@@ -681,36 +681,59 @@ function enableEditMode() {
   locationEl.style.display = "flex";
   locationEl.style.alignItems = "center";
   locationEl.style.gap = "10px";
-  
+
   const locationLabel = document.createElement("label");
   locationLabel.textContent = "장소";
   locationLabel.style.fontWeight = "bold";
   locationLabel.style.minWidth = "50px";
-  
+
   const locationInput = document.createElement("input");
   locationInput.type = "text";
   locationInput.value = locationText;
   locationInput.id = "popup-location-input";
   locationInput.className = "popup-edit-input";
   locationInput.style.flex = "1";
-  
+
   locationEl.appendChild(locationLabel);
   locationEl.appendChild(locationInput);
-  
+
+  // 노출 순서 input 추가
+  const orderEl = document.createElement("div");
+  orderEl.style.marginBottom = "15px";
+  orderEl.style.display = "flex";
+  orderEl.style.alignItems = "center";
+  orderEl.style.gap = "10px";
+
+  const orderLabel = document.createElement("label");
+  orderLabel.textContent = "노출순서";
+  orderLabel.style.minWidth = "50px";
+
+  const orderInput = document.createElement("input");
+  orderInput.type = "number";
+  orderInput.value = currentMedia.order; // 현재 아이템의 노출 순서
+  orderInput.id = "popup-order-input";
+  orderInput.className = "popup-edit-input";
+  orderInput.style.flex = "1";
+
+  orderEl.appendChild(orderLabel);
+  orderEl.appendChild(orderInput);
+  locationEl.parentNode.insertBefore(orderEl, locationEl.nextSibling);
+
   // 태그 편집 가능하게 변경
   const tagsContainer = document.getElementById("popup-tags");
-  const currentTags = Array.from(tagsContainer.querySelectorAll(".popup-tag"))
-    .map(tag => tag.textContent);
-  
+  const currentTags = Array.from(
+    tagsContainer.querySelectorAll(".popup-tag")
+  ).map((tag) => tag.textContent);
+
   tagsContainer.innerHTML = "";
   tagsContainer.style.display = "flex";
   tagsContainer.style.alignItems = "center";
   tagsContainer.style.gap = "10px";
-  
+
   const tagsLabel = document.createElement("label");
   tagsLabel.textContent = "태그";
   tagsLabel.style.minWidth = "50px";
-  
+
   const tagsInput = document.createElement("input");
   tagsInput.type = "text";
   tagsInput.value = currentTags.join(" ");
@@ -718,7 +741,7 @@ function enableEditMode() {
   tagsInput.className = "popup-edit-input";
   tagsInput.placeholder = "태그를 스페이스로 구분하여 입력";
   tagsInput.style.flex = "1";
-  
+
   tagsContainer.appendChild(tagsLabel);
   tagsContainer.appendChild(tagsInput);
 }
@@ -730,78 +753,79 @@ async function saveChanges() {
   const dateInput = document.getElementById("popup-date-input");
   const locationInput = document.getElementById("popup-location-input");
   const tagsInput = document.getElementById("popup-tags-input");
-  
+  const orderInput = document.getElementById("popup-order-input");
+
   if (!titleInput || !currentMedia) return;
-  
+
   // 업데이트할 데이터
   const updatedData = {
     title: titleInput.value,
     description: descInput.value,
     date: dateInput.value,
     location: locationInput.value,
-    tags: tagsInput.value
+    tags: tagsInput.value,
+    order: parseInt(orderInput.value, 10),
   };
-  
+
   try {
     // 디버깅용 로그
     console.log("업데이트할 데이터:", updatedData);
     console.log("현재 미디어 ID:", currentMedia.id);
     console.log("Supabase 클라이언트:", supabase);
-    
+
     // 현재 데이터 먼저 조회
     const { data: currentData, error: selectError } = await supabase
       .from("memories")
       .select("*")
       .eq("id", currentMedia.id)
       .single();
-      
+
     console.log("현재 DB 데이터:", currentData);
-    
+
     if (selectError) {
       console.error("데이터 조회 에러:", selectError);
       alert("데이터 조회 중 오류가 발생했습니다.");
       return;
     }
-    
+
     // Supabase 업데이트
     const { data, error } = await supabase
       .from("memories")
       .update(updatedData)
       .eq("id", currentMedia.id)
       .select();
-      
+
     if (error) {
       console.error("Supabase 업데이트 에러:", error);
       console.error("에러 상세:", {
         code: error.code,
         message: error.message,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
       });
       alert("저장 중 오류가 발생했습니다: " + error.message);
       return;
     }
-    
+
     console.log("업데이트 결과:", data);
-    
+
     // 업데이트 후 다시 조회하여 확인
     const { data: verifyData, error: verifyError } = await supabase
       .from("memories")
       .select("*")
       .eq("id", currentMedia.id)
       .single();
-      
+
     console.log("업데이트 후 검증 데이터:", verifyData);
-    
+
     // 현재 미디어 객체 업데이트
     Object.assign(currentMedia, updatedData);
-    
+
     // UI를 다시 읽기 모드로 변경
     restoreViewMode(updatedData);
-    
+
     // 성공 메시지
     alert("수정사항이 저장되었습니다!");
-    
   } catch (err) {
     console.error("저장 실패:", err);
     alert("저장 중 오류가 발생했습니다.");
@@ -810,7 +834,6 @@ async function saveChanges() {
 
 // 읽기 모드로 복원
 function restoreViewMode(data) {
-  
   // 제목 복원
   const titleWrapper = document.getElementById("popup-title-input").parentNode;
   const titleEl = document.createElement("div");
@@ -818,15 +841,17 @@ function restoreViewMode(data) {
   titleEl.className = "popup-meta-title";
   titleEl.textContent = data.title;
   titleWrapper.parentNode.replaceChild(titleEl, titleWrapper);
-  
+
   // 설명 복원
-  const descWrapper = document.getElementById("popup-description-input").parentNode;
+  const descWrapper = document.getElementById(
+    "popup-description-input"
+  ).parentNode;
   const descEl = document.createElement("div");
   descEl.id = "popup-description";
   descEl.className = "popup-meta-description";
   descEl.textContent = data.description;
   descWrapper.parentNode.replaceChild(descEl, descWrapper);
-  
+
   // 날짜 복원
   const dateEl = document.getElementById("popup-date");
   dateEl.innerHTML = "";
@@ -835,7 +860,7 @@ function restoreViewMode(data) {
   icon.textContent = "📅";
   dateEl.appendChild(icon);
   dateEl.appendChild(document.createTextNode(data.date));
-  
+
   // 장소 복원
   const locationEl = document.getElementById("popup-location");
   locationEl.innerHTML = "";
@@ -847,13 +872,19 @@ function restoreViewMode(data) {
   span.textContent = data.location;
   locationEl.appendChild(iconImg);
   locationEl.appendChild(span);
-  
+
+  // 노출순서 요소 제거 (뷰 모드에서는 표시하지 않음)
+  const orderEl = document.getElementById("popup-order-input")?.parentNode;
+  if (orderEl) {
+    orderEl.remove();
+  }
+
   // 태그 복원
   const tagsContainer = document.getElementById("popup-tags");
   tagsContainer.innerHTML = "";
   if (data.tags) {
-    const tagList = data.tags.split(" ").filter(t => t.trim() !== "");
-    tagList.forEach(tag => {
+    const tagList = data.tags.split(" ").filter((t) => t.trim() !== "");
+    tagList.forEach((tag) => {
       const tagElem = document.createElement("span");
       tagElem.className = "popup-tag";
       tagElem.textContent = tag;

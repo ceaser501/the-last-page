@@ -301,21 +301,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logout-btn");
   const beforeLogin = document.getElementById("before-login");
   const afterLogin = document.getElementById("after-login");
-  
+
   // 로그인 버튼 클릭 이벤트
   loginBtn.addEventListener("click", () => {
     loginModal.style.display = "flex";
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
   });
-  
+
   // 글 등록 버튼 클릭 이벤트
-  writePostBtn.addEventListener("click", () => {
+  writePostBtn.addEventListener("click", async () => {
     formModal.style.display = "block";
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
+
+    // [수정] DB에서 직접 마지막 순서를 실시간으로 조회하여 다음 순서 자동 설정
+    const orderInput = document.getElementById("order");
+    orderInput.value = 1; // 기본값 설정
+
+    try {
+      const { data, error } = await sb
+        .from("memories")
+        .select("order")
+        .order("order", { ascending: false })
+        .limit(1)
+        .single();
+
+      // 테이블이 비어있을 때 발생하는 오류(PGRST116)는 정상적인 상황이므로 무시합니다.
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
+
+      if (data) {
+        // 데이터가 있으면 (가장 큰 order 값을 가진 게시물)
+        orderInput.value = (data.order || 0) + 1;
+      }
+    } catch (err) {
+      console.error(
+        "최대 노출 순서 조회에 실패했습니다. 기본값 1로 설정됩니다.",
+        err
+      );
+    }
   });
-  
+
   // 로그아웃 버튼 클릭 이벤트
   logoutBtn.addEventListener("click", () => {
     // 로그아웃 확인
@@ -323,14 +351,14 @@ document.addEventListener("DOMContentLoaded", () => {
       // UI를 초기 상태로 되돌리기
       beforeLogin.style.display = "flex";
       afterLogin.style.display = "none";
-      
+
       // 모든 모달 닫기
       if (formModal.style.display === "block") {
         formModal.style.display = "none";
         document.body.style.overflow = "auto";
         document.body.classList.remove("modal-open");
       }
-      
+
       alert("로그아웃되었습니다.");
     }
   });
@@ -348,19 +376,17 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", closeLoginModal);
 
   // 폼 모달 취소 버튼
-  formModal
-    .querySelector("#cancel-entry")
-    .addEventListener("click", () => {
-      formModal.style.display = "none";
-      document.body.style.overflow = "auto";
-      document.body.classList.remove("modal-open");
-    });
+  formModal.querySelector("#cancel-entry").addEventListener("click", () => {
+    formModal.style.display = "none";
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("modal-open");
+  });
 
   // 배경 클릭으로 닫기
   loginModal.addEventListener("click", (e) => {
     if (e.target === loginModal) closeLoginModal();
   });
-  
+
   formModal.addEventListener("click", (e) => {
     if (e.target === formModal) {
       formModal.style.display = "none";
@@ -384,22 +410,21 @@ document.addEventListener("DOMContentLoaded", () => {
   loginModal.querySelector("#login-btn").addEventListener("click", () => {
     const id = loginModal.querySelector("#admin-id").value.trim();
     const pw = loginModal.querySelector("#admin-pw").value.trim();
-    
+
     if (!id || !pw) {
       alert("아이디와 비밀번호를 입력해주세요.");
       return;
     }
-    
+
     if (id === "ceaser501" && pw === "0928") {
       alert("✅ 로그인 성공!");
       closeLoginModal();
-      
+
       // UI 업데이트: 로그인 전 버튼들 숨기고 로그인 후 버튼들 표시
       beforeLogin.style.display = "none";
       afterLogin.style.display = "flex";
-      
+
       // 글 등록 폼은 자동으로 열지 않음
-      
     } else {
       alert("❌ 아이디 또는 비밀번호가 틀렸습니다.");
       loginModal.querySelector("#admin-pw").value = "";
