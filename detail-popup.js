@@ -12,6 +12,12 @@ let isSlideshowPlaying = false;
 // 수정 모드 상태
 let isEditMode = false;
 
+// 기본 앨범 커버 URL (Supabase에서 전체 경로 가져오기)
+const { data: defaultCoverData } = window.supabaseClient.storage
+  .from("media")
+  .getPublicUrl("album/default-cover.jpg");
+const DEFAULT_ALBUM_COVER_URL = defaultCoverData.publicUrl;
+
 // 상세 팝업 열기
 function openDetailPopup(media, mediaList) {
   console.log("✅ [디버그] 상세 팝업 호출됨:", media);
@@ -24,13 +30,16 @@ function openDetailPopup(media, mediaList) {
   currentMedia = media; // 현재 미디어 저장
   isEditMode = false; // 수정 모드 초기화
 
-  // 로그인 상태 확인하여 수정 버튼 표시/숨김
+  // 로그인 상태 확인하여 수정/삭제 버튼 표시/숨김
   const editBtn = document.getElementById("popup-edit-btn");
+  const deleteBtn = document.getElementById("popup-delete-btn");
   const afterLogin = document.getElementById("after-login");
   if (afterLogin && afterLogin.style.display === "flex") {
     editBtn.style.display = "block";
+    deleteBtn.style.display = "block";
   } else {
     editBtn.style.display = "none";
+    deleteBtn.style.display = "none";
   }
 
   const overlay = document.getElementById("popup-overlay");
@@ -78,13 +87,13 @@ function openDetailPopup(media, mediaList) {
     if (music) {
       musicWrapper.style.display = "flex"; // 플레이어 보이기
 
-      // 음악 제목과 아티스트 설정
-      $("#track-name").text(music.music_title || "제목 없음");
-      $("#album-name").text(music.artist_name || "아티스트 없음");
+      // 음악 제목과 아티스트 설정 (위치 수정: album-name에 제목, track-name에 가수)
+      $("#album-name").text(music.music_title || "제목 없음");
+      $("#track-name").text(music.artist_name || "아티스트 없음");
 
       // 자켓 이미지 설정
       const albumImg = $("#album-art img");
-      const coverUrl = music.album_cover_url || "data/default-cover.jpg";
+      const coverUrl = music.album_cover_url || DEFAULT_ALBUM_COVER_URL;
       albumImg.attr("src", coverUrl);
       $("#album-art .active").removeClass("active"); // 기존 active 제거
       albumImg.first().addClass("active"); // 첫번째 이미지에 active 추가
@@ -102,6 +111,16 @@ function openDetailPopup(media, mediaList) {
           const minutes = Math.floor(duration / 60);
           const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
           totalDurationEl.textContent = `${minutes}:${seconds}`;
+
+          // 상세팝업 열릴 때 자동으로 재생
+          window.audio.play().catch((error) => {
+            console.log("자동 재생 실패 (브라우저 정책):", error);
+          });
+
+          // UI 업데이트
+          $("#play-pause-button i").attr("class", "fas fa-pause");
+          $("#player-track").addClass("active");
+          $("#album-art").addClass("active");
         };
       }
     } else {
@@ -119,9 +138,31 @@ function openDetailPopup(media, mediaList) {
     });
   }
 
-  // 미디어 리스트 추출
+  // 미디어 리스트 추출 및 파일명 순서대로 정렬
   const mediaFiles = media.media_files || [];
-  const allSrc = mediaFiles.map((file) => file.media_url).filter(Boolean);
+
+  // 파일명에서 순서 번호 추출하여 정렬 (1_001.jpg 형식에서 001 부분)
+  const sortedMediaFiles = mediaFiles.sort((a, b) => {
+    // 대표이미지(is_main)는 항상 맨 앞에
+    if (a.is_main && !b.is_main) return -1;
+    if (!a.is_main && b.is_main) return 1;
+
+    const getFileNumber = (url) => {
+      const fileName = url.split("/").pop(); // 파일명만 추출
+      // 새로운 형식: 1_001.jpg에서 001 추출
+      const newFormatMatch = fileName.match(/(\d+)_(\d+)/);
+      if (newFormatMatch) {
+        return parseInt(newFormatMatch[2], 10); // 두 번째 숫자 부분 (001, 002, 003...)
+      }
+      // 기존 형식: memory_1753286738964_0.jpeg에서 마지막 숫자 추출
+      const oldFormatMatch = fileName.match(/_(\d+)\./);
+      return oldFormatMatch ? parseInt(oldFormatMatch[1], 10) : 0;
+    };
+
+    return getFileNumber(a.media_url) - getFileNumber(b.media_url);
+  });
+
+  const allSrc = sortedMediaFiles.map((file) => file.media_url).filter(Boolean);
   currentAllSrc = allSrc;
 
   thumbList.innerHTML = "";
@@ -155,8 +196,8 @@ function openDetailPopup(media, mediaList) {
 
       video.addEventListener("seeked", () => {
         const canvas = document.createElement("canvas");
-        canvas.width = 160;
-        canvas.height = 150;
+        canvas.width = 40;
+        canvas.height = 53; // 3:4 비율
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         thumb.src = canvas.toDataURL("image/jpeg");
@@ -188,9 +229,12 @@ function renderMainMedia(src) {
     video.src = src;
     video.controls = true;
     video.autoplay = true;
-    video.style.maxWidth = "100%";
+    video.style.width = "412px"; // 3:4 비율 고정
+    video.style.height = "550px"; // 이미지와 동일한 고정 높이
+    video.style.margin = "0 auto"; // 가운데 정렬
+    video.style.display = "block";
     video.style.borderRadius = "16px";
-    video.style.objectFit = "cover";
+    video.style.objectFit = "cover"; // cover로 변경하여 지정된 크기를 꽉 채우도록
     mainImgContainer.appendChild(video);
   } else {
     const img = document.createElement("img");
@@ -233,6 +277,16 @@ function closeDetailPopup() {
   if (document.fullscreenElement) {
     document.exitFullscreen();
   }
+
+  // 조회
+  // 기존 이미지, 행 제거
+  wrapper.innerHTML = "";
+  pointer = 0;
+  row = 0;
+  mediaList = [];
+  rawMemories = [];
+
+  loadMediaFromSupabase();
 }
 
 // 좌우 이동
@@ -321,6 +375,181 @@ document.getElementById("popup-slideshow-btn").addEventListener("click", () => {
 document.getElementById("popup-edit-btn").addEventListener("click", () => {
   toggleEditMode();
 });
+
+// 삭제 버튼 클릭 이벤트
+document.getElementById("popup-delete-btn").addEventListener("click", () => {
+  deleteMemory();
+});
+
+// 메모리 삭제 함수
+async function deleteMemory() {
+  if (!currentMedia) {
+    alert("삭제할 메모리가 선택되지 않았습니다.");
+    return;
+  }
+
+  // 이중 확인
+  if (
+    !confirm(
+      `정말로 "${currentMedia.title}" 메모리를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!`
+    )
+  ) {
+    return;
+  }
+
+  if (
+    !confirm(
+      "삭제하면 모든 사진, 동영상, 음악이 영구적으로 제거됩니다.\n\n정말 삭제하시겠습니까?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    // 로딩 표시
+    const overlay = document.getElementById("popup-overlay");
+    const originalContent = overlay.innerHTML;
+    overlay.innerHTML = `
+      <div style="
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        height: 100vh; 
+        color: white; 
+        font-size: 18px;
+        background: rgba(0,0,0,0.8);
+      ">
+        메모리 삭제 중...
+      </div>
+    `;
+
+    console.log("🗑️ 삭제 시작 - Memory ID:", currentMedia.id);
+
+    // 1. media_files에서 파일 목록 가져오기
+    console.log("📂 media_files 조회 중...");
+    const { data: mediaFiles, error: mediaFilesError } = await window.sbClient
+      .from("media_files")
+      .select("media_url")
+      .eq("memory_id", currentMedia.id);
+
+    if (mediaFilesError) {
+      console.error("❌ media_files 조회 오류:", mediaFilesError);
+      throw mediaFilesError;
+    }
+    console.log(
+      "✅ media_files 조회 성공:",
+      mediaFiles ? mediaFiles.length : 0,
+      "개 파일"
+    );
+
+    // 2. Storage에서 파일들 삭제
+    if (mediaFiles && mediaFiles.length > 0) {
+      const filePaths = mediaFiles.map((file) => {
+        const fileName = file.media_url.split("/").pop();
+        return `uploads/${fileName}`;
+      });
+      console.log("📁 삭제할 Storage 파일 경로:", filePaths);
+
+      const { data: removeData, error: storageError } =
+        await window.sbClient.storage.from("media").remove(filePaths);
+
+      if (storageError) {
+        console.error("❌ Storage 파일 삭제 오류:", storageError);
+      } else {
+        console.log("✅ Storage 파일 삭제 성공:", removeData);
+      }
+    }
+
+    // 3. memory_music에서 음악 파일도 삭제
+    console.log("🎵 memory_music 조회 중...");
+    const { data: musicData, error: musicSelectError } = await window.sbClient
+      .from("memory_music")
+      .select("music_path, album_path")
+      .eq("memory_id", currentMedia.id)
+      .single();
+
+    if (musicSelectError && musicSelectError.code !== "PGRST116") {
+      // PGRST116은 "not found" 에러
+      console.error("❌ memory_music 조회 오류:", musicSelectError);
+    } else if (musicData) {
+      console.log("✅ memory_music 조회 성공:", musicData);
+      const musicFilesToDelete = [];
+      if (musicData.music_path) musicFilesToDelete.push(musicData.music_path);
+      if (musicData.album_path) musicFilesToDelete.push(musicData.album_path);
+
+      if (musicFilesToDelete.length > 0) {
+        console.log("🎵 삭제할 음악 파일:", musicFilesToDelete);
+        const { data: musicRemoveData, error: musicStorageError } =
+          await window.sbClient.storage
+            .from("media")
+            .remove(musicFilesToDelete);
+
+        if (musicStorageError) {
+          console.error("❌ 음악 파일 삭제 오류:", musicStorageError);
+        } else {
+          console.log("✅ 음악 파일 삭제 성공:", musicRemoveData);
+        }
+      }
+    } else {
+      console.log("ℹ️ 삭제할 음악 파일 없음");
+    }
+
+    // 4. DB에서 관련 데이터 삭제 (순서 중요: 외래키 제약 때문에 자식 테이블부터 삭제)
+
+    // media_files 삭제
+    console.log("🗄️ media_files 테이블에서 삭제 중...");
+    const { data: mediaFilesDeleteData, error: mediaFilesDeleteError } =
+      await window.sbClient
+        .from("media_files")
+        .delete()
+        .eq("memory_id", currentMedia.id);
+
+    if (mediaFilesDeleteError) {
+      console.error("❌ media_files 삭제 오류:", mediaFilesDeleteError);
+      throw mediaFilesDeleteError;
+    }
+    console.log("✅ media_files 삭제 성공:", mediaFilesDeleteData);
+
+    // memory_music 삭제
+    console.log("🗄️ memory_music 테이블에서 삭제 중...");
+    const { data: musicDeleteData, error: musicDeleteError } =
+      await window.sbClient
+        .from("memory_music")
+        .delete()
+        .eq("memory_id", currentMedia.id);
+
+    if (musicDeleteError) {
+      console.error("❌ memory_music 삭제 오류:", musicDeleteError);
+      throw musicDeleteError;
+    }
+    console.log("✅ memory_music 삭제 성공:", musicDeleteData);
+
+    // memories 삭제
+    console.log("🗄️ memories 테이블에서 삭제 중...");
+    const { data: memoryDeleteData, error: memoryDeleteError } =
+      await window.sbClient.from("memories").delete().eq("id", currentMedia.id);
+
+    if (memoryDeleteError) {
+      console.error("❌ memories 삭제 오류:", memoryDeleteError);
+      throw memoryDeleteError;
+    }
+    console.log("✅ memories 삭제 성공:", memoryDeleteData);
+
+    console.log("🎉 메모리 삭제 완료:", currentMedia.id);
+
+    // 성공 시 팝업 닫고 페이지 새로고침
+    closeDetailPopup();
+    alert("메모리가 성공적으로 삭제되었습니다.");
+    location.reload();
+  } catch (error) {
+    console.error("💥 메모리 삭제 오류:", error);
+    alert("메모리 삭제 중 오류가 발생했습니다: " + error.message);
+
+    // 오류 시 원래 내용 복원
+    const overlay = document.getElementById("popup-overlay");
+    overlay.innerHTML = originalContent;
+  }
+}
 
 /*******/
 /* 음악 플레이어 UI 로직 (jQuery) */
@@ -521,7 +750,7 @@ function resetMusicPlayer() {
   $("#current-time").text("00:00");
   $("#track-length").text("00:00");
   $("#seek-bar").width(0);
-  $("#album-art img").attr("src", "data/default-cover.jpg");
+  $("#album-art img").attr("src", DEFAULT_ALBUM_COVER_URL);
   $("#player-bg-artwork").css("background-image", "none");
 
   if (window.buffInterval) {

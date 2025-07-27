@@ -305,6 +305,11 @@ function generateRow() {
 
     photo.appendChild(mediaNode);
     photo.appendChild(caption);
+    // 날짜 표시 (우측 하단)
+    const dateEl = document.createElement("div");
+    dateEl.className = "photo-date";
+    dateEl.innerText = media.date || "";
+    photo.appendChild(dateEl);
 
     photo.addEventListener("click", () => {
       openDetailPopup(rawMemories[i], rawMemories); // ← 원본 넘기기

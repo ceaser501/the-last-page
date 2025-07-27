@@ -479,13 +479,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const memory_id = memoryInsert.id;
 
+        // 현재 총 메모리 개수를 구해서 순서 번호 생성 (1, 2, 3, 4...)
+        const { count: memoryCount } = await sb
+          .from("memories")
+          .select("*", { count: "exact", head: true });
+        
+        const sequentialId = memoryCount || 1; // 1, 2, 3, 4... 순서
+
         // 2. 파일 업로드 후 URL 리스트 만들기
         const uploadedList = [];
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          const ext = file.name.split(".").pop();
-          const fileName = `memory_${Date.now()}_${i}.${ext}`;
+          const originalName = file.name;
+          // 순차적 ID와 파일 순서를 사용한 파일명 생성
+          const fileNumber = String(i + 1).padStart(3, "0"); // 001, 002, 003...
+          const fileExtension = originalName.split('.').pop();
+          const fileName = `${sequentialId}_${fileNumber}.${fileExtension}`;
           const filePath = `uploads/${fileName}`;
 
           const { error: uploadError } = await sb.storage
@@ -738,3 +748,6 @@ function getAudioDuration(file) {
     };
   });
 }
+
+
+
