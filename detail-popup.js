@@ -170,18 +170,41 @@ function openDetailPopup(media, mediaList) {
 
   // 썸네일 생성
   allSrc.forEach((src, idx) => {
-    const thumb = document.createElement("img");
-    thumb.className = "popup-thumb";
-    if (idx === 0) thumb.classList.add("selected-thumb");
-
-    thumb.addEventListener("click", () => {
-      renderMainMedia(src);
-      currentImageIndex = idx;
-      highlightThumbnail(idx);
-    });
-
     // 비디오 썸네일 캡처
     if (src.match(/\.(mp4|webm|ogg)$/i)) {
+      // 비디오용 컨테이너 생성
+      const videoContainer = document.createElement("div");
+      videoContainer.className = "popup-thumb-video-container";
+      videoContainer.style.position = "relative";
+      videoContainer.style.display = "inline-block";
+
+      const thumb = document.createElement("img");
+      thumb.className = "popup-thumb";
+      if (idx === 0) thumb.classList.add("selected-thumb");
+
+      // 플레이 아이콘 생성
+      const playIcon = document.createElement("div");
+      playIcon.className = "popup-thumb-play-icon";
+      playIcon.innerHTML = "▶";
+      playIcon.style.position = "absolute";
+      playIcon.style.top = "50%";
+      playIcon.style.left = "50%";
+      playIcon.style.transform = "translate(-50%, -55%)";
+      playIcon.style.fontSize = "20px";
+      playIcon.style.color = "white";
+      playIcon.style.textShadow = "1px 1px 3px black";
+      playIcon.style.pointerEvents = "none";
+      playIcon.style.zIndex = "1";
+
+      videoContainer.appendChild(thumb);
+      videoContainer.appendChild(playIcon);
+
+      videoContainer.addEventListener("click", () => {
+        renderMainMedia(src);
+        currentImageIndex = idx;
+        highlightThumbnail(idx);
+      });
+
       const video = document.createElement("video");
       video.src = src;
       video.crossOrigin = "anonymous";
@@ -205,11 +228,22 @@ function openDetailPopup(media, mediaList) {
       });
 
       document.body.appendChild(video);
+      thumbList.appendChild(videoContainer);
     } else {
-      thumb.src = src;
-    }
+      // 이미지용 썸네일
+      const thumb = document.createElement("img");
+      thumb.className = "popup-thumb";
+      if (idx === 0) thumb.classList.add("selected-thumb");
 
-    thumbList.appendChild(thumb);
+      thumb.addEventListener("click", () => {
+        renderMainMedia(src);
+        currentImageIndex = idx;
+        highlightThumbnail(idx);
+      });
+
+      thumb.src = src;
+      thumbList.appendChild(thumb);
+    }
   });
 
   renderMainMedia(allSrc[0]);
@@ -324,28 +358,29 @@ document
 document.addEventListener("keydown", (e) => {
   const overlay = document.getElementById("popup-overlay");
   const isVisible = window.getComputedStyle(overlay).display !== "none";
-  const isFullscreen = !!document.fullscreenElement;
 
   if (!isVisible) return;
 
-  if (isFullscreen) {
-    if (
-      e.key === "ArrowRight" &&
-      currentImageIndex < currentAllSrc.length - 1
-    ) {
+  // 수정 모드에서 input에 포커스 되어 있을 때는 키보드 이동을 막습니다.
+  if (
+    isEditMode &&
+    (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+  ) {
+    return;
+  }
+
+  // 키보드 좌우 방향키로 팝업 내 썸네일(이미지/영상)을 탐색합니다.
+  if (e.key === "ArrowRight") {
+    if (currentImageIndex < currentAllSrc.length - 1) {
       currentImageIndex++;
       renderMainMedia(currentAllSrc[currentImageIndex]);
       highlightThumbnail(currentImageIndex);
-    } else if (e.key === "ArrowLeft" && currentImageIndex > 0) {
+    }
+  } else if (e.key === "ArrowLeft") {
+    if (currentImageIndex > 0) {
       currentImageIndex--;
       renderMainMedia(currentAllSrc[currentImageIndex]);
       highlightThumbnail(currentImageIndex);
-    }
-  } else {
-    if (e.key === "ArrowRight" && currentIndex < currentMediaList.length - 1) {
-      openDetailPopup(currentMediaList[currentIndex + 1], currentMediaList);
-    } else if (e.key === "ArrowLeft" && currentIndex > 0) {
-      openDetailPopup(currentMediaList[currentIndex - 1], currentMediaList);
     }
   }
 });
@@ -382,6 +417,42 @@ document.getElementById("popup-delete-btn").addEventListener("click", () => {
 });
 
 // 메모리 삭제 함수
+// Supabase 작업 재시도 함수
+async function retrySupabaseOperation(operation, maxRetries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 시도 ${attempt}/${maxRetries}`);
+      const result = await operation();
+
+      // 504 에러나 JSON 파싱 에러 체크
+      if (result && result.error) {
+        const errorMessage = result.error.message || "";
+        if (
+          errorMessage.includes("504") ||
+          errorMessage.includes("Gateway") ||
+          errorMessage.includes("JSON") ||
+          errorMessage.includes("Unexpected token")
+        ) {
+          throw new Error(`서버 오류 (${errorMessage})`);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.warn(`⚠️ 시도 ${attempt} 실패:`, error.message);
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // 지수적 백오프: 1초, 2초, 4초
+      const waitTime = delay * Math.pow(2, attempt - 1);
+      console.log(`⏳ ${waitTime}ms 대기 후 재시도...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
 async function deleteMemory() {
   if (!currentMedia) {
     alert("삭제할 메모리가 선택되지 않았습니다.");
@@ -427,10 +498,13 @@ async function deleteMemory() {
 
     // 1. media_files에서 파일 목록 가져오기
     console.log("📂 media_files 조회 중...");
-    const { data: mediaFiles, error: mediaFilesError } = await window.sbClient
-      .from("media_files")
-      .select("media_url")
-      .eq("memory_id", currentMedia.id);
+    const { data: mediaFiles, error: mediaFilesError } =
+      await retrySupabaseOperation(() =>
+        window.sbClient
+          .from("media_files")
+          .select("media_url")
+          .eq("memory_id", currentMedia.id)
+      );
 
     if (mediaFilesError) {
       console.error("❌ media_files 조회 오류:", mediaFilesError);
@@ -451,7 +525,9 @@ async function deleteMemory() {
       console.log("📁 삭제할 Storage 파일 경로:", filePaths);
 
       const { data: removeData, error: storageError } =
-        await window.sbClient.storage.from("media").remove(filePaths);
+        await retrySupabaseOperation(() =>
+          window.sbClient.storage.from("media").remove(filePaths)
+        );
 
       if (storageError) {
         console.error("❌ Storage 파일 삭제 오류:", storageError);
@@ -462,11 +538,14 @@ async function deleteMemory() {
 
     // 3. memory_music에서 음악 파일도 삭제
     console.log("🎵 memory_music 조회 중...");
-    const { data: musicData, error: musicSelectError } = await window.sbClient
-      .from("memory_music")
-      .select("music_path, album_path")
-      .eq("memory_id", currentMedia.id)
-      .single();
+    const { data: musicData, error: musicSelectError } =
+      await retrySupabaseOperation(() =>
+        window.sbClient
+          .from("memory_music")
+          .select("music_path, album_path")
+          .eq("memory_id", currentMedia.id)
+          .single()
+      );
 
     if (musicSelectError && musicSelectError.code !== "PGRST116") {
       // PGRST116은 "not found" 에러
@@ -480,9 +559,9 @@ async function deleteMemory() {
       if (musicFilesToDelete.length > 0) {
         console.log("🎵 삭제할 음악 파일:", musicFilesToDelete);
         const { data: musicRemoveData, error: musicStorageError } =
-          await window.sbClient.storage
-            .from("media")
-            .remove(musicFilesToDelete);
+          await retrySupabaseOperation(() =>
+            window.sbClient.storage.from("media").remove(musicFilesToDelete)
+          );
 
         if (musicStorageError) {
           console.error("❌ 음악 파일 삭제 오류:", musicStorageError);
@@ -499,10 +578,12 @@ async function deleteMemory() {
     // media_files 삭제
     console.log("🗄️ media_files 테이블에서 삭제 중...");
     const { data: mediaFilesDeleteData, error: mediaFilesDeleteError } =
-      await window.sbClient
-        .from("media_files")
-        .delete()
-        .eq("memory_id", currentMedia.id);
+      await retrySupabaseOperation(() =>
+        window.sbClient
+          .from("media_files")
+          .delete()
+          .eq("memory_id", currentMedia.id)
+      );
 
     if (mediaFilesDeleteError) {
       console.error("❌ media_files 삭제 오류:", mediaFilesDeleteError);
@@ -513,10 +594,12 @@ async function deleteMemory() {
     // memory_music 삭제
     console.log("🗄️ memory_music 테이블에서 삭제 중...");
     const { data: musicDeleteData, error: musicDeleteError } =
-      await window.sbClient
-        .from("memory_music")
-        .delete()
-        .eq("memory_id", currentMedia.id);
+      await retrySupabaseOperation(() =>
+        window.sbClient
+          .from("memory_music")
+          .delete()
+          .eq("memory_id", currentMedia.id)
+      );
 
     if (musicDeleteError) {
       console.error("❌ memory_music 삭제 오류:", musicDeleteError);
@@ -527,7 +610,9 @@ async function deleteMemory() {
     // memories 삭제
     console.log("🗄️ memories 테이블에서 삭제 중...");
     const { data: memoryDeleteData, error: memoryDeleteError } =
-      await window.sbClient.from("memories").delete().eq("id", currentMedia.id);
+      await retrySupabaseOperation(() =>
+        window.sbClient.from("memories").delete().eq("id", currentMedia.id)
+      );
 
     if (memoryDeleteError) {
       console.error("❌ memories 삭제 오류:", memoryDeleteError);

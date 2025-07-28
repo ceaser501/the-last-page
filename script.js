@@ -1,6 +1,42 @@
 const supabase = window.supabaseClient;
 const wrapper = document.getElementById("garland-wrapper");
 
+// Supabase 작업 재시도 함수
+async function retrySupabaseOperation(operation, maxRetries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 시도 ${attempt}/${maxRetries}`);
+      const result = await operation();
+
+      // 504 에러나 JSON 파싱 에러 체크
+      if (result && result.error) {
+        const errorMessage = result.error.message || "";
+        if (
+          errorMessage.includes("504") ||
+          errorMessage.includes("Gateway") ||
+          errorMessage.includes("JSON") ||
+          errorMessage.includes("Unexpected token")
+        ) {
+          throw new Error(`서버 오류 (${errorMessage})`);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.warn(`⚠️ 시도 ${attempt} 실패:`, error.message);
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // 지수적 백오프: 1초, 2초, 4초
+      const waitTime = delay * Math.pow(2, attempt - 1);
+      console.log(`⏳ ${waitTime}ms 대기 후 재시도...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
 // 확장자 체크용 헬퍼
 function isVideo(src) {
   return /\.(mp4|webm|ogg)$/i.test(src);
@@ -10,11 +46,14 @@ let mediaList = [];
 let rawMemories = [];
 
 async function loadMediaFromSupabase() {
-  const { data: memories, error } = await supabase
-    .from("memories")
-    .select("*, media_files(order:file_order, media_url, is_main)") // ✅ media_files 내부 정렬 적용
-    .eq("is_public", true)
-    .order("order", { ascending: true }); // memories 자체 정렬
+  const { data: memories, error } = await retrySupabaseOperation(
+    () =>
+      supabase
+        .from("memories")
+        .select("*, media_files(order:file_order, media_url, is_main)") // ✅ media_files 내부 정렬 적용
+        .eq("is_public", true)
+        .order("order", { ascending: true }) // memories 자체 정렬
+  );
 
   if (error) {
     console.error("Supabase fetch error:", error);
@@ -206,7 +245,7 @@ function generateRow() {
     let order = j;
     if (row % 2 === 1) order = imagesPerRow - 1 - j;
 
-    const spacing = 180;
+    const spacing = 190;
     const totalRowWidth = spacing * imagesPerRow;
     const x = `calc(50% - ${totalRowWidth / 2}px + ${spacing * order}px)`;
     const y =
@@ -222,12 +261,11 @@ function generateRow() {
     const shadowY = 8 + rotate * 0.2;
     photo.style.boxShadow = `${shadowX}px ${shadowY}px 18px rgba(0,0,0,0.45)`;
 
-    // 미디어 노드 생성
-    let mediaNode;
-    if (media.type === "video") {
-      mediaNode = document.createElement("div");
-      mediaNode.className = "photo-video-wrapper";
+    // 미디어 컨텐츠를 감싸는 일관된 래퍼를 생성합니다.
+    const photoVideoWrapper = document.createElement("div");
+    photoVideoWrapper.className = "photo-video-wrapper";
 
+    if (media.type === "video") {
       const thumbnail = document.createElement("img");
       thumbnail.className = "photo-img";
 
@@ -257,13 +295,22 @@ function generateRow() {
       playIcon.className = "play-icon";
       playIcon.innerHTML = "▶";
 
-      mediaNode.appendChild(thumbnail);
-      mediaNode.appendChild(playIcon);
+      photoVideoWrapper.appendChild(thumbnail);
+      photoVideoWrapper.appendChild(playIcon);
     } else {
-      mediaNode = document.createElement("img");
-      mediaNode.src = media.mainSrc;
-      mediaNode.className = "photo-img";
-      mediaNode.loading = "lazy";
+      const img = document.createElement("img");
+      img.src = media.mainSrc;
+      img.className = "photo-img";
+      img.loading = "lazy";
+      photoVideoWrapper.appendChild(img);
+    }
+
+    // 사진 위에 날짜 표시
+    if (media.date) {
+      const dateElement = document.createElement("div");
+      dateElement.className = "photo-date";
+      dateElement.textContent = media.date;
+      photoVideoWrapper.appendChild(dateElement);
     }
 
     const caption = document.createElement("figcaption");
@@ -303,13 +350,8 @@ function generateRow() {
       photo.appendChild(tape);
     }
 
-    photo.appendChild(mediaNode);
+    photo.appendChild(photoVideoWrapper);
     photo.appendChild(caption);
-    // 날짜 표시 (우측 하단)
-    const dateEl = document.createElement("div");
-    dateEl.className = "photo-date";
-    dateEl.innerText = media.date || "";
-    photo.appendChild(dateEl);
 
     photo.addEventListener("click", () => {
       openDetailPopup(rawMemories[i], rawMemories); // ← 원본 넘기기

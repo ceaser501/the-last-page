@@ -139,7 +139,7 @@ h1,
 
 /* 중앙위치 조정 되어야할 사진들 */
 .photo img.photo-img[src*="5_001"],
-.photo img.photo-img[src*=""] {
+.photo img.photo-img[src*="8_001"] {
   object-position: center 30%; /* 기본 중앙 위치 */
 }
 
@@ -1592,8 +1592,8 @@ h2 {
 
 .photo-date {
   position: absolute;
-  bottom: 40px;
-  right: 15px;
+  bottom: 5px;
+  right: 8px;
   font-size: 13px;
   color: white;
   font-family: "Patrick Hand", cursive;

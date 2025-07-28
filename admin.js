@@ -1,6 +1,42 @@
 /* sb 연동 */
 const sb = window.sbClient;
 
+// Supabase 작업 재시도 함수
+async function retrySupabaseOperation(operation, maxRetries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 시도 ${attempt}/${maxRetries}`);
+      const result = await operation();
+
+      // 504 에러나 JSON 파싱 에러 체크
+      if (result && result.error) {
+        const errorMessage = result.error.message || "";
+        if (
+          errorMessage.includes("504") ||
+          errorMessage.includes("Gateway") ||
+          errorMessage.includes("JSON") ||
+          errorMessage.includes("Unexpected token")
+        ) {
+          throw new Error(`서버 오류 (${errorMessage})`);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.warn(`⚠️ 시도 ${attempt} 실패:`, error.message);
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // 지수적 백오프: 1초, 2초, 4초
+      const waitTime = delay * Math.pow(2, attempt - 1);
+      console.log(`⏳ ${waitTime}ms 대기 후 재시도...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
 // 업로드 중 오버레이
 const uploadOverlay = document.createElement("div");
 uploadOverlay.id = "upload-overlay";
@@ -483,7 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const { count: memoryCount } = await sb
           .from("memories")
           .select("*", { count: "exact", head: true });
-        
+
         const sequentialId = memoryCount || 1; // 1, 2, 3, 4... 순서
 
         // 2. 파일 업로드 후 URL 리스트 만들기
@@ -494,16 +530,16 @@ document.addEventListener("DOMContentLoaded", () => {
           const originalName = file.name;
           // 순차적 ID와 파일 순서를 사용한 파일명 생성
           const fileNumber = String(i + 1).padStart(3, "0"); // 001, 002, 003...
-          const fileExtension = originalName.split('.').pop();
+          const fileExtension = originalName.split(".").pop();
           const fileName = `${sequentialId}_${fileNumber}.${fileExtension}`;
           const filePath = `uploads/${fileName}`;
 
-          const { error: uploadError } = await sb.storage
-            .from("media")
-            .upload(filePath, file, {
+          const { error: uploadError } = await retrySupabaseOperation(() =>
+            sb.storage.from("media").upload(filePath, file, {
               contentType: file.type,
               upsert: false,
-            });
+            })
+          );
 
           if (uploadError) {
             alert(`파일 ${file.name} 업로드 실패`);
@@ -530,9 +566,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 3. media_files 일괄 insert
         console.log("📦 uploadedList:", uploadedList);
-        const { error: insertError } = await sb
-          .from("media_files")
-          .insert(uploadedList);
+        const { error: insertError } = await retrySupabaseOperation(() =>
+          sb.from("media_files").insert(uploadedList)
+        );
         if (insertError) {
           console.error("📛 media_files insert error:", insertError);
           alert("media_files 저장 실패");
@@ -623,12 +659,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const blob = new Blob([picture.data], { type: picture.format });
                 const jacketFilename = `jacket-${Date.now()}.jpg`;
 
-                const { data, error } = await sb.storage
-                  .from("media")
-                  .upload(`album/${jacketFilename}`, blob, {
-                    contentType: picture.format,
-                    upsert: true,
-                  });
+                const { data, error } = await retrySupabaseOperation(() =>
+                  sb.storage
+                    .from("media")
+                    .upload(`album/${jacketFilename}`, blob, {
+                      contentType: picture.format,
+                      upsert: true,
+                    })
+                );
 
                 if (!error && data?.path) {
                   albumPath = data.path;
@@ -681,13 +719,14 @@ async function uploadMusicToDB({
   const fileName = `music_${Date.now()}.${ext}`;
   const filePath = `music/${fileName}`; // 버킷 내부 경로
 
-  const { data: musicData, error: musicError } = await sb.storage
-    .from("media")
-    .upload(filePath, musicFile, {
-      cacheControl: "3600",
-      upsert: true,
-      contentType: "audio/mpeg",
-    });
+  const { data: musicData, error: musicError } = await retrySupabaseOperation(
+    () =>
+      sb.storage.from("media").upload(filePath, musicFile, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: "audio/mpeg",
+      })
+  );
 
   const musicPath = musicData?.path;
   if (!musicPath) {
@@ -696,24 +735,26 @@ async function uploadMusicToDB({
     return;
   }
 
-  const { error: musicInsertError } = await sb.from("memory_music").insert({
-    memory_id,
-    artist_name:
-      typeof artist === "string"
-        ? artist.trim()
-        : typeof artist?.text === "string"
-        ? artist.text.trim()
-        : "알 수 없음",
+  const { error: musicInsertError } = await retrySupabaseOperation(() =>
+    sb.from("memory_music").insert({
+      memory_id,
+      artist_name:
+        typeof artist === "string"
+          ? artist.trim()
+          : typeof artist?.text === "string"
+          ? artist.text.trim()
+          : "알 수 없음",
 
-    music_title:
-      typeof title === "string"
-        ? title.replace(/\s*\(\d+\)\s*$/, "").trim()
-        : "제목 없음",
+      music_title:
+        typeof title === "string"
+          ? title.replace(/\s*\(\d+\)\s*$/, "").trim()
+          : "제목 없음",
 
-    duration_seconds: duration,
-    music_path: musicPath,
-    album_path: albumPath,
-  });
+      duration_seconds: duration,
+      music_path: musicPath,
+      album_path: albumPath,
+    })
+  );
 
   if (musicInsertError) {
     console.error("📛 음악 등록 오류:", musicInsertError.message);
@@ -748,6 +789,3 @@ function getAudioDuration(file) {
     };
   });
 }
-
-
-
