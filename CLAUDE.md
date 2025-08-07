@@ -8,75 +8,95 @@ This is "The Last Page" - a wedding memory gallery web application that displays
 
 ## Key Architecture
 
-### Frontend Structure
-- **index.html**: Main gallery page with polaroid photo display
+### Modular JavaScript Design
 - **script.js**: Core gallery logic with lazy loading and Supabase integration
-- **detail-popup.js**: Modal popup for viewing individual memories with slideshow
+- **detail-popup.js**: Modal popup system with slideshow, music player, and zoom controls
 - **admin.js**: Admin interface for uploading and managing memories (login: ceaser501/0928)
-- **style.css**: Polaroid effects, animations, and responsive design
+- **dark-mode.js**: Theme switching with localStorage persistence
+- **signup.js**: User registration form handling
+- **style.css**: CSS custom properties for theming, polaroid effects, and responsive design
 
-### Data Flow
-1. Configuration loaded from external Supabase storage
-2. Media metadata fetched from Supabase database
-3. Images/videos loaded from Supabase storage with lazy loading
-4. Admin uploads go directly to Supabase storage and database
+### Configuration and Data Flow
+1. **External Configuration**: Loads from `https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/public-config/config.js`
+2. **Supabase Initialization**: Creates client using `window.SUPABASE_CONFIG`
+3. **Lazy Loading**: Intersection Observer renders content in rows (7 photos for even rows, 5 for odd)
+4. **Retry Logic**: Exponential backoff for Supabase operations to handle network issues
 
-### External Dependencies
-- Supabase (Database & Storage): `https://lbjqzhqqxuqyvglslpne.supabase.co`
-- jQuery 3.6.0
-- Fancybox 5.0 (lightbox)
-- Flatpickr (date picker)
-- Daum Postcode API (Korean addresses)
+### Database Architecture (Supabase)
+- **memories**: Main memory records with metadata
+- **media_files**: Multiple images/videos per memory with ordering and main image flag
+- **memory_music**: Background music with MP3 metadata and album covers
+
+### File Naming Convention
+Sequential naming: `{memoryId}_{fileNumber}.{ext}` (e.g., `1_001.jpg`, `1_002.jpg`)
+Files sorted by this numbering system with main images (is_main=true) always first.
 
 ## Development Commands
 
 This is a static website with no build process. To develop:
 
-1. **Run locally**: Open `index.html` in a web browser or use a local server:
-   ```bash
-   python -m http.server 8000
-   # or
-   npx http-server
-   ```
+```bash
+# Local development - serve files locally
+python -m http.server 8000
+# or
+npx http-server
+```
 
-2. **Deploy**: Push to GitHub - the site appears to be hosted on GitHub Pages
+**Deploy**: Push to GitHub - hosted on GitHub Pages
 
-## Key Patterns and Conventions
+## Key Data Structures
 
-### Memory Data Structure
+### Memory Object
 ```javascript
 {
   id: number,
-  nickname: string,
   title: string,
-  main_image_url: string,
-  image_urls: string[], // Additional images
-  tags: string[],
+  thumbnail_title: string,
+  description: string,
   date: string,
   location: string,
-  music_title: string,
-  music_url: string,
+  tags: string,
+  order: number,
   is_public: boolean,
-  display_order: number
+  media_files: [
+    {
+      media_url: string,
+      is_main: boolean,
+      file_order: number
+    }
+  ],
+  music: {
+    music_title: string,
+    artist_name: string,
+    music_url: string,
+    album_cover_url: string
+  }
 }
 ```
 
-### File Upload Pattern
-- Multiple file selection supported
-- Files uploaded to Supabase storage bucket 'wedding-memories'
-- Automatic ordering based on drag-and-drop position
-- Main image is the first in the list
+### Theme Implementation
+CSS custom properties enable dynamic theme switching:
+```css
+:root { /* light theme variables */ }
+[data-theme="dark"] { /* dark theme overrides */ }
+```
+Theme preference stored in localStorage and applied on page load.
 
-### Lazy Loading Implementation
-Uses Intersection Observer to load images as they come into viewport:
-- Placeholder images shown initially
-- Real images loaded when within 100px of viewport
-- Prevents loading all images at once for performance
+## External Dependencies
+
+- **Supabase**: `https://lbjqzhqqxuqyvglslpne.supabase.co` (database & storage)
+- **jQuery 3.6.0**: DOM manipulation
+- **Fancybox 5.0**: Lightbox (currently disabled)
+- **Flatpickr**: Date picker
+- **Daum Postcode API**: Korean address lookup
+- **musicmetadata.js**: MP3 metadata extraction
+- **Font Awesome 6.5.0**: Icons
 
 ## Important Considerations
 
 1. **Language**: UI text and comments are in Korean
-2. **Authentication**: Simple hardcoded login for admin (not secure for production)
-3. **Supabase Keys**: Currently using public anon key in client-side code
-4. **Image Optimization**: No automatic image resizing - relies on Supabase transforms
-5. **State Management**: No state management library - uses DOM directly
+2. **Authentication**: Hardcoded admin credentials (ceaser501/0928) - not secure for production
+3. **Client-side Security**: Supabase public key exposed, no server-side validation
+4. **Video Processing**: Canvas-based thumbnail generation for video files
+5. **Audio Integration**: Custom HTML5 audio player with seek controls and metadata display
+6. **Performance**: Intersection Observer prevents loading all images simultaneously

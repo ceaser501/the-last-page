@@ -37,10 +37,73 @@
     />
   </head>
   <body>
+    <!-- 음표 아이콘 -->
+    <button id="music-icon" title="배경음악">
+      <i class="fas fa-music"></i>
+    </button>
+
     <!-- 다크모드 토글 버튼 -->
     <button id="dark-mode-toggle" title="다크모드 전환">
       <i class="fas fa-sun"></i>
     </button>
+
+    <!-- 메인 음악 플레이어 -->
+    <div id="main-music-player" class="main-music-wrapper">
+      <div class="main-music-container">
+        <div id="main-player-bg-artwork"></div>
+        <div id="main-player-bg-layer"></div>
+        <div id="main-player-container">
+          <div id="main-player">
+            <div id="main-album-art">
+              <img src="" class="active" id="main-album-img" />
+              <div id="main-buffer-box">Buffering ...</div>
+            </div>
+            <div id="main-player-track">
+              <div id="main-track-info">
+                <span id="main-track-name"></span>
+                <span id="main-album-name"></span>
+              </div>
+              <div id="main-track-time">
+                <div id="main-current-time"></div>
+                <div id="main-track-length"></div>
+              </div>
+              <div id="main-seek-bar-container">
+                <div id="main-seek-time"></div>
+                <div id="main-s-hover"></div>
+                <div id="main-seek-bar"></div>
+              </div>
+            </div>
+            <div id="main-player-controls">
+              <div class="control">
+                <div class="button" id="main-music-toggle">
+                  <i class="fas fa-volume-up"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-prev-button">
+                  <i class="fas fa-step-backward"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-play-pause-button">
+                  <i class="fas fa-play"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-next-button">
+                  <i class="fas fa-step-forward"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-playlist-button">
+                  <i class="fas fa-list"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 우측 상단 버튼 영역 -->
     <div class="top-right-buttons">
@@ -54,6 +117,13 @@
       <div id="after-login" class="auth-buttons" style="display: none">
         <span id="welcome-message">ceaser501님 환영합니다.</span>
         <button id="write-post-btn" class="auth-btn primary">글 등록</button>
+        <button
+          id="bgm-upload-btn"
+          class="auth-btn secondary"
+          style="display: none"
+        >
+          BGM 설정
+        </button>
         <button id="logout-btn" class="auth-btn secondary">로그아웃</button>
       </div>
     </div>
@@ -253,6 +323,90 @@
       </div>
     </div>
 
+    <!-- BGM 업로드 모달 -->
+    <div id="bgm-upload-modal" class="modal" style="display: none">
+      <div class="modal-content bgm-upload-modal-content">
+        <h2>🎵 배경음악(BGM) 설정</h2>
+        <p class="bgm-description">
+          메인 페이지에서 재생될 배경음악을 업로드하세요.
+        </p>
+
+        <form id="bgm-upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="bgm-file">음악 파일</label>
+            <input type="file" id="bgm-file" accept=".mp3" required />
+            <div class="bgm-file-info">
+              <small>• MP3 파일만 지원됩니다</small>
+              <small
+                >• 파일명은 "아티스트 - 곡제목.mp3" 형식을 권장합니다</small
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bgm-title">곡 제목</label>
+            <input
+              type="text"
+              id="bgm-title"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="bgm-artist">아티스트</label>
+            <input
+              type="text"
+              id="bgm-artist"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="bgm-submit">업로드</button>
+            <button
+              type="button"
+              id="bgm-cancel"
+              style="
+                background-color: #eee;
+                color: #333;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              "
+              onmouseover="this.style.boxShadow='0 2px 8px rgba(128, 128, 128, 0.3)'"
+              onmouseout="this.style.boxShadow='none'"
+            >
+              닫기
+            </button>
+          </div>
+        </form>
+
+        <div id="bgm-current-info" class="bgm-current-section">
+          <h4 class="bgm-current-title">현재 설정된 BGM</h4>
+          <div id="bgm-current-display">로딩 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 플레이리스트 모달 -->
+    <div id="playlist-modal" class="modal" style="display: none">
+      <div class="modal-content playlist-modal-content">
+        <h2>🎵 플레이리스트</h2>
+        <div id="playlist-container">
+          <div id="playlist-list">
+            <!-- 플레이리스트 항목들이 여기에 동적으로 추가됩니다 -->
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="playlist-close">닫기</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -269,6 +423,7 @@
     <!-- 기능별 스크립트 -->
     <script src="dark-mode.js"></script>
     <script src="signup.js"></script>
+    <script src="main-music-player.js"></script>
     <script src="detail-popup.js"></script>
     <script src="script.js"></script>
     <script src="admin.js"></script>

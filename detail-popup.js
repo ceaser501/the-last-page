@@ -12,6 +12,15 @@ let isSlideshowPlaying = false;
 // 수정 모드 상태
 let isEditMode = false;
 
+// 이미지 확대/축소 및 패닝(이동) 상태 변수
+let zoomLevel = 1;
+let isDragging = false;
+let startPos = { x: 0, y: 0 };
+let imgPos = { x: 0, y: 0 };
+const ZOOM_STEP = 0.2;
+const MAX_ZOOM = 3;
+const MIN_ZOOM = 1;
+
 // 기본 앨범 커버 URL (Supabase에서 전체 경로 가져오기)
 const { data: defaultCoverData } = window.supabaseClient.storage
   .from("media")
@@ -23,6 +32,11 @@ function openDetailPopup(media, mediaList) {
   console.log("✅ [디버그] 상세 팝업 호출됨:", media);
   console.log("✅ media.media_files:", media.media_files);
   console.log("🎵 음악 정보:", media.music);
+
+  // 메인 음악 일시정지
+  if (typeof pauseMainMusic === "function") {
+    pauseMainMusic();
+  }
 
   currentMediaList = mediaList;
   currentIndex = mediaList.indexOf(media);
@@ -258,6 +272,10 @@ function renderMainMedia(src) {
   mainImgContainer.innerHTML = "";
   if (!src) return;
 
+  // 줌/패닝 상태 초기화
+  zoomLevel = 1;
+  imgPos = { x: 0, y: 0 };
+
   if (src.match(/\.(mp4|webm|ogg)$/i)) {
     const video = document.createElement("video");
     video.src = src;
@@ -274,7 +292,79 @@ function renderMainMedia(src) {
     const img = document.createElement("img");
     img.src = src;
     img.id = "popup-main-image";
+
+    // 확대/축소 컨트롤 추가
+    const zoomControls = document.createElement("div");
+    zoomControls.className = "zoom-controls";
+
+    const zoomInBtn = document.createElement("button");
+    zoomInBtn.textContent = "+";
+    zoomInBtn.title = "확대";
+
+    const zoomOutBtn = document.createElement("button");
+    zoomOutBtn.textContent = "−";
+    zoomOutBtn.title = "축소";
+
+    zoomControls.appendChild(zoomOutBtn);
+    zoomControls.appendChild(zoomInBtn);
+
     mainImgContainer.appendChild(img);
+    mainImgContainer.appendChild(zoomControls);
+
+    // 이미지 변환(transform) 업데이트 함수
+    const updateTransform = () => {
+      img.style.transform = `translate(${imgPos.x}px, ${imgPos.y}px) scale(${zoomLevel})`;
+      img.style.cursor = zoomLevel > 1 ? "grab" : "default";
+    };
+
+    // 줌 인/아웃 이벤트 리스너
+    zoomInBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (zoomLevel < MAX_ZOOM) {
+        zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
+        updateTransform();
+      }
+    });
+
+    zoomOutBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (zoomLevel > MIN_ZOOM) {
+        zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_STEP);
+        // 줌 레벨이 1로 돌아오면 이미지 위치를 초기화합니다.
+        if (zoomLevel === 1) {
+          imgPos = { x: 0, y: 0 };
+        }
+        updateTransform();
+      }
+    });
+
+    // 이미지 드래그(패닝)를 위한 이벤트 리스너
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      imgPos.x = e.clientX - startPos.x;
+      imgPos.y = e.clientY - startPos.y;
+      updateTransform();
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      img.style.cursor = "grab";
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    img.addEventListener("mousedown", (e) => {
+      if (zoomLevel <= 1) return; // 확대된 상태에서만 드래그 가능
+      e.preventDefault();
+      isDragging = true;
+      startPos.x = e.clientX - imgPos.x;
+      startPos.y = e.clientY - imgPos.y;
+      img.style.cursor = "grabbing";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
   }
 }
 
@@ -299,6 +389,11 @@ function closeDetailPopup() {
 
   // 🎵 음악 플레이어 초기화
   resetMusicPlayer();
+
+  // 메인 음악 재시작
+  if (typeof resumeMainMusic === "function") {
+    resumeMainMusic();
+  }
 
   // 🎞️ 슬라이드쇼 정지
   if (isSlideshowPlaying) {

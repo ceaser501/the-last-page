@@ -86,8 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="form-actions">
-          <button type="button" id="cancel-btn" class="login-cancel">취소</button>
           <button type="button" id="login-btn" class="login-submit">로그인</button>
+          <button type="button" id="cancel-btn" class="login-cancel">닫기</button>
         </div>
       </form>
     </div>
@@ -311,13 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
         thumb.style.objectFit = "cover";
         thumb.style.cursor = "pointer";
         thumb.style.borderRadius = "8px";
-        thumb.style.border = index === 0 ? "3px solid #f99" : "2px solid #ccc"; // 대표 선택 표시
+        thumb.style.border = index === 0 ? "3px solid #f99" : "2px solid #eee"; // 대표 선택 표시
 
         // 선택 시 border 색 바뀌기
         thumb.addEventListener("click", () => {
           // 전체 초기화
           previewContainer.querySelectorAll("img").forEach((img) => {
-            img.style.border = "2px solid #ccc";
+            img.style.border = "2px solid #eee";
           });
           thumb.style.border = "3px solid #f99";
           selectedIndex = index; // 대표 인덱스 기억
@@ -351,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
 
-    // [수정] DB에서 직접 마지막 순서를 실시간으로 조회하여 다음 순서 자동 설정
+    // [수정] BGM을 제외한 일반 게시물의 마지막 순서를 조회하여 다음 순서 자동 설정
     const orderInput = document.getElementById("order");
     orderInput.value = 1; // 기본값 설정
 
@@ -359,6 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const { data, error } = await sb
         .from("memories")
         .select("order")
+        .neq("tags", "#MAIN_BGM_ONLY") // BGM 태그를 가진 메모리 제외
         .order("order", { ascending: false })
         .limit(1)
         .single();
@@ -369,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (data) {
-        // 데이터가 있으면 (가장 큰 order 값을 가진 게시물)
+        // 데이터가 있으면 (BGM을 제외한 가장 큰 order 값을 가진 게시물)
         orderInput.value = (data.order || 0) + 1;
       }
     } catch (err) {
@@ -388,11 +389,20 @@ document.addEventListener("DOMContentLoaded", () => {
       beforeLogin.style.display = "flex";
       afterLogin.style.display = "none";
 
+      // BGM 업로드 버튼 숨기기
+      document.getElementById("bgm-upload-btn").style.display = "none";
+
       // 모든 모달 닫기
       if (formModal.style.display === "block") {
         formModal.style.display = "none";
         document.body.style.overflow = "auto";
         document.body.classList.remove("modal-open");
+      }
+
+      // BGM 모달도 닫기
+      const bgmModal = document.getElementById("bgm-upload-modal");
+      if (bgmModal && bgmModal.style.display === "flex") {
+        bgmModal.style.display = "none";
       }
 
       alert("로그아웃되었습니다.");
@@ -459,6 +469,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // UI 업데이트: 로그인 전 버튼들 숨기고 로그인 후 버튼들 표시
       beforeLogin.style.display = "none";
       afterLogin.style.display = "flex";
+
+      // ceaser501 계정일 때만 BGM 업로드 버튼 표시
+      if (id === "ceaser501") {
+        document.getElementById("bgm-upload-btn").style.display =
+          "inline-block";
+      }
 
       // 글 등록 폼은 자동으로 열지 않음
     } else {
@@ -789,3 +805,538 @@ function getAudioDuration(file) {
     };
   });
 }
+
+// BGM 업로드 관련 함수들
+async function uploadBGMToDB({
+  musicFile,
+  artist,
+  title,
+  duration,
+  albumPath,
+}) {
+  // 메인 BGM을 위한 특별한 태그
+  const MAIN_BGM_TAG = "#MAIN_BGM_ONLY";
+
+  // 확장자 추출
+  const ext = musicFile.name.split(".").pop();
+  const fileName = `main_bgm_${Date.now()}.${ext}`;
+  const filePath = `music/${fileName}`;
+
+  try {
+    // 새로운 BGM용 memory 생성 (누적 방식)
+    const { data: newMemory, error: createError } = await sb
+      .from("memories")
+      .insert({
+        title: title || "메인 BGM",
+        thumbnail_title: title || "BGM",
+        description: `메인 페이지 배경음악 - ${artist || "Unknown Artist"}`,
+        date: new Date().toISOString().split("T")[0],
+        location: "",
+        tags: MAIN_BGM_TAG,
+        order: 9999, // 표시되지 않도록 큰 숫자
+        is_public: false, // 갤러리에 표시하지 않음
+      })
+      .select("id")
+      .single();
+
+    if (createError || !newMemory) {
+      throw new Error(
+        "메인 BGM memory 생성 실패: " +
+          (createError?.message || "알 수 없는 오류")
+      );
+    }
+
+    const MAIN_MUSIC_ID = newMemory.id;
+
+    // 새 음악 파일 업로드
+    const { data: musicData, error: musicError } = await retrySupabaseOperation(
+      () =>
+        sb.storage.from("media").upload(filePath, musicFile, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: "audio/mpeg",
+        })
+    );
+
+    if (musicError || !musicData?.path) {
+      throw new Error(
+        "음악 파일 업로드 실패: " + (musicError?.message || "알 수 없는 오류")
+      );
+    }
+
+    // 새로운 BGM 데이터 삽입 (누적 방식)
+    const { error: insertError } = await retrySupabaseOperation(() =>
+      sb.from("memory_music").insert({
+        memory_id: MAIN_MUSIC_ID,
+        artist_name: artist || "알 수 없음",
+        music_title: title || "제목 없음",
+        duration_seconds: duration,
+        music_path: musicData.path,
+        album_path: albumPath,
+      })
+    );
+
+    if (insertError) {
+      throw new Error("BGM 등록 실패: " + insertError.message);
+    }
+
+    console.log("🎵 BGM 설정 성공");
+    return true;
+  } catch (error) {
+    console.error("🛑 BGM 업로드 오류:", error);
+    throw error;
+  }
+}
+
+// 현재 BGM 리스트 조회 (여러개)
+async function getCurrentBGMList() {
+  try {
+    // 메인 BGM용 memories 찾기 (여러개) - created_at 기준으로 정렬
+    const { data: mainMemories, error: memoriesError } = await sb
+      .from("memories")
+      .select("id, created_at")
+      .eq("tags", "#MAIN_BGM_ONLY")
+      .order("created_at", { ascending: false });
+
+    if (memoriesError) {
+      console.error("BGM memories 조회 오류:", memoriesError);
+      return [];
+    }
+
+    if (!mainMemories || mainMemories.length === 0) {
+      return [];
+    }
+
+    // 모든 BGM 데이터 로드
+    const bgmList = [];
+    for (const memory of mainMemories) {
+      const { data: musicData, error } = await sb
+        .from("memory_music")
+        .select("*")
+        .eq("memory_id", memory.id);
+
+      if (musicData && musicData.length > 0) {
+        bgmList.push(...musicData);
+      }
+    }
+
+    return bgmList;
+  } catch (error) {
+    console.error("현재 BGM 리스트 조회 실패:", error);
+    return [];
+  }
+}
+
+// BGM 삭제 함수
+async function deleteBGM(musicId) {
+  if (!confirm("정말 이 BGM을 삭제하시겠습니까?")) {
+    return;
+  }
+
+  try {
+    // 음악 데이터 조회 (파일 경로 확인용)
+    const { data: musicData } = await sb
+      .from("memory_music")
+      .select("*")
+      .eq("id", musicId)
+      .single();
+
+    if (musicData) {
+      // 파일 삭제
+      const filesToDelete = [];
+      if (musicData.music_path) filesToDelete.push(musicData.music_path);
+      if (musicData.album_path && !musicData.album_path.includes("default")) {
+        filesToDelete.push(musicData.album_path);
+      }
+
+      if (filesToDelete.length > 0) {
+        await sb.storage.from("media").remove(filesToDelete);
+      }
+
+      // DB에서 음악 삭제
+      await sb.from("memory_music").delete().eq("id", musicId);
+
+      // 관련 memory도 삭제 (다른 음악이 없다면)
+      const { data: remainingMusic } = await sb
+        .from("memory_music")
+        .select("id")
+        .eq("memory_id", musicData.memory_id);
+
+      if (!remainingMusic || remainingMusic.length === 0) {
+        await sb.from("memories").delete().eq("id", musicData.memory_id);
+      }
+    }
+
+    alert("BGM이 삭제되었습니다.");
+
+    // 메인 음악 플레이어 새로고침
+    if (typeof loadMainMusic === "function") {
+      await loadMainMusic();
+    }
+
+    // 모달 새로고침
+    document.getElementById("bgm-upload-btn").click();
+  } catch (error) {
+    console.error("BGM 삭제 실패:", error);
+    alert("BGM 삭제 실패: " + error.message);
+  }
+}
+
+// BGM 순서 변경 기능 (간단한 위/아래 이동)
+let draggedBGM = null;
+
+function startDrag(event, bgmId) {
+  event.preventDefault();
+  draggedBGM = bgmId;
+
+  // 드래그 시작 시각적 피드백
+  const item = event.target.closest(".bgm-list-item");
+  item.style.opacity = "0.5";
+
+  document.addEventListener("mouseup", endDrag);
+  document.addEventListener("mousemove", onDragMove);
+}
+
+function onDragMove(event) {
+  if (!draggedBGM) return;
+
+  const listContainer = document.getElementById("bgm-list-container");
+  const items = listContainer.querySelectorAll(".bgm-list-item");
+  const mouseY = event.clientY;
+
+  let targetItem = null;
+  let minDistance = Infinity;
+
+  items.forEach((item) => {
+    const rect = item.getBoundingClientRect();
+    const itemCenter = rect.top + rect.height / 2;
+    const distance = Math.abs(mouseY - itemCenter);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      targetItem = item;
+    }
+  });
+
+  if (targetItem && targetItem.dataset.bgmId !== draggedBGM) {
+    const draggedItem = document.querySelector(`[data-bgm-id="${draggedBGM}"]`);
+    const targetRect = targetItem.getBoundingClientRect();
+
+    if (mouseY < targetRect.top + targetRect.height / 2) {
+      targetItem.parentNode.insertBefore(draggedItem, targetItem);
+    } else {
+      targetItem.parentNode.insertBefore(draggedItem, targetItem.nextSibling);
+    }
+  }
+}
+
+async function endDrag() {
+  if (!draggedBGM) return;
+
+  const draggedItem = document.querySelector(`[data-bgm-id="${draggedBGM}"]`);
+  draggedItem.style.opacity = "1";
+
+  // 새로운 순서 저장
+  try {
+    // 저장 중 표시
+    const saveIndicator = document.createElement("div");
+    saveIndicator.innerHTML = "순서 저장 중...";
+    saveIndicator.style.cssText = `
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: rgba(0,0,0,0.8); 
+      color: white; 
+      padding: 10px 20px; 
+      border-radius: 4px; 
+      z-index: 10001;
+    `;
+    document.body.appendChild(saveIndicator);
+
+    await saveBGMOrder();
+
+    // 저장 완료 표시
+    saveIndicator.innerHTML = "✅ 순서 저장 완료!";
+    saveIndicator.style.background = "rgba(0,128,0,0.8)";
+
+    // 표시 제거 후 모달 새로고침
+    setTimeout(() => {
+      document.body.removeChild(saveIndicator);
+      document.getElementById("bgm-upload-btn").click();
+    }, 1000);
+  } catch (error) {
+    console.error("순서 저장 실패:", error);
+    alert("순서 저장에 실패했습니다.");
+  }
+
+  draggedBGM = null;
+  document.removeEventListener("mouseup", endDrag);
+  document.removeEventListener("mousemove", onDragMove);
+}
+
+async function saveBGMOrder() {
+  try {
+    const items = document.querySelectorAll(".bgm-list-item");
+    const updates = [];
+
+    items.forEach((item, index) => {
+      const bgmId = item.dataset.bgmId;
+      updates.push({
+        id: bgmId,
+        order: index,
+      });
+    });
+
+    console.log("BGM 순서 변경:", updates);
+
+    // 각 BGM의 memory에 순서 정보를 created_at 시간으로 업데이트
+    // (더 최근 시간 = 더 앞순서)
+    const now = new Date();
+    for (let i = 0; i < updates.length; i++) {
+      const update = updates[i];
+
+      // 순서에 따라 시간을 조정 (첫 번째가 가장 최근)
+      const orderTime = new Date(now.getTime() + (updates.length - i) * 1000);
+
+      try {
+        // BGM ID로 memory_id 찾기
+        const { data: musicData } = await sb
+          .from("memory_music")
+          .select("memory_id")
+          .eq("id", update.id)
+          .single();
+
+        if (musicData) {
+          // 해당 memory의 created_at 업데이트 (순서 조정)
+          await sb
+            .from("memories")
+            .update({
+              created_at: orderTime.toISOString(),
+            })
+            .eq("id", musicData.memory_id);
+        }
+      } catch (updateError) {
+        console.error(`BGM ${update.id} 순서 업데이트 실패:`, updateError);
+      }
+    }
+
+    // 메인 음악 플레이어 새로고침
+    if (typeof loadMainMusic === "function") {
+      setTimeout(() => {
+        loadMainMusic();
+      }, 500); // 약간의 지연으로 DB 업데이트 완료 대기
+    }
+
+    console.log("✅ BGM 순서 저장 완료");
+  } catch (error) {
+    console.error("BGM 순서 저장 실패:", error);
+    alert("BGM 순서 저장 실패: " + error.message);
+  }
+}
+
+// BGM 업로드 모달 이벤트 처리
+document.addEventListener("DOMContentLoaded", () => {
+  // BGM 업로드 버튼 클릭
+  document
+    .getElementById("bgm-upload-btn")
+    ?.addEventListener("click", async () => {
+      const modal = document.getElementById("bgm-upload-modal");
+      modal.style.display = "flex";
+
+      // 현재 BGM 리스트 표시
+      const currentBGMList = await getCurrentBGMList();
+      const displayDiv = document.getElementById("bgm-current-display");
+
+      if (currentBGMList.length > 0) {
+        const bgmListHTML = currentBGMList
+          .map((bgm, index) => {
+            const duration =
+              Math.floor(bgm.duration_seconds / 60) +
+              ":" +
+              String(bgm.duration_seconds % 60).padStart(2, "0");
+            return `
+          <div class="bgm-list-item" data-bgm-id="${bgm.id}" data-order="${index}">
+            <div class="bgm-item-info">
+              <div class="bgm-item-title">${bgm.music_title}</div>
+              <div class="bgm-item-details">${bgm.artist_name} • ${duration}</div>
+            </div>
+            <div class="bgm-item-controls">
+              <button class="bgm-control-btn move" onmousedown="startDrag(event, '${bgm.id}')" title="순서 변경">
+                <i class="fas fa-grip-vertical"></i>
+              </button>
+              <button class="bgm-control-btn delete" onclick="deleteBGM('${bgm.id}')" title="삭제">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+          })
+          .join("");
+
+        displayDiv.innerHTML = `
+        <div id="bgm-list-container" style="max-height: 300px; overflow-y: auto;">
+          ${bgmListHTML}
+        </div>
+        <div class="bgm-list-summary">총 ${currentBGMList.length}곡이 등록되어 있습니다</div>
+      `;
+      } else {
+        displayDiv.innerHTML = `<div class="bgm-list-summary">설정된 BGM이 없습니다</div>`;
+      }
+    });
+
+  // BGM 업로드 폼 제출
+  document
+    .getElementById("bgm-upload-form")
+    ?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("bgm-file");
+      const titleInput = document.getElementById("bgm-title");
+      const artistInput = document.getElementById("bgm-artist");
+
+      const musicFile = fileInput.files[0];
+      if (!musicFile) {
+        alert("음악 파일을 선택해주세요.");
+        return;
+      }
+
+      try {
+        // 업로드 오버레이 표시
+        uploadOverlay.style.display = "flex";
+
+        // 메타데이터 추출
+        let artist = artistInput.value.trim();
+        let title = titleInput.value.trim();
+        let duration = 0;
+
+        // 파일명에서 자동 추출
+        if (!artist || !title) {
+          const baseName = musicFile.name.replace(/\.mp3$/i, "");
+          const parts = baseName.split(" - ");
+          if (parts.length >= 2) {
+            if (!artist) artist = parts[0].trim();
+            if (!title) title = parts[1].trim();
+          } else {
+            if (!title) title = baseName;
+          }
+        }
+
+        // 재생시간 추출
+        duration = await getAudioDuration(musicFile);
+
+        // 앨범 커버 추출 (기본값 사용)
+        let albumPath = "album/default.jpg";
+
+        // musicmetadata로 메타데이터 추출 시도
+        musicmetadata(musicFile, async function (err, metadata) {
+          try {
+            if (metadata) {
+              if (metadata.artist && !artistInput.value.trim()) {
+                artist = metadata.artist;
+              }
+              if (metadata.title && !titleInput.value.trim()) {
+                title = metadata.title;
+              }
+              if (metadata.duration) {
+                duration = Math.floor(metadata.duration);
+              }
+
+              // 앨범 아트 추출
+              if (metadata.picture && metadata.picture.length > 0) {
+                const picture = metadata.picture[0];
+                const blob = new Blob([picture.data], { type: picture.format });
+
+                try {
+                  const albumFileName = `album_main_${Date.now()}.jpg`;
+                  const albumFilePath = `album/${albumFileName}`;
+
+                  const { data: albumData } = await sb.storage
+                    .from("media")
+                    .upload(albumFilePath, blob, {
+                      cacheControl: "3600",
+                      upsert: true,
+                      contentType: "image/jpeg",
+                    });
+
+                  if (albumData?.path) {
+                    albumPath = albumData.path;
+                  }
+                } catch (albumError) {
+                  console.warn("앨범 커버 업로드 실패:", albumError);
+                }
+              }
+            }
+
+            // BGM 업로드 실행
+            await uploadBGMToDB({
+              musicFile,
+              artist,
+              title,
+              duration,
+              albumPath,
+            });
+
+            // 성공 처리
+            alert("BGM이 성공적으로 설정되었습니다!");
+            document.getElementById("bgm-upload-modal").style.display = "none";
+
+            // 메인 음악 플레이어 새로고침
+            if (typeof loadMainMusic === "function") {
+              await loadMainMusic();
+            }
+          } catch (error) {
+            console.error("BGM 업로드 실패:", error);
+            alert("BGM 업로드 실패: " + error.message);
+          } finally {
+            uploadOverlay.style.display = "none";
+          }
+        });
+      } catch (error) {
+        console.error("BGM 업로드 처리 실패:", error);
+        alert("BGM 업로드 실패: " + error.message);
+        uploadOverlay.style.display = "none";
+      }
+    });
+
+  // BGM 업로드 모달 취소
+  document.getElementById("bgm-cancel")?.addEventListener("click", () => {
+    document.getElementById("bgm-upload-modal").style.display = "none";
+  });
+
+  // 파일 선택 시 자동으로 제목/아티스트 추출
+  document.getElementById("bgm-file")?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const titleInput = document.getElementById("bgm-title");
+    const artistInput = document.getElementById("bgm-artist");
+
+    if (file) {
+      const baseName = file.name.replace(/\.mp3$/i, "");
+      const parts = baseName.split(" - ");
+
+      // 일시적으로 disabled 해제
+      titleInput.disabled = false;
+      artistInput.disabled = false;
+
+      if (parts.length >= 2) {
+        artistInput.value = parts[0].trim();
+        titleInput.value = parts[1].trim();
+      } else {
+        titleInput.value = baseName;
+        artistInput.value = "알 수 없는 아티스트";
+      }
+
+      // 다시 disabled 처리
+      titleInput.disabled = true;
+      artistInput.disabled = true;
+    } else {
+      // 파일이 선택되지 않은 경우 초기화
+      titleInput.disabled = false;
+      artistInput.disabled = false;
+      titleInput.value = "";
+      artistInput.value = "";
+      titleInput.disabled = true;
+      artistInput.disabled = true;
+    }
+  });
+});
