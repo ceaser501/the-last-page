@@ -16,7 +16,7 @@ const DEFAULT_MAIN_ALBUM_COVER_URL = defaultMainCoverData.publicUrl;
 // 메인 음악 플레이어 초기화
 function initMainMusicPlayer() {
   mainAudio = new Audio();
-  mainAudio.loop = true;
+  mainAudio.loop = false; // 플레이리스트 재생을 위해 false로 변경
   mainAudio.volume = 0.7;
 
   // jQuery 요소 선택
@@ -300,16 +300,16 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
     const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
     $("#main-track-length").text(`${minutes}:${seconds}`);
 
-    // 이미 재생 중이었던 경우만 계속 재생 (트랙 변경 시)
-    if (wasPlaying && !isPopupOpen) {
+    // 이미 재생 중이었던 경우나 자동 재생 요청인 경우 재생
+    if ((wasPlaying || shouldAutoPlay) && !isPopupOpen) {
       mainAudio.play().then(() => {
         $("#main-player-track").addClass("active");
         $("#main-album-art").addClass("active");
         $("#main-play-pause-button i").attr("class", "fas fa-pause");
         $("#main-music-player").addClass("playing");
-        console.log("🎵 트랙 변경 후 재생 계속:", musicData.music_title);
+        console.log("🎵 트랙 재생:", musicData.music_title);
       }).catch((error) => {
-        console.log("🔇 트랙 변경 후 재생 실패:", error.name);
+        console.log("🔇 트랙 재생 실패:", error.name);
       });
     }
   };
@@ -324,18 +324,30 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
 
 // 이전 곡 재생
 function playPreviousTrack() {
-  if (playlist.length <= 1) return;
+  if (playlist.length === 0) return;
+  
+  // 플레이리스트가 1개만 있어도 다시 재생 (처음부터)
+  if (playlist.length === 1) {
+    loadTrackByIndex(0, true); // 같은 곡 다시 재생
+    return;
+  }
   
   const prevIndex = currentTrackIndex > 0 ? currentTrackIndex - 1 : playlist.length - 1;
-  loadTrackByIndex(prevIndex);
+  loadTrackByIndex(prevIndex, true); // 자동 재생으로 이전 곡 로드
 }
 
 // 다음 곡 재생
 function playNextTrack() {
-  if (playlist.length <= 1) return;
+  if (playlist.length === 0) return;
+  
+  // 플레이리스트가 1개만 있어도 다시 재생 (처음부터)
+  if (playlist.length === 1) {
+    loadTrackByIndex(0, true); // 같은 곡 다시 재생
+    return;
+  }
   
   const nextIndex = currentTrackIndex < playlist.length - 1 ? currentTrackIndex + 1 : 0;
-  loadTrackByIndex(nextIndex);
+  loadTrackByIndex(nextIndex, true); // 자동 재생으로 다음 곡 로드
 }
 
 // 플레이리스트 모달 표시
@@ -387,7 +399,7 @@ function renderPlaylist() {
     // 클릭 이벤트
     item.on("click", function() {
       const clickedIndex = parseInt($(this).data("index"));
-      loadTrackByIndex(clickedIndex);
+      loadTrackByIndex(clickedIndex, true); // 자동 재생으로 선택한 곡 로드
       renderPlaylist(); // 현재 재생 곡 표시 업데이트
     });
 
@@ -398,23 +410,40 @@ function renderPlaylist() {
 // 팝업 상태 업데이트 함수들
 function pauseMainMusic() {
   console.log("🔇 pauseMainMusic 함수 호출됨");
-  if (mainAudio && !mainAudio.paused) {
+  console.log("🔇 [디버그] mainAudio 상태:", mainAudio ? "존재" : "없음");
+  console.log("🔇 [디버그] mainAudio.paused:", mainAudio ? mainAudio.paused : "N/A");
+  console.log("🔇 [디버그] mainAudio.muted:", mainAudio ? mainAudio.muted : "N/A");
+  console.log("🔇 [디버그] mainAudio.currentTime:", mainAudio ? mainAudio.currentTime : "N/A");
+  console.log("🔇 [디버그] mainAudio.src:", mainAudio ? mainAudio.src : "N/A");
+  
+  if (mainAudio && mainAudio.src) {
+    console.log("🔇 [디버그] 메인 음악 강제 일시정지 실행 중...");
+    // 재생 중이거나 음소거 상태와 관계없이 무조건 정지
     mainAudio.pause();
+    // 추가 보안: 볼륨도 0으로 설정
+    mainAudio.volume = 0;
     $("#main-player-track").removeClass("active");
     $("#main-album-art").removeClass("active");
     $("#main-play-pause-button i").attr("class", "fas fa-play");
     $("#main-music-player").removeClass("playing");
-    console.log("🔇 메인 음악 일시정지 완료 (팝업 열림)");
+    console.log("🔇 [디버그] 메인 음악 강제 일시정지 완료");
+    console.log("🔇 [디버그] 일시정지 후 mainAudio.paused:", mainAudio.paused);
+    console.log("🔇 [디버그] 일시정지 후 mainAudio.volume:", mainAudio.volume);
   } else {
-    console.log("🔇 메인 음악이 이미 정지되어 있거나 오디오가 없음");
+    console.log("🔇 [디버그] mainAudio가 없거나 src가 없음");
   }
   isPopupOpen = true;
+  console.log("🔇 [디버그] isPopupOpen 설정 완료:", isPopupOpen);
 }
 
 function resumeMainMusic() {
   console.log("🎵 resumeMainMusic 함수 호출됨");
   isPopupOpen = false;
   if (mainAudio && mainAudio.src) {
+    // 볼륨 복구
+    mainAudio.volume = 0.7;
+    console.log("🎵 [디버그] 볼륨 복구:", mainAudio.volume);
+    
     // 이어서 재생 (currentTime 유지)
     mainAudio.play().then(() => {
       $("#main-player-track").addClass("active");

@@ -84,9 +84,95 @@ h1,
   font-weight: 700;
 }
 
+/* 메인 컨텐츠 영역 */
+.main-content {
+  padding-top: 100px;
+}
+
+/* 상단 날짜 낙서 */
+.date-graffiti {
+  text-align: right;
+  margin-right: 280px;
+  font-family: "Patrick Hand", cursive;
+  font-size: 28px;
+  color: var(--text-color);
+  opacity: 0.55;
+  transform: rotate(-1deg);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.date-graffiti:hover {
+  opacity: 0.9;
+  transform: rotate(2deg) scale(1.03);
+}
+
+/* 벽 낙서 스타일 로맨틱 멘트 */
+.wall-graffiti {
+  position: relative;
+  text-align: left;
+  font-family: "Patrick Hand", cursive;
+  font-size: 18px;
+  color: var(--text-color);
+  opacity: 0.6;
+  margin: 150px 0 0;
+  padding: 0 20px;
+  margin-left: 10%;
+  max-width: 60%;
+  transform: rotate(-1.5deg);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wall-graffiti:hover {
+  opacity: 0.8;
+  transform: rotate(-1.5deg) scale(1.05);
+}
+
+.wall-graffiti:hover .graffiti-heart-right {
+  opacity: 1;
+  transform: rotate(15deg) scale(1.1);
+  color: #ff4757;
+}
+
+.wall-graffiti:hover .graffiti-heart-left {
+  opacity: 1;
+  transform: rotate(-20deg) scale(1.1);
+  color: #ff5722;
+}
+
+/* 낙서 하트 장식 - 오른쪽 */
+.graffiti-heart-right {
+  font-size: 22px;
+  color: #ff6b9d;
+  opacity: 0.8;
+  transform: rotate(15deg);
+  display: inline-block;
+  margin-left: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* 낙서 하트 장식 - 왼쪽 */
+.graffiti-heart-left {
+  font-size: 20px;
+  color: #ff8fa3;
+  opacity: 0.7;
+  transform: rotate(-20deg);
+  display: inline-block;
+  margin-right: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
 /* 가랜드 */
 .garland-wrapper {
-  padding: 120px 20px;
+  padding: 0px 20px 120px;
+  margin-top: -30px !important;
   max-width: 1500px;
   margin: 0 auto;
   position: relative;
@@ -95,7 +181,7 @@ h1,
 .garland-row {
   width: 100%;
   max-width: 1400px;
-  height: 350px;
+  height: 280px; /* 높이를 줄여서 줄 간격 축소 */
   position: relative;
   margin: 0 auto;
 }

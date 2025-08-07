@@ -213,6 +213,10 @@ function generateRow() {
     rowWrapper.style.marginLeft = "60px";
   }
 
+  if (row == 1) {
+    rowWrapper.style.marginTop = "-50px";
+  }
+
   const rope = document.createElement("div");
   rope.className = "garland-line";
   rowWrapper.appendChild(rope);
@@ -275,7 +279,7 @@ function generateRow() {
       videoForThumb.crossOrigin = "anonymous";
       videoForThumb.muted = true;
       videoForThumb.playsInline = true;
-      videoForThumb.preload = "auto";
+      videoForThumb.preload = "metadata"; // 메타데이터만 로드하여 트래픽 절약
 
       videoForThumb.addEventListener("loadedmetadata", () => {
         videoForThumb.currentTime = 0.1; // 첫 프레임보다 약간 뒤로
@@ -382,6 +386,29 @@ function setupLazyRender() {
   // 최초 2줄만 먼저 렌더
   generateRow();
   generateRow();
+
+  // 첫 번째와 두 번째 줄 사이에 로맨틱 멘트 추가
+  addRomanticMessage();
+}
+
+// 벽 낙서 스타일 로맨틱 멘트 추가 함수
+function addRomanticMessage() {
+  // 이미 추가되었으면 중복 방지
+  if (document.querySelector(".wall-graffiti")) return;
+
+  const message = document.createElement("div");
+  message.className = "wall-graffiti";
+  message.innerHTML = "<span class='graffiti-heart-left'>♥</span> 나의 오늘, 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
+
+  // 첫 번째 줄과 두 번째 줄 사이에 삽입
+  const rows = wrapper.querySelectorAll(".garland-row");
+  if (rows.length >= 2) {
+    // 두 번째 줄 앞에 삽입
+    wrapper.insertBefore(message, rows[1]);
+  } else {
+    // 줄이 충분하지 않으면 wrapper 끝에 추가
+    wrapper.appendChild(message);
+  }
 }
 
 //setupLazyRender();

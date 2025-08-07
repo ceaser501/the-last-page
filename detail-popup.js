@@ -34,8 +34,13 @@ function openDetailPopup(media, mediaList) {
   console.log("🎵 음악 정보:", media.music);
 
   // 메인 음악 일시정지
+  console.log("🔍 [디버그] pauseMainMusic 함수 체크:", typeof pauseMainMusic);
   if (typeof pauseMainMusic === "function") {
+    console.log("🔇 [디버그] pauseMainMusic 함수 호출 시작");
     pauseMainMusic();
+    console.log("🔇 [디버그] pauseMainMusic 함수 호출 완료");
+  } else {
+    console.log("❌ [디버그] pauseMainMusic 함수를 찾을 수 없음");
   }
 
   currentMediaList = mediaList;
@@ -126,9 +131,12 @@ function openDetailPopup(media, mediaList) {
           const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
           totalDurationEl.textContent = `${minutes}:${seconds}`;
 
+          console.log("🎵 [디버그] 팝업 음악 메타데이터 로드 완료, 자동 재생 시작");
           // 상세팝업 열릴 때 자동으로 재생
-          window.audio.play().catch((error) => {
-            console.log("자동 재생 실패 (브라우저 정책):", error);
+          window.audio.play().then(() => {
+            console.log("🎵 [디버그] 팝업 음악 재생 성공");
+          }).catch((error) => {
+            console.log("❌ [디버그] 팝업 음악 자동 재생 실패 (브라우저 정책):", error);
           });
 
           // UI 업데이트
@@ -194,6 +202,7 @@ function openDetailPopup(media, mediaList) {
 
       const thumb = document.createElement("img");
       thumb.className = "popup-thumb";
+      thumb.loading = "lazy"; // 지연 로딩 추가
       if (idx === 0) thumb.classList.add("selected-thumb");
 
       // 플레이 아이콘 생성
@@ -224,7 +233,7 @@ function openDetailPopup(media, mediaList) {
       video.crossOrigin = "anonymous";
       video.muted = true;
       video.playsInline = true;
-      video.preload = "auto";
+      video.preload = "metadata"; // 메타데이터만 로드하여 트래픽 절약
       video.style.display = "none";
 
       video.addEventListener("loadedmetadata", () => {
@@ -247,6 +256,7 @@ function openDetailPopup(media, mediaList) {
       // 이미지용 썸네일
       const thumb = document.createElement("img");
       thumb.className = "popup-thumb";
+      thumb.loading = "lazy"; // 지연 로딩 추가
       if (idx === 0) thumb.classList.add("selected-thumb");
 
       thumb.addEventListener("click", () => {
@@ -281,6 +291,7 @@ function renderMainMedia(src) {
     video.src = src;
     video.controls = true;
     video.autoplay = true;
+    video.preload = "none"; // 사용자가 재생을 원할 때만 로드
     video.style.width = "412px"; // 3:4 비율 고정
     video.style.height = "550px"; // 이미지와 동일한 고정 높이
     video.style.margin = "0 auto"; // 가운데 정렬
@@ -292,6 +303,7 @@ function renderMainMedia(src) {
     const img = document.createElement("img");
     img.src = src;
     img.id = "popup-main-image";
+    img.loading = "lazy"; // 지연 로딩 추가
 
     // 확대/축소 컨트롤 추가
     const zoomControls = document.createElement("div");
