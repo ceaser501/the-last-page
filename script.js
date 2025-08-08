@@ -131,77 +131,90 @@ function generateRow() {
     */
 
   if (row === 2) {
-    const flowerSticker = document.createElement("img");
-    flowerSticker.src = "./data/flower2.png";
-    flowerSticker.alt = "flower Sticker";
-    flowerSticker.style.position = "absolute";
-    flowerSticker.style.top = "740px";
-    flowerSticker.style.left = "calc(22% - 10px)";
-    flowerSticker.style.width = "130px";
-    flowerSticker.style.transform = "rotate(-10deg) translateY(-20px)";
-    flowerSticker.style.zIndex = "6";
-    flowerSticker.style.pointerEvents = "none";
+    // 중복 방지: 기존 스티커가 있는지 확인
+    if (!document.querySelector('.flower-sticker-row2')) {
+      const flowerSticker = document.createElement("img");
+      flowerSticker.src = "./data/flower2.png";
+      flowerSticker.alt = "flower Sticker";
+      flowerSticker.className = "flower-sticker-row2"; // 클래스 추가로 중복 방지
+      flowerSticker.style.position = "absolute";
+      flowerSticker.style.top = "740px";
+      flowerSticker.style.left = "calc(22% - 10px)";
+      flowerSticker.style.width = "130px";
+      flowerSticker.style.transform = "rotate(-10deg) translateY(-20px)";
+      flowerSticker.style.zIndex = "6";
+      flowerSticker.style.pointerEvents = "none";
 
-    document.body.appendChild(flowerSticker);
+      document.body.appendChild(flowerSticker);
+    }
   }
 
   if (row === 3) {
-    const heartSticker = document.createElement("img");
-    heartSticker.src = "./data/heart.png";
-    heartSticker.alt = "heart Sticker";
-    heartSticker.style.position = "absolute";
-    heartSticker.style.top = "890px";
-    heartSticker.style.left = "calc(71% - 60px)";
-    heartSticker.style.width = "130px";
-    heartSticker.style.transform = "rotate(0deg) translateY(-20px)";
-    heartSticker.style.zIndex = "6";
-    heartSticker.style.pointerEvents = "none";
+    // 중복 방지: 기존 스티커가 있는지 확인
+    if (!document.querySelector('.heart-sticker-row3')) {
+      const heartSticker = document.createElement("img");
+      heartSticker.src = "./data/heart.png";
+      heartSticker.alt = "heart Sticker";
+      heartSticker.className = "heart-sticker-row3"; // 클래스 추가로 중복 방지
+      heartSticker.style.position = "absolute";
+      heartSticker.style.top = "890px";
+      heartSticker.style.left = "calc(71% - 60px)";
+      heartSticker.style.width = "130px";
+      heartSticker.style.transform = "rotate(0deg) translateY(-20px)";
+      heartSticker.style.zIndex = "6";
+      heartSticker.style.pointerEvents = "none";
 
-    const heartSticker2 = document.createElement("img");
-    heartSticker2.src = "./data/heart.png";
-    heartSticker2.alt = "heart Sticker";
-    heartSticker2.style.position = "absolute";
-    heartSticker2.style.top = "870px";
-    heartSticker2.style.left = "calc(78% - 70px)";
-    heartSticker2.style.width = "130px";
-    heartSticker2.style.transform = "rotate(-12deg) translateY(-20px)";
-    heartSticker2.style.zIndex = "6";
-    heartSticker2.style.pointerEvents = "none";
+      const heartSticker2 = document.createElement("img");
+      heartSticker2.src = "./data/heart.png";
+      heartSticker2.alt = "heart Sticker";
+      heartSticker2.className = "heart-sticker2-row3"; // 클래스 추가로 중복 방지
+      heartSticker2.style.position = "absolute";
+      heartSticker2.style.top = "870px";
+      heartSticker2.style.left = "calc(78% - 70px)";
+      heartSticker2.style.width = "130px";
+      heartSticker2.style.transform = "rotate(-12deg) translateY(-20px)";
+      heartSticker2.style.zIndex = "6";
+      heartSticker2.style.pointerEvents = "none";
 
-    document.body.appendChild(heartSticker);
-    document.body.appendChild(heartSticker2);
+      document.body.appendChild(heartSticker);
+      document.body.appendChild(heartSticker2);
+    }
   }
 
   if (row === 4) {
-    const loveSticker = document.createElement("img");
-    loveSticker.src = "./data/love.png";
-    loveSticker.alt = "heart Sticker";
-    loveSticker.style.position = "absolute";
-    loveSticker.style.top = "1360px";
-    loveSticker.style.left = "calc(21% - 60px)";
-    loveSticker.style.width = "100px";
-    loveSticker.style.transform = "rotate(0deg) translateY(-20px)";
-    loveSticker.style.zIndex = "6";
-    loveSticker.style.pointerEvents = "none";
+    // 중복 방지: 기존 스티커가 있는지 확인
+    if (!document.querySelector('.love-sticker-row4') && !wrapper.querySelector('.date-tape')) {
+      const loveSticker = document.createElement("img");
+      loveSticker.src = "./data/love.png";
+      loveSticker.alt = "heart Sticker";
+      loveSticker.className = "love-sticker-row4"; // 클래스 추가로 중복 방지
+      loveSticker.style.position = "absolute";
+      loveSticker.style.top = "1360px";
+      loveSticker.style.left = "calc(21% - 60px)";
+      loveSticker.style.width = "100px";
+      loveSticker.style.transform = "rotate(0deg) translateY(-20px)";
+      loveSticker.style.zIndex = "6";
+      loveSticker.style.pointerEvents = "none";
 
-    const dateTape = document.createElement("div");
-    dateTape.className = "date-tape";
-    dateTape.textContent = "2024.09.28 ~ 2026.04.12";
-    dateTape.style.background = "#f2d9c6dc";
-    dateTape.style.opacity = "0.8";
-    dateTape.style.position = "absolute";
-    dateTape.style.right = "500px";
-    dateTape.style.margin = "10px auto -60px auto";
-    dateTape.style.zIndex = "5";
-    dateTape.style.fontFamily = "'Gloria Hallelujah', cursive";
-    dateTape.style.fontSize = "22px";
-    dateTape.style.fontWeight = "bold";
-    dateTape.style.color = "#222";
-    dateTape.style.transform = "translateX(180px) rotate(-2deg)";
-    dateTape.style.maxWidth = "fit-content";
+      const dateTape = document.createElement("div");
+      dateTape.className = "date-tape";
+      dateTape.textContent = "2024.09.28 ~ 2026.04.12";
+      dateTape.style.background = "#f2d9c6dc";
+      dateTape.style.opacity = "0.8";
+      dateTape.style.position = "absolute";
+      dateTape.style.right = "500px";
+      dateTape.style.margin = "10px auto -60px auto";
+      dateTape.style.zIndex = "5";
+      dateTape.style.fontFamily = "'Gloria Hallelujah', cursive";
+      dateTape.style.fontSize = "22px";
+      dateTape.style.fontWeight = "bold";
+      dateTape.style.color = "#222";
+      dateTape.style.transform = "translateX(180px) rotate(-2deg)";
+      dateTape.style.maxWidth = "fit-content";
 
-    wrapper.appendChild(loveSticker);
-    wrapper.appendChild(dateTape);
+      wrapper.appendChild(loveSticker);
+      wrapper.appendChild(dateTape);
+    }
   }
 
   const imagesPerRow = row % 2 === 0 ? 7 : 5;

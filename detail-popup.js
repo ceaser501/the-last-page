@@ -420,8 +420,12 @@ function closeDetailPopup() {
   }
 
   // 조회
-  // 기존 이미지, 행 제거
-  wrapper.innerHTML = "";
+  // 기존 이미지, 행 제거 (스티커 제외하고)
+  // wrapper 안의 .garland-row와 .wall-graffiti만 제거
+  const elementsToRemove = wrapper.querySelectorAll('.garland-row, .wall-graffiti');
+  elementsToRemove.forEach(el => el.remove());
+  
+  // 전역 변수 초기화
   pointer = 0;
   row = 0;
   mediaList = [];

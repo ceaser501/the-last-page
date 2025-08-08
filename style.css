@@ -69,6 +69,8 @@ body {
   background-repeat: repeat;
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh; /* 최소 높이 보장 */
+  margin: 0; /* 마진 초기화 */
 }
 
 [data-theme="dark"] body {
@@ -87,6 +89,8 @@ h1,
 /* 메인 컨텐츠 영역 */
 .main-content {
   padding-top: 100px;
+  min-height: calc(100vh - 100px); /* 최소 높이 보장 */
+  position: relative; /* 위치 기준점 설정 */
 }
 
 /* 상단 날짜 낙서 */
