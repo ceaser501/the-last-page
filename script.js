@@ -50,7 +50,7 @@ async function loadMediaFromSupabase() {
     () =>
       supabase
         .from("memories")
-        .select("*, media_files(order:file_order, media_url, is_main)") // ✅ media_files 내부 정렬 적용
+        .select("*, media_files(order:file_order, media_url, is_main, file_order)") // ✅ media_files 내부 정렬 적용
         .eq("is_public", true)
         .order("order", { ascending: true }) // memories 자체 정렬
   );
@@ -130,28 +130,9 @@ function generateRow() {
   }
     */
 
-  if (row === 2) {
-    // 중복 방지: 기존 스티커가 있는지 확인
-    if (!document.querySelector('.flower-sticker-row2')) {
-      const flowerSticker = document.createElement("img");
-      flowerSticker.src = "./data/flower2.png";
-      flowerSticker.alt = "flower Sticker";
-      flowerSticker.className = "flower-sticker-row2"; // 클래스 추가로 중복 방지
-      flowerSticker.style.position = "absolute";
-      flowerSticker.style.top = "740px";
-      flowerSticker.style.left = "calc(22% - 10px)";
-      flowerSticker.style.width = "130px";
-      flowerSticker.style.transform = "rotate(-10deg) translateY(-20px)";
-      flowerSticker.style.zIndex = "6";
-      flowerSticker.style.pointerEvents = "none";
-
-      document.body.appendChild(flowerSticker);
-    }
-  }
-
   if (row === 3) {
     // 중복 방지: 기존 스티커가 있는지 확인
-    if (!document.querySelector('.heart-sticker-row3')) {
+    if (!document.querySelector(".heart-sticker-row3")) {
       const heartSticker = document.createElement("img");
       heartSticker.src = "./data/heart.png";
       heartSticker.alt = "heart Sticker";
@@ -183,7 +164,10 @@ function generateRow() {
 
   if (row === 4) {
     // 중복 방지: 기존 스티커가 있는지 확인
-    if (!document.querySelector('.love-sticker-row4') && !wrapper.querySelector('.date-tape')) {
+    if (
+      !document.querySelector(".love-sticker-row4") &&
+      !wrapper.querySelector(".date-tape")
+    ) {
       const loveSticker = document.createElement("img");
       loveSticker.src = "./data/love.png";
       loveSticker.alt = "heart Sticker";
@@ -411,7 +395,8 @@ function addRomanticMessage() {
 
   const message = document.createElement("div");
   message.className = "wall-graffiti";
-  message.innerHTML = "<span class='graffiti-heart-left'>♥</span> 나의 오늘, 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
+  message.innerHTML =
+    "<span class='graffiti-heart-left'>♥</span> 우리가 함께 했던 이 타임라인들 처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
 
   // 첫 번째 줄과 두 번째 줄 사이에 삽입
   const rows = wrapper.querySelectorAll(".garland-row");

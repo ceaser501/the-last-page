@@ -300,8 +300,8 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
     const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
     $("#main-track-length").text(`${minutes}:${seconds}`);
 
-    // 이미 재생 중이었던 경우나 자동 재생 요청인 경우 재생
-    if ((wasPlaying || shouldAutoPlay) && !isPopupOpen) {
+    // 이미 재생 중이었던 경우나 자동 재생 요청인 경우에만 재생 (페이지 로드 시 자동재생 방지)
+    if (shouldAutoPlay && (wasPlaying || shouldAutoPlay) && !isPopupOpen) {
       mainAudio.play().then(() => {
         $("#main-player-track").addClass("active");
         $("#main-album-art").addClass("active");
@@ -311,12 +311,22 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
       }).catch((error) => {
         console.log("🔇 트랙 재생 실패:", error.name);
       });
+    } else {
+      // 자동재생 안 할 때는 정지 상태로 UI 설정
+      $("#main-player-track").removeClass("active");
+      $("#main-album-art").removeClass("active");
+      $("#main-play-pause-button i").attr("class", "fas fa-play");
+      $("#main-music-player").removeClass("playing");
     }
   };
 
-  // 곡이 끝나면 다음 곡으로
+  // 곡이 끝나면 정지 (자동으로 다음 곡 재생 안함)
   mainAudio.onended = () => {
-    playNextTrack();
+    console.log("🎵 곡 재생 완료 - 정지 상태로 변경");
+    $("#main-player-track").removeClass("active");
+    $("#main-album-art").removeClass("active");
+    $("#main-play-pause-button i").attr("class", "fas fa-play");
+    $("#main-music-player").removeClass("playing");
   };
 
   console.log("✅ 트랙 로드:", musicData.music_title);
@@ -328,12 +338,12 @@ function playPreviousTrack() {
   
   // 플레이리스트가 1개만 있어도 다시 재생 (처음부터)
   if (playlist.length === 1) {
-    loadTrackByIndex(0, true); // 같은 곡 다시 재생
+    loadTrackByIndex(0, false); // 자동재생 안함
     return;
   }
   
   const prevIndex = currentTrackIndex > 0 ? currentTrackIndex - 1 : playlist.length - 1;
-  loadTrackByIndex(prevIndex, true); // 자동 재생으로 이전 곡 로드
+  loadTrackByIndex(prevIndex, false); // 자동재생 안함
 }
 
 // 다음 곡 재생
@@ -342,12 +352,12 @@ function playNextTrack() {
   
   // 플레이리스트가 1개만 있어도 다시 재생 (처음부터)
   if (playlist.length === 1) {
-    loadTrackByIndex(0, true); // 같은 곡 다시 재생
+    loadTrackByIndex(0, false); // 자동재생 안함
     return;
   }
   
   const nextIndex = currentTrackIndex < playlist.length - 1 ? currentTrackIndex + 1 : 0;
-  loadTrackByIndex(nextIndex, true); // 자동 재생으로 다음 곡 로드
+  loadTrackByIndex(nextIndex, false); // 자동재생 안함
 }
 
 // 플레이리스트 모달 표시
@@ -399,7 +409,7 @@ function renderPlaylist() {
     // 클릭 이벤트
     item.on("click", function() {
       const clickedIndex = parseInt($(this).data("index"));
-      loadTrackByIndex(clickedIndex, true); // 자동 재생으로 선택한 곡 로드
+      loadTrackByIndex(clickedIndex, true); // 플레이리스트에서 선택 시 자동재생
       renderPlaylist(); // 현재 재생 곡 표시 업데이트
     });
 
@@ -437,23 +447,13 @@ function pauseMainMusic() {
 }
 
 function resumeMainMusic() {
-  console.log("🎵 resumeMainMusic 함수 호출됨");
+  console.log("🎵 resumeMainMusic 함수 호출됨 - 자동재생 안함");
   isPopupOpen = false;
   if (mainAudio && mainAudio.src) {
-    // 볼륨 복구
+    // 볼륨만 복구하고 자동재생은 하지 않음
     mainAudio.volume = 0.7;
     console.log("🎵 [디버그] 볼륨 복구:", mainAudio.volume);
-    
-    // 이어서 재생 (currentTime 유지)
-    mainAudio.play().then(() => {
-      $("#main-player-track").addClass("active");
-      $("#main-album-art").addClass("active");
-      $("#main-play-pause-button i").attr("class", "fas fa-pause");
-      $("#main-music-player").addClass("playing");
-      console.log("🎵 메인 음악 재시작 완료");
-    }).catch((error) => {
-      console.log("❌ 메인 음악 재시작 실패:", error);
-    });
+    console.log("🎵 자동재생 방지: 사용자가 플레이 버튼을 직접 눌러야 재생됨");
   } else {
     console.log("🔇 메인 오디오가 없거나 소스가 설정되지 않음");
   }
@@ -488,14 +488,8 @@ $(document).ready(function() {
         "pointer-events": "auto"
       });
       
-      // 음악이 일시정지 상태라면 자동으로 재생 시작
-      if (mainAudio && mainAudio.paused && mainAudio.src) {
-        $("#main-player-track").addClass("active");
-        $("#main-album-art").addClass("active");
-        $("#main-music-player").addClass("playing");
-        $("#main-play-pause-button i").attr("class", "fas fa-pause");
-        mainAudio.play().catch(error => console.log("음악 재생 실패:", error));
-      }
+      // 자동재생 제거: 사용자가 플레이 버튼을 직접 눌러야 함
+      console.log("🎵 플레이어 표시됨 - 자동재생하지 않음");
     } else {
       // 플레이어 숨김
       musicPlayer.css({
@@ -555,29 +549,8 @@ $(document).ready(function() {
     }
   });
   
-  // 사용자의 첫 상호작용을 기다려서 음악 시작
-  setTimeout(() => {
-    if (playlist.length > 0 && mainAudio && mainAudio.src) {
-      function startMusicOnFirstInteraction() {
-        if (mainAudio.paused) {
-          $("#main-player-track").addClass("active");
-          $("#main-album-art").addClass("active");
-          $("#main-music-player").addClass("playing");
-          $("#main-play-pause-button i").attr("class", "fas fa-pause");
-          mainAudio.play().catch(error => console.log("음악 시작 실패:", error));
-        }
-        
-        // 이벤트 리스너 제거 (한 번만 실행)
-        document.removeEventListener('click', startMusicOnFirstInteraction);
-        document.removeEventListener('keydown', startMusicOnFirstInteraction);
-        document.removeEventListener('touchstart', startMusicOnFirstInteraction);
-      }
-      
-      document.addEventListener('click', startMusicOnFirstInteraction);
-      document.addEventListener('keydown', startMusicOnFirstInteraction);
-      document.addEventListener('touchstart', startMusicOnFirstInteraction);
-    }
-  }, 1000);
+  // 자동재생 기능 완전 제거: 사용자가 플레이 버튼을 직접 눌러야만 재생됨
+  console.log("🎵 자동재생 기능 비활성화 - 플레이 버튼을 직접 눌러주세요");
   
   console.log("✅ 메인 음악 플레이어 초기화 완료");
 });

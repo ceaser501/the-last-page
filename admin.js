@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <form id="login-form">
         <div class="form-group">
           <label for="admin-id">아이디</label>
-          <input type="text" id="admin-id" value="ceaser501" required />
+          <input type="text" id="admin-id" value="taesu" required />
         </div>
 
         <div class="form-group">
@@ -462,7 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (id === "ceaser501" && pw === "0928") {
+    if (id === "taesu" && pw === "0928") {
       alert("✅ 로그인 성공!");
       closeLoginModal();
 
@@ -470,8 +470,8 @@ document.addEventListener("DOMContentLoaded", () => {
       beforeLogin.style.display = "none";
       afterLogin.style.display = "flex";
 
-      // ceaser501 계정일 때만 BGM 업로드 버튼 표시
-      if (id === "ceaser501") {
+      // teaesu 계정일 때만 BGM 업로드 버튼 표시
+      if (id === "taesu") {
         document.getElementById("bgm-upload-btn").style.display =
           "inline-block";
       }

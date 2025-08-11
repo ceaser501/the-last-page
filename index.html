@@ -115,7 +115,7 @@
 
       <!-- 로그인 후 버튼들 -->
       <div id="after-login" class="auth-buttons" style="display: none">
-        <span id="welcome-message">ceaser501님 환영합니다.</span>
+        <span id="welcome-message">보연사랑님 환영합니다.</span>
         <button id="write-post-btn" class="auth-btn primary">글 등록</button>
         <button
           id="bgm-upload-btn"
@@ -140,21 +140,16 @@
 
     <!-- 상세 팝업 영역 -->
     <div id="popup-overlay" class="popup-overlay" style="display: none">
+      <!-- 네비게이션 버튼들을 overlay 레벨에 배치 -->
+      <button id="popup-prev-btn" class="popup-nav">‹</button>
+      <button id="popup-next-btn" class="popup-nav">›</button>
+
       <div class="detail-popup">
         <div class="popup-controls">
-          <button id="popup-edit-btn" title="수정" style="display: none">
-            ✎
-          </button>
-          <button id="popup-delete-btn" title="삭제" style="display: none">
-            🗑
-          </button>
           <button id="popup-slideshow-btn" title="슬라이드쇼">▶</button>
           <button id="popup-fullscreen-btn" title="전체화면">⛶</button>
           <button id="popup-close-btn" title="닫기">✕</button>
         </div>
-
-        <button id="popup-prev-btn" class="popup-nav">‹</button>
-        <button id="popup-next-btn" class="popup-nav">›</button>
 
         <div class="popup-left">
           <div id="popup-main-image-container" src=""></div>
@@ -237,8 +232,40 @@
                 class="popup-meta-thumbnail"
                 style="display: none"
               ></div>
-              <!-- 팝업 내부 우측 [제목]-->
-              <div id="popup-title" class="popup-meta-title"></div>
+              <!-- 팝업 내부 우측 [제목]과 버튼들 -->
+              <div class="popup-title-row">
+                <div id="popup-title" class="popup-meta-title"></div>
+                <div class="popup-action-buttons">
+                  <button
+                    id="popup-music-change-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    음악변경
+                  </button>
+                  <button
+                    id="popup-add-media-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    파일업로드
+                  </button>
+                  <button
+                    id="popup-edit-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    수정
+                  </button>
+                  <button
+                    id="popup-delete-btn"
+                    class="auth-btn control-btn-group secondary"
+                    style="display: none"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
               <!-- 팝업 내부 우측 [내용]-->
               <div id="popup-description" class="popup-meta-description"></div>
               <!-- 팝업 내부 우측 [달력/날짜]-->
@@ -396,6 +423,93 @@
           <h4 class="bgm-current-title">현재 설정된 BGM</h4>
           <div id="bgm-current-display">로딩 중...</div>
         </div>
+      </div>
+    </div>
+
+    <!-- 사진/영상 추가 모달 -->
+    <div id="media-upload-modal" class="modal" style="display: none">
+      <div class="modal-content media-upload-modal-content">
+        <h2>📎 사진/영상 추가</h2>
+        <p class="upload-description">
+          현재 메모리에 새로운 사진이나 영상을 추가합니다. (최대 21개)
+        </p>
+
+        <div class="upload-info">
+          <div id="current-files-info">현재 파일 개수를 확인하는 중...</div>
+          <div id="remaining-slots-info"></div>
+        </div>
+
+        <form id="media-upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="media-files">파일 선택</label>
+            <input
+              type="file"
+              id="media-files"
+              name="media-files"
+              accept="image/*,video/*"
+              multiple
+              required
+            />
+            <div class="upload-file-info">
+              <small>• 이미지: JPG, PNG, GIF, WEBP</small>
+              <small>• 동영상: MP4, MOV, AVI, WEBM</small>
+              <small>• 한 번에 여러 파일을 선택할 수 있습니다</small>
+            </div>
+          </div>
+
+          <div id="selected-files-preview" class="selected-files-preview"></div>
+
+          <div class="form-actions">
+            <button type="submit" id="media-upload-submit">업로드</button>
+            <button type="button" id="media-upload-cancel">닫기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 음악변경 모달 -->
+    <div id="music-change-modal" class="modal" style="display: none">
+      <div class="modal-content music-change-modal-content">
+        <h2>🎵 음악 변경</h2>
+        <p class="music-change-description">
+          현재 메모리의 배경음악을 변경합니다.
+        </p>
+
+        <form id="music-change-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="music-change-file">음악 파일</label>
+            <input type="file" id="music-change-file" accept=".mp3" required />
+            <div class="upload-file-info">
+              <small>• MP3 파일만 지원됩니다</small>
+              <small>• 파일명은 "아티스트 - 곡제목.mp3" 형식을 권장합니다</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="music-change-title">곡 제목</label>
+            <input
+              type="text"
+              id="music-change-title"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="music-change-artist">아티스트</label>
+            <input
+              type="text"
+              id="music-change-artist"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="music-change-submit">변경</button>
+            <button type="button" id="music-change-cancel">취소</button>
+          </div>
+        </form>
       </div>
     </div>
 
