@@ -247,7 +247,8 @@ h1,
 }
 
 /* 상단위치 조정 되어야할 사진들 */
-.photo img.photo-img[src*="21_001"] {
+.photo img.photo-img[src*="21_001"],
+.photo img.photo-img[src*="22_001"] {
   object-position: center 10%; /* 기본 중앙 위치 */
   height: 190px;
 }

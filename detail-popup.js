@@ -41,7 +41,7 @@ function openDetailPopup(media, mediaList) {
   currentImageIndex = 0;
   currentMedia = media; // 현재 미디어 저장
   isEditMode = false; // 수정 모드 초기화
-  
+
   // 폴라로이드 번호 계산 (배열 인덱스 + 1)
   const polaroidNumber = currentIndex + 1;
 
@@ -172,10 +172,10 @@ function openDetailPopup(media, mediaList) {
 
   // 미디어 리스트 추출 및 file_order로 정렬
   let mediaFiles = media.media_files || [];
-  
+
   // 현재 폴라로이드 번호를 기준으로 예상 접두사 설정
   let expectedPrefix = polaroidNumber.toString();
-  
+
   // 기존 파일에서 접두사를 확인하여 일치하는지 검증
   if (mediaFiles.length > 0) {
     const firstFile = mediaFiles[0];
@@ -191,19 +191,19 @@ function openDetailPopup(media, mediaList) {
       }
     }
   }
-  
+
   // 동일한 접두사를 가진 파일들만 유지 (다른 메모리 파일 제거)
-  mediaFiles = mediaFiles.filter(file => {
+  mediaFiles = mediaFiles.filter((file) => {
     const fileName = file.media_url.split("/").pop();
     return fileName.startsWith(expectedPrefix + "_");
   });
-  
+
   // file_order 순서대로 정렬 (대표이미지는 맨 앞)
   const sortedMediaFiles = mediaFiles.sort((a, b) => {
     // 대표이미지는 무조건 맨 앞
     if (a.is_main && !b.is_main) return -1;
     if (!a.is_main && b.is_main) return 1;
-    
+
     // file_order로 정렬 (숫자 비교)
     const aOrder = a.file_order || 0;
     const bOrder = b.file_order || 0;
@@ -226,7 +226,7 @@ function openDetailPopup(media, mediaList) {
       videoContainer.style.position = "relative";
       videoContainer.style.display = "block";
       videoContainer.style.width = "48px";
-      videoContainer.style.height = "48px";
+      //videoContainer.style.height = "48px";
       videoContainer.style.flexShrink = "0";
 
       const thumb = document.createElement("img");
@@ -239,7 +239,7 @@ function openDetailPopup(media, mediaList) {
       playIcon.className = "popup-thumb-play-icon";
       playIcon.innerHTML = "▶";
       playIcon.style.position = "absolute";
-      playIcon.style.top = "57%";
+      playIcon.style.top = "50%";
       playIcon.style.left = "55%";
       playIcon.style.transform = "translate(-50%, -55%)";
       playIcon.style.fontSize = "20px";
@@ -574,9 +574,11 @@ document.getElementById("popup-add-media-btn").addEventListener("click", () => {
 });
 
 // 음악변경 버튼 클릭 이벤트
-document.getElementById("popup-music-change-btn").addEventListener("click", () => {
-  showMusicChangeModal();
-});
+document
+  .getElementById("popup-music-change-btn")
+  .addEventListener("click", () => {
+    showMusicChangeModal();
+  });
 
 // 메모리 삭제 함수
 // Supabase 작업 재시도 함수
@@ -1385,16 +1387,16 @@ async function showMediaUploadModal() {
 
   // 현재 파일 개수 확인
   await checkCurrentFileCount();
-  
+
   const modal = document.getElementById("media-upload-modal");
   const form = document.getElementById("media-upload-form");
-  
+
   // 폼 초기화
   form.reset();
   selectedFiles = [];
   updateFilePreview();
   updateFileCountInfo();
-  
+
   modal.style.display = "flex";
   document.body.classList.add("modal-open");
 
@@ -1416,18 +1418,25 @@ async function checkCurrentFileCount() {
     } else {
       currentFileCount = mediaFiles ? mediaFiles.length : 0;
     }
-    
-    console.log(`🔍 현재 메모리 ${currentMedia.id}의 파일 개수: ${currentFileCount}`);
+
+    console.log(
+      `🔍 현재 메모리 ${currentMedia.id}의 파일 개수: ${currentFileCount}`
+    );
     console.log("🔍 파일 개수 확인 - 전체 파일 목록:", mediaFiles);
-    console.log("🔍 파일 개수 확인 - 파일별 상세:", mediaFiles?.map(f => ({
-      id: f.id,
-      url: f.media_url?.split("/").pop() || 'URL없음',
-      fullUrl: f.media_url
-    })));
-    
+    console.log(
+      "🔍 파일 개수 확인 - 파일별 상세:",
+      mediaFiles?.map((f) => ({
+        id: f.id,
+        url: f.media_url?.split("/").pop() || "URL없음",
+        fullUrl: f.media_url,
+      }))
+    );
+
     // currentMedia에서도 파일 개수 확인
     if (currentMedia && currentMedia.media_files) {
-      console.log(`currentMedia에서 확인한 파일 개수: ${currentMedia.media_files.length}`);
+      console.log(
+        `currentMedia에서 확인한 파일 개수: ${currentMedia.media_files.length}`
+      );
       console.log("currentMedia 파일 목록:", currentMedia.media_files);
     }
   } catch (error) {
@@ -1440,12 +1449,12 @@ async function checkCurrentFileCount() {
 function updateFileCountInfo() {
   const currentInfo = document.getElementById("current-files-info");
   const remainingInfo = document.getElementById("remaining-slots-info");
-  
+
   const totalSelected = selectedFiles.length;
   const remaining = Math.max(0, 21 - currentFileCount - totalSelected);
-  
+
   currentInfo.textContent = `현재 저장된 파일: ${currentFileCount}개`;
-  
+
   if (remaining > 0) {
     remainingInfo.textContent = `추가 가능: ${remaining}개 (선택됨: ${totalSelected}개)`;
     remainingInfo.style.color = "var(--description-color)";
@@ -1499,7 +1508,7 @@ function setupMediaUploadEvents() {
 function handleFileSelection(files) {
   const fileArray = Array.from(files);
   const availableSlots = Math.max(0, 21 - currentFileCount);
-  
+
   if (fileArray.length > availableSlots) {
     alert(`최대 ${availableSlots}개의 파일만 추가할 수 있습니다.`);
     return;
@@ -1508,8 +1517,15 @@ function handleFileSelection(files) {
   // 파일 검증
   const validFiles = [];
   const supportedTypes = [
-    "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
-    "video/mp4", "video/mov", "video/avi", "video/webm"
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "video/mp4",
+    "video/mov",
+    "video/avi",
+    "video/webm",
   ];
 
   for (const file of fileArray) {
@@ -1517,13 +1533,13 @@ function handleFileSelection(files) {
       alert(`지원하지 않는 파일 형식입니다: ${file.name}`);
       continue;
     }
-    
+
     // 파일 크기 제한 (50MB)
     if (file.size > 50 * 1024 * 1024) {
       alert(`파일 크기가 너무 큽니다 (50MB 초과): ${file.name}`);
       continue;
     }
-    
+
     validFiles.push(file);
   }
 
@@ -1535,7 +1551,7 @@ function handleFileSelection(files) {
 // 파일 미리보기 업데이트
 function updateFilePreview() {
   const preview = document.getElementById("selected-files-preview");
-  
+
   if (selectedFiles.length === 0) {
     preview.classList.remove("show");
     return;
@@ -1547,11 +1563,11 @@ function updateFilePreview() {
   selectedFiles.forEach((file, index) => {
     const item = document.createElement("div");
     item.className = "file-preview-item";
-    
+
     const isVideo = file.type.startsWith("video/");
     const icon = isVideo ? "🎬" : "📷";
     const sizeText = formatFileSize(file.size);
-    
+
     item.innerHTML = `
       <div class="file-preview-info">
         <span class="file-preview-icon">${icon}</span>
@@ -1562,14 +1578,14 @@ function updateFilePreview() {
       </div>
       <button type="button" class="file-preview-remove" data-index="${index}">✕</button>
     `;
-    
+
     // 제거 버튼 이벤트
     item.querySelector(".file-preview-remove").onclick = () => {
       selectedFiles.splice(index, 1);
       updateFilePreview();
       updateFileCountInfo();
     };
-    
+
     preview.appendChild(item);
   });
 }
@@ -1586,7 +1602,6 @@ function formatFileSize(bytes) {
 // 다음 파일 번호 계산 (polaroidNumber_xxx.jpg 형식에서 xxx 부분)
 async function getNextFileNumber(polaroidNumber) {
   try {
-    
     const { data: mediaFiles, error } = await window.supabaseClient
       .from("media_files")
       .select("media_url")
@@ -1598,16 +1613,16 @@ async function getNextFileNumber(polaroidNumber) {
     }
 
     let maxNumber = 0;
-    
+
     if (mediaFiles && mediaFiles.length > 0) {
       const expectedPrefix = polaroidNumber.toString();
-      mediaFiles.forEach(file => {
+      mediaFiles.forEach((file) => {
         const fileName = file.media_url.split("/").pop();
         const match = fileName.match(/^(\d+)_(\d+)\./);
         if (match) {
           const prefix = match[1];
           const number = parseInt(match[2], 10);
-          
+
           // 현재 폴라로이드 번호와 일치하는 파일만 처리
           if (prefix === expectedPrefix && number > maxNumber) {
             maxNumber = number;
@@ -1615,9 +1630,8 @@ async function getNextFileNumber(polaroidNumber) {
         }
       });
     }
-    
+
     return maxNumber + 1;
-    
   } catch (error) {
     console.error("다음 파일 번호 계산 중 오류:", error);
     return 1;
@@ -1633,33 +1647,34 @@ async function handleMediaUpload() {
 
   const submitBtn = document.getElementById("media-upload-submit");
   const originalText = submitBtn.textContent;
-  
+
   try {
     // UI 비활성화
     submitBtn.textContent = "업로드 중...";
     submitBtn.disabled = true;
-    
+
     // 현재 폴라로이드 번호 계산
     const polaroidNumber = currentIndex + 1;
-    
+
     // 시작 번호 가져오기
     let nextNumber = await getNextFileNumber(polaroidNumber);
-    
+
     // 각 파일 업로드
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
       const fileNumber = String(nextNumber + i).padStart(3, "0");
       const fileExtension = file.name.split(".").pop().toLowerCase();
-      
+
       // 파일명 생성 (동적 폴라로이드 번호 사용)
       const fileName = `${polaroidNumber}_${fileNumber}.${fileExtension}`;
-      
+
       submitBtn.textContent = `업로드 중... (${i + 1}/${selectedFiles.length})`;
-      
+
       // Supabase Storage에 업로드
-      const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-        .from("media")
-        .upload(`uploads/${fileName}`, file);
+      const { data: uploadData, error: uploadError } =
+        await window.supabaseClient.storage
+          .from("media")
+          .upload(`uploads/${fileName}`, file);
 
       if (uploadError) {
         console.error("파일 업로드 실패:", uploadError);
@@ -1678,25 +1693,24 @@ async function handleMediaUpload() {
           memory_id: currentMedia.id,
           media_url: urlData.publicUrl,
           file_order: nextNumber + i,
-          is_main: false
+          is_main: false,
         });
 
       if (dbError) {
         console.error("DB 레코드 추가 실패:", dbError);
         throw new Error(`DB 레코드 추가 실패: ${file.name}`);
       }
-      
+
       console.log(`파일 업로드 완료: ${fileName}`);
     }
 
     alert(`${selectedFiles.length}개의 파일이 성공적으로 업로드되었습니다!`);
-    
+
     // 모달 닫기
     closeMediaUploadModal();
-    
+
     // 팝업 새로고침 (썸네일 목록 업데이트)
     await refreshPopupContent();
-    
   } catch (error) {
     console.error("업로드 처리 중 오류:", error);
     alert("업로드 중 오류가 발생했습니다: " + error.message);
@@ -1713,7 +1727,9 @@ async function refreshPopupContent() {
     // 현재 메모리의 최신 데이터 가져오기
     const { data: refreshedMemory, error } = await window.supabaseClient
       .from("memories")
-      .select("*, media_files(order:file_order, media_url, is_main, file_order)")
+      .select(
+        "*, media_files(order:file_order, media_url, is_main, file_order)"
+      )
       .eq("id", currentMedia.id)
       .single();
 
@@ -1724,20 +1740,22 @@ async function refreshPopupContent() {
 
     // currentMedia 업데이트
     currentMedia = refreshedMemory;
-    
+
     // 미디어 리스트에서도 업데이트
-    const memoryIndex = currentMediaList.findIndex(m => m.id === currentMedia.id);
+    const memoryIndex = currentMediaList.findIndex(
+      (m) => m.id === currentMedia.id
+    );
     if (memoryIndex !== -1) {
       currentMediaList[memoryIndex] = refreshedMemory;
     }
 
     // file_order 순서대로 정렬 (대표이미지는 맨 앞)
     let mediaFiles = refreshedMemory.media_files || [];
-    
+
     // 현재 폴라로이드 번호를 기준으로 예상 접두사 설정
     const polaroidNumber = currentIndex + 1;
     let expectedPrefix = polaroidNumber.toString();
-    
+
     // 기존 파일에서 접두사를 확인하여 일치하는지 검증
     if (mediaFiles.length > 0) {
       const firstFile = mediaFiles[0];
@@ -1754,27 +1772,36 @@ async function refreshPopupContent() {
         }
       }
     }
-    
+
     // 동일한 접두사를 가진 파일들만 유지 (다른 메모리 파일 제거)
-    mediaFiles = mediaFiles.filter(file => {
+    mediaFiles = mediaFiles.filter((file) => {
       const fileName = file.media_url.split("/").pop();
       return fileName.startsWith(expectedPrefix + "_");
     });
-    
+
     const sortedMediaFiles = mediaFiles.sort((a, b) => {
       // 대표이미지는 무조건 맨 앞
       if (a.is_main && !b.is_main) return -1;
       if (!a.is_main && b.is_main) return 1;
-      
+
       // file_order로 정렬 (숫자 비교)
       const aOrder = a.file_order || 0;
       const bOrder = b.file_order || 0;
       return aOrder - bOrder;
     });
-    
-    console.log("새로고침 - file_order로 정렬 후:", sortedMediaFiles.map(f => ({ url: f.media_url.split("/").pop(), file_order: f.file_order, is_main: f.is_main })));
 
-    const allSrc = sortedMediaFiles.map((file) => file.media_url).filter(Boolean);
+    console.log(
+      "새로고침 - file_order로 정렬 후:",
+      sortedMediaFiles.map((f) => ({
+        url: f.media_url.split("/").pop(),
+        file_order: f.file_order,
+        is_main: f.is_main,
+      }))
+    );
+
+    const allSrc = sortedMediaFiles
+      .map((file) => file.media_url)
+      .filter(Boolean);
     currentAllSrc = allSrc;
 
     // 썸네일 목록 다시 렌더링
@@ -1801,7 +1828,7 @@ async function refreshPopupContent() {
         playIcon.className = "popup-thumb-play-icon";
         playIcon.innerHTML = "▶";
         playIcon.style.position = "absolute";
-        playIcon.style.top = "57%";
+        playIcon.style.top = "50%";
         playIcon.style.left = "55%";
         playIcon.style.transform = "translate(-50%, -55%)";
         playIcon.style.fontSize = "20px";
@@ -1862,7 +1889,6 @@ async function refreshPopupContent() {
     });
 
     console.log("팝업 콘텐츠 새로고침 완료");
-
   } catch (error) {
     console.error("팝업 새로고침 중 오류:", error);
   }
@@ -1873,7 +1899,7 @@ function closeMediaUploadModal() {
   const modal = document.getElementById("media-upload-modal");
   modal.style.display = "none";
   document.body.classList.remove("modal-open");
-  
+
   // 선택된 파일들 초기화
   selectedFiles = [];
   document.getElementById("media-upload-form").reset();
@@ -1886,7 +1912,7 @@ function showMusicChangeModal() {
   const modal = document.getElementById("music-change-modal");
   modal.style.display = "flex";
   document.body.classList.add("modal-open");
-  
+
   // 폼 리셋
   document.getElementById("music-change-form").reset();
   document.getElementById("music-change-title").value = "";
@@ -1906,47 +1932,54 @@ document.getElementById("music-change-cancel").addEventListener("click", () => {
 });
 
 // 음악 파일 메타데이터 추출
-document.getElementById("music-change-file").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+document
+  .getElementById("music-change-file")
+  .addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  try {
-    // musicmetadata.js를 사용하여 메타데이터 추출
-    const metadata = await new Promise((resolve, reject) => {
-      window.musicmetadata(file, (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
+    try {
+      // musicmetadata.js를 사용하여 메타데이터 추출
+      const metadata = await new Promise((resolve, reject) => {
+        window.musicmetadata(file, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
       });
-    });
 
-    document.getElementById("music-change-title").value = metadata.title || file.name.replace(/\.[^/.]+$/, "");
-    document.getElementById("music-change-artist").value = metadata.artist?.[0] || "알 수 없는 아티스트";
-  } catch (error) {
-    console.error("메타데이터 추출 실패:", error);
-    // 파일명에서 추출 시도
-    const fileName = file.name.replace(/\.[^/.]+$/, "");
-    if (fileName.includes(" - ")) {
-      const parts = fileName.split(" - ");
-      document.getElementById("music-change-artist").value = parts[0].trim();
-      document.getElementById("music-change-title").value = parts[1].trim();
-    } else {
-      document.getElementById("music-change-title").value = fileName;
-      document.getElementById("music-change-artist").value = "알 수 없는 아티스트";
+      document.getElementById("music-change-title").value =
+        metadata.title || file.name.replace(/\.[^/.]+$/, "");
+      document.getElementById("music-change-artist").value =
+        metadata.artist?.[0] || "알 수 없는 아티스트";
+    } catch (error) {
+      console.error("메타데이터 추출 실패:", error);
+      // 파일명에서 추출 시도
+      const fileName = file.name.replace(/\.[^/.]+$/, "");
+      if (fileName.includes(" - ")) {
+        const parts = fileName.split(" - ");
+        document.getElementById("music-change-artist").value = parts[0].trim();
+        document.getElementById("music-change-title").value = parts[1].trim();
+      } else {
+        document.getElementById("music-change-title").value = fileName;
+        document.getElementById("music-change-artist").value =
+          "알 수 없는 아티스트";
+      }
     }
-  }
-});
+  });
 
 // 음악변경 폼 제출 처리
-document.getElementById("music-change-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  await handleMusicChange();
-});
+document
+  .getElementById("music-change-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await handleMusicChange();
+  });
 
 // 음악변경 처리 함수
 async function handleMusicChange() {
   const fileInput = document.getElementById("music-change-file");
   const file = fileInput.files[0];
-  
+
   if (!file) {
     alert("음악 파일을 선택해주세요.");
     return;
@@ -1954,26 +1987,25 @@ async function handleMusicChange() {
 
   const submitBtn = document.getElementById("music-change-submit");
   const originalText = submitBtn.textContent;
-  
+
   try {
     // UI 비활성화
     submitBtn.textContent = "변경 중...";
     submitBtn.disabled = true;
-    
+
     const musicTitle = document.getElementById("music-change-title").value;
     const artistName = document.getElementById("music-change-artist").value;
-    
+
     // 파일명 생성 (admin.js와 동일한 패턴 사용)
     const fileName = `music_${Date.now()}.mp3`;
     const filePath = `music/${fileName}`;
-    
+
     // Supabase Storage에 음악 파일 업로드 (admin.js와 동일한 옵션 사용)
-    const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-      .from("media")
-      .upload(filePath, file, {
+    const { data: uploadData, error: uploadError } =
+      await window.supabaseClient.storage.from("media").upload(filePath, file, {
         cacheControl: "3600",
         upsert: true,
-        contentType: "audio/mpeg"
+        contentType: "audio/mpeg",
       });
 
     if (uploadError) {
@@ -2001,7 +2033,7 @@ async function handleMusicChange() {
         .update({
           music_title: musicTitle,
           artist_name: artistName,
-          music_path: filePath
+          music_path: filePath,
         })
         .eq("memory_id", currentMedia.id);
       dbError = error;
@@ -2015,7 +2047,7 @@ async function handleMusicChange() {
           artist_name: artistName,
           music_path: filePath,
           duration_seconds: 0, // 기본값 설정
-          album_path: null // 앨범 커버는 일단 null로
+          album_path: null, // 앨범 커버는 일단 null로
         });
       dbError = error;
     }
@@ -2026,13 +2058,12 @@ async function handleMusicChange() {
     }
 
     alert("음악이 성공적으로 변경되었습니다!");
-    
+
     // 모달 닫기
     closeMusicChangeModal();
-    
+
     // 팝업 새로고침 (음악 플레이어 업데이트)
     await refreshPopupContent();
-    
   } catch (error) {
     console.error("음악변경 처리 중 오류:", error);
     alert("음악 변경 중 오류가 발생했습니다: " + error.message);
