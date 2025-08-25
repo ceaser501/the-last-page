@@ -593,6 +593,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         alert("등록 완료!");
         formModal.style.display = "none";
+        
+        // 🔥 UI 상태 완전 복원 (스크롤 활성화, 모달 상태 해제)
+        document.body.style.overflow = "auto";
+        document.body.classList.remove("modal-open");
 
         // 메모리 새로 불러오기
         if (typeof loadMediaFromSupabase === "function") {
@@ -1143,6 +1147,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", async () => {
       const modal = document.getElementById("bgm-upload-modal");
       modal.style.display = "flex";
+      
+      // 🔥 모달 열 때 UI 상태 설정 (스크롤 비활성화, 모달 상태 활성화)
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
 
       // 현재 BGM 리스트 표시
       const currentBGMList = await getCurrentBGMList();
@@ -1280,6 +1288,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // 성공 처리
             alert("BGM이 성공적으로 설정되었습니다!");
             document.getElementById("bgm-upload-modal").style.display = "none";
+            
+            // 🔥 UI 상태 완전 복원 (스크롤 활성화, 모달 상태 해제)
+            document.body.style.overflow = "auto";
+            document.body.classList.remove("modal-open");
 
             // 메인 음악 플레이어 새로고침
             if (typeof loadMainMusic === "function") {
@@ -1302,6 +1314,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // BGM 업로드 모달 취소
   document.getElementById("bgm-cancel")?.addEventListener("click", () => {
     document.getElementById("bgm-upload-modal").style.display = "none";
+    
+    // 🔥 UI 상태 완전 복원 (스크롤 활성화, 모달 상태 해제)
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("modal-open");
   });
 
   // 파일 선택 시 자동으로 제목/아티스트 추출

@@ -12,6 +12,12 @@ let isSlideshowPlaying = false;
 // 수정 모드 상태
 let isEditMode = false;
 
+// 🔥 성능 최적화: 메모리 캐싱 시스템
+let mediaDataCache = new Map(); // 로드한 미디어 데이터 캐시
+let thumbnailTimeouts = []; // 썸네일 타이머 관리
+let thumbnailQueue = []; // 썸네일 로딩 큐
+let isLoadingThumbnails = false; // 썸네일 로딩 상태
+
 // 이미지 확대/축소 및 패닝(이동) 상태 변수
 let zoomLevel = 1;
 let isDragging = false;
@@ -28,19 +34,242 @@ const { data: defaultCoverData } = window.supabaseClient.storage
 const DEFAULT_ALBUM_COVER_URL = defaultCoverData.publicUrl;
 
 // 상세 팝업 열기
-function openDetailPopup(media, mediaList) {
-  // 성능 최적화: 디버깅 로그 제거
-
+async function openDetailPopup(media, mediaList) {
   // 메인 음악 일시정지
   if (typeof pauseMainMusic === "function") {
     pauseMainMusic();
   }
 
+  // 🎵 기존 팝업 음악 정지 (슬라이드 전환 시 중복 재생 방지)
+  if (window.audio) {
+    window.audio.pause();
+    window.audio.currentTime = 0;
+    console.log("🎵 기존 팝업 음악 정지");
+  }
+
+  // 🔥 기존 썸네일 로딩 작업 정리 (네트워크 리소스 절약)
+  clearThumbnailQueue();
+
   currentMediaList = mediaList;
-  currentIndex = mediaList.indexOf(media);
+  // ID 기반으로 인덱스 찾기 (객체 참조 문제 해결)
+  currentIndex = mediaList.findIndex(m => m.id === media.id);
   currentImageIndex = 0;
-  currentMedia = media; // 현재 미디어 저장
-  isEditMode = false; // 수정 모드 초기화
+  currentMedia = media;
+  isEditMode = false;
+
+  console.log("🔍 팝업 열기 - media.id:", media.id, "currentIndex:", currentIndex);
+
+  try {
+    let fullMedia;
+
+    // 🚀 캐시 확인 - 이미 로드한 데이터가 있으면 DB 쿼리 생략
+    if (mediaDataCache.has(media.id)) {
+      console.log("🔄 캐시에서 데이터 로드:", media.id);
+      fullMedia = mediaDataCache.get(media.id);
+    } else {
+      console.log("📡 DB에서 새 데이터 로드:", media.id);
+      // 상세 팝업에서 전체 미디어 데이터 로드
+      const { data, error } = await window.supabaseClient
+        .from("memories")
+        .select("*, media_files(order:file_order, media_url, is_main, file_order)")
+        .eq("id", media.id)
+        .single();
+
+      if (error) {
+        console.error("상세 미디어 로드 실패:", error);
+        alert("미디어 정보를 불러오는데 실패했습니다.");
+        return;
+      }
+
+      fullMedia = data;
+      // 🗄️ 캐시에 저장 (최대 50개까지만 저장하여 메모리 관리)
+      if (mediaDataCache.size >= 50) {
+        const firstKey = mediaDataCache.keys().next().value;
+        mediaDataCache.delete(firstKey);
+      }
+      mediaDataCache.set(media.id, fullMedia);
+    }
+
+    // 팝업 내용 렌더링 (로딩 메시지 없이 바로 표시)
+    await renderDetailPopupContent(fullMedia);
+    
+    // 팝업 표시
+    const overlay = document.getElementById("popup-overlay");
+    overlay.style.display = "flex";
+    
+    // 🔮 인접 슬라이드 프리로드 (백그라운드에서)
+    preloadAdjacentSlides();
+    
+  } catch (error) {
+    console.error("상세 팝업 로드 중 오류:", error);
+    alert("미디어 정보를 불러오는데 실패했습니다.");
+  }
+}
+
+// 🔮 인접 슬라이드 프리로딩 (백그라운드에서 다음/이전 슬라이드 데이터 미리 로드)
+async function preloadAdjacentSlides() {
+  if (!currentMediaList || currentMediaList.length <= 1) return;
+  
+  const preloadTasks = [];
+  
+  // 이전 슬라이드 프리로드
+  if (currentIndex > 0) {
+    const prevMedia = currentMediaList[currentIndex - 1];
+    if (!mediaDataCache.has(prevMedia.id)) {
+      preloadTasks.push(preloadSingleSlide(prevMedia.id));
+    }
+  }
+  
+  // 다음 슬라이드 프리로드
+  if (currentIndex < currentMediaList.length - 1) {
+    const nextMedia = currentMediaList[currentIndex + 1];
+    if (!mediaDataCache.has(nextMedia.id)) {
+      preloadTasks.push(preloadSingleSlide(nextMedia.id));
+    }
+  }
+  
+  // 백그라운드에서 실행 (에러가 발생해도 메인 기능에 영향 없음)
+  Promise.all(preloadTasks).catch(error => {
+    console.log("🔮 프리로드 중 일부 실패 (무시됨):", error);
+  });
+}
+
+// 단일 슬라이드 프리로딩
+async function preloadSingleSlide(mediaId) {
+  try {
+    console.log("🔮 프리로드 시작:", mediaId);
+    const { data, error } = await window.supabaseClient
+      .from("memories")
+      .select("*, media_files(order:file_order, media_url, is_main, file_order)")
+      .eq("id", mediaId)
+      .single();
+      
+    if (!error) {
+      mediaDataCache.set(mediaId, data);
+      console.log("✅ 프리로드 완료:", mediaId);
+    }
+  } catch (error) {
+    console.log("❌ 프리로드 실패:", mediaId, error);
+  }
+}
+
+// 상세 팝업 내용 렌더링
+async function renderDetailPopupContent(media) {
+  currentMedia = media;
+
+  // 🎵 기존 음악 플레이어 정리 (HTML 재생성 전에 정리)
+  resetMusicPlayer();
+
+  // 팝업 HTML 구조 복원 (원본 구조 유지)
+  const overlay = document.getElementById("popup-overlay");
+  overlay.innerHTML = `
+    <!-- 네비게이션 버튼들을 overlay 레벨에 배치 -->
+    <button id="popup-prev-btn" class="popup-nav">‹</button>
+    <button id="popup-next-btn" class="popup-nav">›</button>
+
+    <div class="detail-popup">
+      <div class="popup-controls">
+        <button id="popup-slideshow-btn" title="슬라이드쇼">▶</button>
+        <button id="popup-fullscreen-btn" title="전체화면">⛶</button>
+        <button id="popup-close-btn" title="닫기">✕</button>
+      </div>
+
+      <div class="popup-left">
+        <div id="popup-main-image-container" src=""></div>
+        <div id="popup-thumbnails" class="thumbnail-list"></div>
+      </div>
+      <div class="popup-right">
+        <!-- 팝업 내부 우측 [음악 플레이어]-->
+        <div class="music-wrapper" style="display: none;">
+          <div class="music-player-container">
+            <div id="player-bg-artwork"></div>
+            <div id="player-bg-layer"></div>
+            <div id="player-container">
+              <div id="player">
+                <div id="player-track">
+                  <span id="album-name"></span>
+                  <span id="track-name"></span>
+                  <div id="track-time">
+                    <div id="current-time"></div>
+                    <div id="track-length"></div>
+                  </div>
+                  <div id="seek-bar-container">
+                    <div id="seek-time"></div>
+                    <div id="s-hover"></div>
+                    <div id="seek-bar"></div>
+                  </div>
+                </div>
+                <div id="player-content">
+                  <div id="album-art">
+                    <img src="" class="active" id="_1" />
+                    <div id="buffer-box">Buffering ...</div>
+                  </div>
+                  <div id="player-controls">
+                    <div class="control">
+                      <div class="button" id="play-previous">
+                        <i class="fas fa-backward"></i>
+                      </div>
+                    </div>
+                    <div class="control">
+                      <div class="button" id="play-pause-button">
+                        <i class="fas fa-play"></i>
+                      </div>
+                    </div>
+                    <div class="control">
+                      <div class="button" id="play-next">
+                        <i class="fas fa-forward"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-texts">
+          <div id="popup-content-wrapper">
+            <!-- 팝업 내부 우측 [썸네일 제목] (숨김) -->
+            <div id="popup-thumbnail-title" class="popup-meta-thumbnail" style="display: none"></div>
+            <!-- 팝업 내부 우측 [제목]과 버튼들 -->
+            <div class="popup-title-row">
+              <div id="popup-title" class="popup-meta-title"></div>
+              <div class="popup-action-buttons">
+                <button id="popup-music-change-btn" class="auth-btn control-btn-group primary" style="display: none">
+                  음악변경
+                </button>
+                <button id="popup-add-media-btn" class="auth-btn control-btn-group primary" style="display: none">
+                  파일업로드
+                </button>
+                <button id="popup-edit-btn" class="auth-btn control-btn-group primary" style="display: none">
+                  수정
+                </button>
+                <button id="popup-delete-btn" class="auth-btn control-btn-group secondary" style="display: none">
+                  삭제
+                </button>
+              </div>
+            </div>
+            <!-- 팝업 내부 우측 [내용]-->
+            <div id="popup-description" class="popup-meta-description"></div>
+            <!-- 팝업 내부 우측 [달력/날짜]-->
+            <div id="popup-date" class="popup-meta">
+              <i class="icon">📅</i>
+            </div>
+            <!-- 팝업 내부 우측 [장소]-->
+            <div id="popup-location" class="popup-meta"></div>
+            <!-- 팝업 내부 우측 [태그]-->
+            <div id="popup-tags" class="popup-tags"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 이벤트 리스너 재설정
+  setupPopupEventListeners();
+
+  // 음악 플레이어 초기화 (HTML이 새로 생성되었으므로 다시 초기화 필요)
+  initPlayer();
 
   // 폴라로이드 번호 계산 (배열 인덱스 + 1)
   const polaroidNumber = currentIndex + 1;
@@ -63,10 +292,7 @@ function openDetailPopup(media, mediaList) {
     musicChangeBtn.style.display = "none";
   }
 
-  const overlay = document.getElementById("popup-overlay");
-  const mainImgContainer = document.getElementById(
-    "popup-main-image-container"
-  );
+  const mainImgContainer = document.getElementById("popup-main-image-container");
   const musicWrapper = document.querySelector(".music-wrapper");
   const thumbList = document.getElementById("popup-thumbnails");
 
@@ -231,8 +457,13 @@ function openDetailPopup(media, mediaList) {
 
       const thumb = document.createElement("img");
       thumb.className = "popup-thumb";
-      thumb.loading = "lazy"; // 지연 로딩 추가
+      thumb.loading = "lazy";
       if (idx === 0) thumb.classList.add("selected-thumb");
+
+      // 비디오 썸네일 플레이스홀더 설정
+      thumb.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23f0f0f0'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial' font-size='8'>로딩중</text></svg>";
+      thumb.setAttribute("data-video-src", src);
+      thumb.setAttribute("data-video-thumbnail", "pending");
 
       // 플레이 아이콘 생성
       const playIcon = document.createElement("div");
@@ -257,30 +488,12 @@ function openDetailPopup(media, mediaList) {
         highlightThumbnail(idx);
       });
 
-      const video = document.createElement("video");
-      video.src = src;
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.playsInline = true;
-      video.preload = "metadata"; // 메타데이터만 로드하여 트래픽 절약
-      video.style.display = "none";
-
-      video.addEventListener("loadedmetadata", () => {
-        video.currentTime = 0.1;
-      });
-
-      video.addEventListener("seeked", () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 40;
-        canvas.height = 53; // 3:4 비율
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        thumb.src = canvas.toDataURL("image/jpeg");
-        video.remove();
-      });
-
-      document.body.appendChild(video);
       thumbList.appendChild(videoContainer);
+
+      // 🔥 우선순위 기반 썸네일 로딩 큐에 추가
+      // 처음 3개는 높은 우선순위(0-2), 나머지는 낮은 우선순위
+      const priority = idx < 3 ? idx : idx + 10;
+      addToThumbnailQueue(thumb, priority);
     } else {
       // 이미지용 썸네일
       const thumb = document.createElement("img");
@@ -294,13 +507,255 @@ function openDetailPopup(media, mediaList) {
         highlightThumbnail(idx);
       });
 
+      // 🔥 썸네일 이미지 에러 핸들링 추가
+      thumb.addEventListener("error", (e) => {
+        console.error("❌ 팝업 썸네일 이미지 로딩 실패:", src);
+        console.error("🔍 썸네일 에러 상세:", {
+          url: src,
+          index: idx,
+          naturalWidth: thumb.naturalWidth,
+          naturalHeight: thumb.naturalHeight,
+          complete: thumb.complete,
+          currentSrc: thumb.currentSrc
+        });
+        
+        thumb.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='7'>실패</text></svg>";
+      });
+
       thumb.src = src;
       thumbList.appendChild(thumb);
     }
   });
 
   renderMainMedia(allSrc[0]);
-  overlay.style.display = "flex";
+}
+
+// 팝업용 비디오 썸네일 생성 함수 - 개선된 에러 핸들링 및 타이머 관리
+function generatePopupVideoThumbnail(thumbnailImg, retryCount = 0) {
+  const videoSrc = thumbnailImg.getAttribute("data-video-src");
+  if (!videoSrc) return;
+  
+  thumbnailImg.setAttribute("data-video-thumbnail", "loading");
+  
+  const videoForThumb = document.createElement("video");
+  videoForThumb.src = videoSrc;
+  videoForThumb.crossOrigin = "anonymous";
+  videoForThumb.muted = true;
+  videoForThumb.playsInline = true;
+  videoForThumb.preload = "metadata";
+  videoForThumb.style.display = "none";
+
+  let isCompleted = false;
+  let timeoutId = null;
+
+  // 🔥 타임아웃 설정 (10초 후 강제 실패)
+  timeoutId = setTimeout(() => {
+    if (!isCompleted) {
+      console.warn("⏰ 비디오 썸네일 생성 타임아웃:", videoSrc);
+      handleThumbnailError();
+    }
+  }, 10000);
+
+  function cleanup() {
+    isCompleted = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    try {
+      videoForThumb.remove();
+    } catch (e) {
+      // 이미 제거된 경우 무시
+    }
+  }
+
+  function handleThumbnailError() {
+    cleanup();
+    
+    // 🔄 재시도 로직 (최대 2회)
+    if (retryCount < 2) {
+      console.log(`🔄 썸네일 생성 재시도 (${retryCount + 1}/2):`, videoSrc);
+      
+      // 지수적 백오프로 재시도
+      const delay = 1000 * Math.pow(2, retryCount);
+      setTimeout(() => {
+        generatePopupVideoThumbnail(thumbnailImg, retryCount + 1);
+      }, delay);
+      return;
+    }
+
+    // 최종 실패 - 에러 이미지 표시
+    thumbnailImg.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='7'>로딩실패</text></svg>";
+    thumbnailImg.setAttribute("data-video-thumbnail", "error");
+  }
+
+  videoForThumb.addEventListener("loadedmetadata", () => {
+    if (!isCompleted) {
+      videoForThumb.currentTime = 0.1;
+    }
+  });
+
+  videoForThumb.addEventListener("seeked", () => {
+    if (isCompleted) return;
+    
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 53;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoForThumb, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL("image/jpeg", 0.8);
+      thumbnailImg.src = dataURL;
+      thumbnailImg.setAttribute("data-video-thumbnail", "loaded");
+      
+      console.log("✅ 비디오 썸네일 생성 완료:", videoSrc);
+      cleanup();
+    } catch (error) {
+      console.error("❌ Canvas 렌더링 실패:", error);
+      handleThumbnailError();
+    }
+  });
+
+  videoForThumb.addEventListener("error", (e) => {
+    console.error("❌ 비디오 로딩 실패:", videoSrc, e);
+    handleThumbnailError();
+  });
+
+  // 🔥 네트워크 상태 체크 추가
+  videoForThumb.addEventListener("stalled", () => {
+    console.warn("⚠️ 비디오 로딩 지연:", videoSrc);
+  });
+
+  videoForThumb.addEventListener("suspend", () => {
+    console.warn("⚠️ 비디오 로딩 일시정지:", videoSrc);
+  });
+
+  document.body.appendChild(videoForThumb);
+}
+
+// 🔥 썸네일 로딩 큐 관리 시스템
+function clearThumbnailQueue() {
+  // 기존 타이머들 모두 정리
+  thumbnailTimeouts.forEach(timeoutId => {
+    clearTimeout(timeoutId);
+  });
+  thumbnailTimeouts = [];
+  thumbnailQueue = [];
+  isLoadingThumbnails = false;
+}
+
+function addToThumbnailQueue(thumbnailImg, priority = 0) {
+  thumbnailQueue.push({ thumbnailImg, priority });
+  
+  // 우선순위별로 정렬 (0이 가장 높은 우선순위)
+  thumbnailQueue.sort((a, b) => a.priority - b.priority);
+  
+  if (!isLoadingThumbnails) {
+    processThumbnailQueue();
+  }
+}
+
+function processThumbnailQueue() {
+  if (thumbnailQueue.length === 0) {
+    isLoadingThumbnails = false;
+    return;
+  }
+  
+  isLoadingThumbnails = true;
+  const { thumbnailImg } = thumbnailQueue.shift();
+  
+  // 썸네일이 여전히 pending 상태인지 확인
+  if (thumbnailImg.getAttribute("data-video-thumbnail") === "pending") {
+    generatePopupVideoThumbnail(thumbnailImg);
+  }
+  
+  // 500ms 후 다음 썸네일 처리 (네트워크 부하 분산)
+  const timeoutId = setTimeout(() => {
+    processThumbnailQueue();
+  }, 500);
+  
+  thumbnailTimeouts.push(timeoutId);
+}
+
+// 팝업 이벤트 리스너 설정
+function setupPopupEventListeners() {
+  // 닫기 버튼
+  document.getElementById("popup-close-btn").addEventListener("click", () => {
+    closeDetailPopup();
+  });
+
+  // 좌우 이동
+  document.getElementById("popup-prev-btn").addEventListener("click", () => {
+    console.log("🔍 이전 버튼 클릭 - currentIndex:", currentIndex, "mediaList length:", currentMediaList.length);
+    if (currentIndex > 0) {
+      const prevMedia = currentMediaList[currentIndex - 1];
+      console.log("🔍 이전 미디어로 이동:", prevMedia.id, "index:", currentIndex - 1);
+      openDetailPopup(prevMedia, currentMediaList);
+    }
+  });
+
+  document.getElementById("popup-next-btn").addEventListener("click", () => {
+    console.log("🔍 다음 버튼 클릭 - currentIndex:", currentIndex, "mediaList length:", currentMediaList.length);
+    if (currentIndex < currentMediaList.length - 1) {
+      const nextMedia = currentMediaList[currentIndex + 1];
+      console.log("🔍 다음 미디어로 이동:", nextMedia.id, "index:", currentIndex + 1);
+      openDetailPopup(nextMedia, currentMediaList);
+    }
+  });
+
+  // 전체화면
+  document.getElementById("popup-fullscreen-btn").addEventListener("click", () => {
+    const container = document.getElementById("popup-main-image-container");
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      } else if (container.msRequestFullscreen) {
+        container.msRequestFullscreen();
+      }
+    }
+  });
+
+  // 슬라이드쇼
+  document.getElementById("popup-slideshow-btn").addEventListener("click", () => {
+    if (!isSlideshowPlaying) {
+      isSlideshowPlaying = true;
+      document.getElementById("popup-slideshow-btn").textContent = "⏸";
+      slideshowInterval = setInterval(() => {
+        if (currentIndex < currentMediaList.length - 1) {
+          openDetailPopup(currentMediaList[currentIndex + 1], currentMediaList);
+        } else {
+          clearInterval(slideshowInterval);
+          isSlideshowPlaying = false;
+          document.getElementById("popup-slideshow-btn").textContent = "▶";
+        }
+      }, 3000);
+    } else {
+      clearInterval(slideshowInterval);
+      isSlideshowPlaying = false;
+      document.getElementById("popup-slideshow-btn").textContent = "▶";
+    }
+  });
+
+  // 수정/삭제/미디어 추가/음악변경 버튼
+  document.getElementById("popup-edit-btn").addEventListener("click", () => {
+    toggleEditMode();
+  });
+
+  document.getElementById("popup-delete-btn").addEventListener("click", () => {
+    deleteMemory();
+  });
+
+  document.getElementById("popup-add-media-btn").addEventListener("click", () => {
+    showMediaUploadModal();
+  });
+
+  document.getElementById("popup-music-change-btn").addEventListener("click", () => {
+    showMusicChangeModal();
+  });
 }
 
 // 본문 미디어 렌더링
@@ -330,9 +785,43 @@ function renderMainMedia(src) {
     mainImgContainer.appendChild(video);
   } else {
     const img = document.createElement("img");
-    img.src = src;
     img.id = "popup-main-image";
     img.loading = "lazy"; // 지연 로딩 추가
+    
+    // 🔥 팝업 메인 이미지 로딩 에러 핸들링 추가
+    img.addEventListener("error", (e) => {
+      console.error("❌ 팝업 메인 이미지 로딩 실패:", src);
+      console.error("🔍 에러 상세 정보:", {
+        url: src,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        complete: img.complete,
+        currentSrc: img.currentSrc,
+        error: e
+      });
+      
+      // URL 검증
+      if (src && src.includes('supabase')) {
+        console.log("🌐 Supabase URL 테스트 중...");
+        fetch(src, { method: 'HEAD' })
+          .then(response => {
+            console.log(`🔍 URL 응답: ${response.status} ${response.statusText}`);
+            console.log(`📁 Content-Type: ${response.headers.get('content-type')}`);
+            console.log(`📏 Content-Length: ${response.headers.get('content-length')}`);
+          })
+          .catch(fetchError => {
+            console.error("🚨 URL 접근 실패:", fetchError);
+          });
+      }
+      
+      img.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='16'>이미지를 불러올 수 없습니다</text></svg>";
+    });
+    
+    img.addEventListener("load", () => {
+      console.log("✅ 팝업 메인 이미지 로딩 완료:", src);
+    });
+    
+    img.src = src;
 
     // 확대/축소 컨트롤 추가
     const zoomControls = document.createElement("div");
@@ -417,10 +906,6 @@ function highlightThumbnail(index) {
   });
 }
 
-// 닫기 버튼
-document.getElementById("popup-close-btn").addEventListener("click", () => {
-  closeDetailPopup();
-});
 
 function closeDetailPopup() {
   const overlay = document.getElementById("popup-overlay");
@@ -475,36 +960,6 @@ function closeDetailPopup() {
   loadMediaFromSupabase();
 }
 
-// 좌우 이동
-document.getElementById("popup-prev-btn").addEventListener("click", () => {
-  if (currentIndex > 0) {
-    openDetailPopup(currentMediaList[currentIndex - 1], currentMediaList);
-  }
-});
-
-document.getElementById("popup-next-btn").addEventListener("click", () => {
-  if (currentIndex < currentMediaList.length - 1) {
-    openDetailPopup(currentMediaList[currentIndex + 1], currentMediaList);
-  }
-});
-
-// 전체화면
-document
-  .getElementById("popup-fullscreen-btn")
-  .addEventListener("click", () => {
-    const container = document.getElementById("popup-main-image-container");
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-      } else if (container.webkitRequestFullscreen) {
-        container.webkitRequestFullscreen();
-      } else if (container.msRequestFullscreen) {
-        container.msRequestFullscreen();
-      }
-    }
-  });
 
 // 키보드 방향키 탐색
 document.addEventListener("keydown", (e) => {
@@ -537,48 +992,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// 슬라이드쇼
-document.getElementById("popup-slideshow-btn").addEventListener("click", () => {
-  if (!isSlideshowPlaying) {
-    isSlideshowPlaying = true;
-    document.getElementById("popup-slideshow-btn").textContent = "⏸";
-    slideshowInterval = setInterval(() => {
-      if (currentIndex < currentMediaList.length - 1) {
-        openDetailPopup(currentMediaList[currentIndex + 1], currentMediaList);
-      } else {
-        clearInterval(slideshowInterval);
-        isSlideshowPlaying = false;
-        document.getElementById("popup-slideshow-btn").textContent = "▶";
-      }
-    }, 3000);
-  } else {
-    clearInterval(slideshowInterval);
-    isSlideshowPlaying = false;
-    document.getElementById("popup-slideshow-btn").textContent = "▶";
-  }
-});
 
-// 수정 버튼 클릭 이벤트
-document.getElementById("popup-edit-btn").addEventListener("click", () => {
-  toggleEditMode();
-});
-
-// 삭제 버튼 클릭 이벤트
-document.getElementById("popup-delete-btn").addEventListener("click", () => {
-  deleteMemory();
-});
-
-// 미디어 추가 버튼 클릭 이벤트
-document.getElementById("popup-add-media-btn").addEventListener("click", () => {
-  showMediaUploadModal();
-});
-
-// 음악변경 버튼 클릭 이벤트
-document
-  .getElementById("popup-music-change-btn")
-  .addEventListener("click", () => {
-    showMusicChangeModal();
-  });
 
 // 메모리 삭제 함수
 // Supabase 작업 재시도 함수
@@ -805,158 +1219,157 @@ async function deleteMemory() {
 const currentTime = document.getElementById("current-time");
 const totalTime = document.getElementById("track-length");
 
-$(function () {
-  const playerTrack = $("#player-track");
-  const bgArtwork = $("#player-bg-artwork");
-  const albumName = $("#album-name");
-  const trackName = $("#track-name");
-  const albumArt = $("#album-art");
-  const sArea = $("#seek-bar-container");
-  const seekBar = $("#seek-bar");
-  const trackTime = $("#track-time");
-  const seekTime = $("#seek-time");
-  const sHover = $("#s-hover");
-  const playPauseButton = $("#play-pause-button");
-  const tProgress = $("#current-time");
-  const tTime = $("#track-length");
-  const playPreviousTrackButton = $("#play-previous");
-  const playNextTrackButton = $("#play-next");
+// 전역 스코프에서 접근 가능하도록 initPlayer 함수를 밖으로 이동
+function initPlayer() {
+    // jQuery 선택자들을 함수 내부에서 새로 가져오기
+    const playerTrack = $("#player-track");
+    const bgArtwork = $("#player-bg-artwork");
+    const albumName = $("#album-name");
+    const trackName = $("#track-name");
+    const albumArt = $("#album-art");
+    const sArea = $("#seek-bar-container");
+    const seekBar = $("#seek-bar");
+    const trackTime = $("#track-time");
+    const seekTime = $("#seek-time");
+    const sHover = $("#s-hover");
+    const playPauseButton = $("#play-pause-button");
+    const tProgress = $("#current-time");
+    const tTime = $("#track-length");
+    const playPreviousTrackButton = $("#play-previous");
+    const playNextTrackButton = $("#play-next");
 
-  let bgArtworkUrl,
-    i = playPauseButton.find("i"),
-    seekT,
-    seekLoc,
-    seekBarPos,
-    cM,
-    ctMinutes,
-    ctSeconds,
-    curMinutes,
-    curSeconds,
-    durMinutes,
-    durSeconds,
-    playProgress,
-    bTime,
-    nTime = 0,
-    buffInterval = null;
+    let bgArtworkUrl,
+      i = playPauseButton.find("i"),
+      seekT,
+      seekLoc,
+      seekBarPos,
+      cM,
+      ctMinutes,
+      ctSeconds,
+      curMinutes,
+      curSeconds,
+      durMinutes,
+      durSeconds,
+      playProgress,
+      bTime,
+      nTime = 0,
+      buffInterval = null;
 
-  function playPause() {
-    setTimeout(function () {
-      if (audio.paused) {
-        playerTrack.addClass("active");
-        albumArt.addClass("active");
-        checkBuffering();
-        i.attr("class", "fas fa-pause");
-        audio.play();
-      } else {
-        playerTrack.removeClass("active");
-        albumArt.removeClass("active");
-        clearInterval(buffInterval);
-        albumArt.removeClass("buffering");
-        i.attr("class", "fas fa-play");
-        audio.pause();
-      }
-    }, 300);
-  }
-
-  function showHover(event) {
-    seekBarPos = sArea.offset();
-    seekT = event.clientX - seekBarPos.left;
-    seekLoc = audio.duration * (seekT / sArea.outerWidth());
-
-    sHover.width(seekT);
-
-    cM = seekLoc / 60;
-
-    ctMinutes = Math.floor(cM);
-    ctSeconds = Math.floor(seekLoc - ctMinutes * 60);
-
-    if (ctMinutes < 0 || ctSeconds < 0) return;
-
-    if (ctMinutes < 0 || ctSeconds < 0) return;
-
-    if (ctMinutes < 10) ctMinutes = "0" + ctMinutes;
-    if (ctSeconds < 10) ctSeconds = "0" + ctSeconds;
-
-    if (isNaN(ctMinutes) || isNaN(ctSeconds)) seekTime.text("--:--");
-    else seekTime.text(ctMinutes + ":" + ctSeconds);
-
-    seekTime.css({ left: seekT, "margin-left": "-21px" }).fadeIn(0);
-  }
-
-  function hideHover() {
-    sHover.width(0);
-    seekTime
-      .text("00:00")
-      .css({ left: "0px", "margin-left": "0px" })
-      .fadeOut(0);
-  }
-
-  function playFromClickedPos() {
-    audio.currentTime = seekLoc;
-    seekBar.width(seekT);
-    hideHover();
-  }
-
-  function updateCurrTime() {
-    nTime = new Date();
-    nTime = nTime.getTime();
-
-    curMinutes = Math.floor(audio.currentTime / 60);
-    curSeconds = Math.floor(audio.currentTime - curMinutes * 60);
-
-    durMinutes = Math.floor(audio.duration / 60);
-    durSeconds = Math.floor(audio.duration - durMinutes * 60);
-
-    playProgress = (audio.currentTime / audio.duration) * 100;
-
-    if (curMinutes < 10) curMinutes = "0" + curMinutes;
-    if (curSeconds < 10) curSeconds = "0" + curSeconds;
-
-    if (durMinutes < 10) durMinutes = "0" + durMinutes;
-    if (durSeconds < 10) durSeconds = "0" + durSeconds;
-
-    if (isNaN(curMinutes) || isNaN(curSeconds)) tProgress.text("00:00");
-    else tProgress.text(curMinutes + ":" + curSeconds);
-
-    if (isNaN(durMinutes) || isNaN(durSeconds)) tTime.text("00:00");
-    else tTime.text(durMinutes + ":" + durSeconds);
-
-    if (
-      isNaN(curMinutes) ||
-      isNaN(curSeconds) ||
-      isNaN(durMinutes) ||
-      isNaN(durSeconds)
-    )
-      trackTime.removeClass("active");
-    else trackTime.addClass("active");
-
-    seekBar.width(playProgress + "%");
-
-    if (playProgress == 100) {
-      i.attr("class", "fa fa-play");
-      seekBar.width(0);
-      tProgress.text("00:00");
-      albumArt.removeClass("buffering").removeClass("active");
-      clearInterval(buffInterval);
-    }
-  }
-
-  function checkBuffering() {
-    clearInterval(buffInterval);
-    buffInterval = setInterval(function () {
-      if (nTime == 0 || bTime - nTime > 1000) albumArt.addClass("buffering");
-      else albumArt.removeClass("buffering");
-
-      bTime = new Date();
-      bTime = bTime.getTime();
-    }, 100);
-  }
-
-  function initPlayer() {
     window.audio = new Audio(); // 전역화
     window.buffInterval = null; // 전역화
 
     audio.loop = false;
+
+    function playPause() {
+      setTimeout(function () {
+        if (audio.paused) {
+          playerTrack.addClass("active");
+          albumArt.addClass("active");
+          checkBuffering();
+          i.attr("class", "fas fa-pause");
+          audio.play();
+        } else {
+          playerTrack.removeClass("active");
+          albumArt.removeClass("active");
+          clearInterval(buffInterval);
+          albumArt.removeClass("buffering");
+          i.attr("class", "fas fa-play");
+          audio.pause();
+        }
+      }, 300);
+    }
+
+    function showHover(event) {
+      seekBarPos = sArea.offset();
+      seekT = event.clientX - seekBarPos.left;
+      seekLoc = audio.duration * (seekT / sArea.outerWidth());
+
+      sHover.width(seekT);
+
+      cM = seekLoc / 60;
+
+      ctMinutes = Math.floor(cM);
+      ctSeconds = Math.floor(seekLoc - ctMinutes * 60);
+
+      if (ctMinutes < 0 || ctSeconds < 0) return;
+
+      if (ctMinutes < 10) ctMinutes = "0" + ctMinutes;
+      if (ctSeconds < 10) ctSeconds = "0" + ctSeconds;
+
+      if (isNaN(ctMinutes) || isNaN(ctSeconds)) seekTime.text("--:--");
+      else seekTime.text(ctMinutes + ":" + ctSeconds);
+
+      seekTime.css({ left: seekT, "margin-left": "-21px" }).fadeIn(0);
+    }
+
+    function hideHover() {
+      sHover.width(0);
+      seekTime
+        .text("00:00")
+        .css({ left: "0px", "margin-left": "0px" })
+        .fadeOut(0);
+    }
+
+    function playFromClickedPos() {
+      audio.currentTime = seekLoc;
+      seekBar.width(seekT);
+      hideHover();
+    }
+
+    function updateCurrTime() {
+      nTime = new Date();
+      nTime = nTime.getTime();
+
+      curMinutes = Math.floor(audio.currentTime / 60);
+      curSeconds = Math.floor(audio.currentTime - curMinutes * 60);
+
+      durMinutes = Math.floor(audio.duration / 60);
+      durSeconds = Math.floor(audio.duration - durMinutes * 60);
+
+      playProgress = (audio.currentTime / audio.duration) * 100;
+
+      if (curMinutes < 10) curMinutes = "0" + curMinutes;
+      if (curSeconds < 10) curSeconds = "0" + curSeconds;
+
+      if (durMinutes < 10) durMinutes = "0" + durMinutes;
+      if (durSeconds < 10) durSeconds = "0" + durSeconds;
+
+      if (isNaN(curMinutes) || isNaN(curSeconds)) tProgress.text("00:00");
+      else tProgress.text(curMinutes + ":" + curSeconds);
+
+      if (isNaN(durMinutes) || isNaN(durSeconds)) tTime.text("00:00");
+      else tTime.text(durMinutes + ":" + durSeconds);
+
+      if (
+        isNaN(curMinutes) ||
+        isNaN(curSeconds) ||
+        isNaN(durMinutes) ||
+        isNaN(durSeconds)
+      )
+        trackTime.removeClass("active");
+      else trackTime.addClass("active");
+
+      seekBar.width(playProgress + "%");
+
+      if (playProgress == 100) {
+        i.attr("class", "fa fa-play");
+        seekBar.width(0);
+        tProgress.text("00:00");
+        albumArt.removeClass("buffering").removeClass("active");
+        clearInterval(buffInterval);
+      }
+    }
+
+    function checkBuffering() {
+      clearInterval(buffInterval);
+      buffInterval = setInterval(function () {
+        if (nTime == 0 || bTime - nTime > 1000) albumArt.addClass("buffering");
+        else albumArt.removeClass("buffering");
+
+        bTime = new Date();
+        bTime = bTime.getTime();
+      }, 100);
+    }
 
     playPauseButton.on("click", playPause);
 
@@ -979,16 +1392,21 @@ $(function () {
       // 다음 메모리로 이동하는 기능 호출
       document.getElementById("popup-next-btn").click();
     });
-  }
+}
 
-  initPlayer();
+// DOM 로딩 완료 시 초기 설정
+$(function () {
+  // 초기 로딩 시에만 필요한 설정이 있다면 여기에 추가
 });
 
 function resetMusicPlayer() {
   if (!window.audio) return;
 
+  console.log("🎵 음악 플레이어 리셋");
   window.audio.pause();
+  window.audio.currentTime = 0; // 재생 위치도 초기화
   window.audio.src = ""; // 소스 제거
+  window.audio.load(); // 완전히 새로고침
 
   // UI 초기화
   $("#play-pause-button i").attr("class", "fas fa-play");
@@ -1004,6 +1422,7 @@ function resetMusicPlayer() {
 
   if (window.buffInterval) {
     clearInterval(window.buffInterval);
+    window.buffInterval = null;
   }
 }
 
@@ -1398,6 +1817,7 @@ async function showMediaUploadModal() {
   updateFileCountInfo();
 
   modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
   document.body.classList.add("modal-open");
 
   // 모달 이벤트 리스너 설정
@@ -1883,6 +2303,12 @@ async function refreshPopupContent() {
           highlightThumbnail(idx);
         });
 
+        // 🔥 새로고침된 썸네일 이미지 에러 핸들링 추가
+        thumb.addEventListener("error", () => {
+          console.error("❌ 새로고침된 팝업 썸네일 이미지 로딩 실패:", src);
+          thumb.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='7'>실패</text></svg>";
+        });
+
         thumb.src = src;
         thumbList.appendChild(thumb);
       }
@@ -1898,6 +2324,7 @@ async function refreshPopupContent() {
 function closeMediaUploadModal() {
   const modal = document.getElementById("media-upload-modal");
   modal.style.display = "none";
+  document.body.style.overflow = "auto";
   document.body.classList.remove("modal-open");
 
   // 선택된 파일들 초기화
@@ -1911,6 +2338,7 @@ function closeMediaUploadModal() {
 function showMusicChangeModal() {
   const modal = document.getElementById("music-change-modal");
   modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
   document.body.classList.add("modal-open");
 
   // 폼 리셋
@@ -1923,6 +2351,7 @@ function showMusicChangeModal() {
 function closeMusicChangeModal() {
   const modal = document.getElementById("music-change-modal");
   modal.style.display = "none";
+  document.body.style.overflow = "auto";
   document.body.classList.remove("modal-open");
 }
 

@@ -46,29 +46,30 @@ let mediaList = [];
 let rawMemories = [];
 
 async function loadMediaFromSupabase() {
-  const { data: memories, error } = await retrySupabaseOperation(
-    () =>
-      supabase
-        .from("memories")
-        .select("*, media_files(order:file_order, media_url, is_main, file_order)") // ✅ media_files 내부 정렬 적용
-        .eq("is_public", true)
-        .order("order", { ascending: true }) // memories 자체 정렬
+  // 메인 화면에서는 대표 이미지만 먼저 로드하여 초기 로딩 성능 향상
+  const { data: memories, error } = await retrySupabaseOperation(() =>
+    supabase
+      .from("memories")
+      .select("*, media_files!inner(media_url, is_main)")
+      .eq("is_public", true)
+      .eq("media_files.is_main", true) // 대표 이미지만 로드
+      .order("order", { ascending: true })
   );
 
   if (error) {
     console.error("Supabase fetch error:", error);
     return;
   }
-  console.log("📦 memories data:", memories);
+  console.log("📦 memories data (thumbnail only):", memories);
 
-  rawMemories = memories; // 원본 저장
+  // 원본 데이터는 상세 팝업에서 별도로 로드하도록 변경
+  rawMemories = memories;
   mediaList = memories.map((item, index) => {
-    const mainMedia = item.media_files.find((f) => !!f.is_main);
-    const subMediaList = item.media_files.filter((f) => !f.is_main);
+    const mainMedia = item.media_files?.[0]; // 대표 이미지만 있음
 
     return {
       mainSrc: mainMedia?.media_url || "",
-      subSrcList: subMediaList.map((f) => f.media_url),
+      subSrcList: [], // 메인 화면에서는 서브 미디어 정보 제거
       type: mainMedia?.media_url.match(/\.(mp4|webm|ogg)$/i)
         ? "video"
         : "image",
@@ -78,10 +79,11 @@ async function loadMediaFromSupabase() {
       date: item.date,
       location: item.location,
       index: index,
+      id: item.id, // 상세 팝업에서 사용할 ID 추가
     };
   });
 
-  setupLazyRender(); // 기존 초기화 호출 위치에서 제거하고 여기서 실행
+  setupLazyRender();
 }
 
 const rotateAngles = [-10, 15, -25, 5, 5, -8, 2, -13, -7, 2, -3];
@@ -89,11 +91,124 @@ const rotateAngles = [-10, 15, -25, 5, 5, -8, 2, -13, -7, 2, -3];
 const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add("show");
+      if (entry.isIntersecting) {
+        entry.target.classList.add("show");
+
+        // 비디오 썸네일 지연 생성
+        const videoImg = entry.target.querySelector(
+          'img[data-video-thumbnail="pending"]'
+        );
+        if (videoImg) {
+          generateVideoThumbnail(videoImg);
+        }
+      }
     });
   },
   { threshold: 0.1 }
 );
+
+// 비디오 썸네일 생성 함수 - 개선된 에러 핸들링 및 타이머 관리
+function generateVideoThumbnail(thumbnailImg, retryCount = 0) {
+  const videoSrc = thumbnailImg.getAttribute("data-video-src");
+  if (!videoSrc) return;
+
+  thumbnailImg.setAttribute("data-video-thumbnail", "loading");
+
+  const videoForThumb = document.createElement("video");
+  videoForThumb.src = videoSrc;
+  videoForThumb.crossOrigin = "anonymous";
+  videoForThumb.muted = true;
+  videoForThumb.playsInline = true;
+  videoForThumb.preload = "metadata";
+  videoForThumb.style.display = "none";
+
+  let isCompleted = false;
+  let timeoutId = null;
+
+  // 🔥 타임아웃 설정 (8초 후 강제 실패)
+  timeoutId = setTimeout(() => {
+    if (!isCompleted) {
+      console.warn("⏰ 메인 비디오 썸네일 생성 타임아웃:", videoSrc);
+      handleThumbnailError();
+    }
+  }, 8000);
+
+  function cleanup() {
+    isCompleted = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    try {
+      videoForThumb.remove();
+    } catch (e) {
+      // 이미 제거된 경우 무시
+    }
+  }
+
+  function handleThumbnailError() {
+    cleanup();
+
+    // 🔄 재시도 로직 (최대 1회 - 메인 화면은 빠른 로딩 우선)
+    if (retryCount < 1) {
+      console.log(
+        `🔄 메인 썸네일 생성 재시도 (${retryCount + 1}/1):`,
+        videoSrc
+      );
+
+      // 1초 후 재시도
+      setTimeout(() => {
+        generateVideoThumbnail(thumbnailImg, retryCount + 1);
+      }, 1000);
+      return;
+    }
+
+    // 최종 실패 - 에러 이미지 표시
+    thumbnailImg.src =
+      "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='150' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='11'>로딩실패</text></svg>";
+    thumbnailImg.setAttribute("data-video-thumbnail", "error");
+  }
+
+  videoForThumb.addEventListener("loadedmetadata", () => {
+    if (!isCompleted) {
+      videoForThumb.currentTime = 0.1; // 첫 프레임보다 약간 뒤로
+    }
+  });
+
+  videoForThumb.addEventListener("seeked", () => {
+    if (isCompleted) return;
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 160;
+      canvas.height = 150;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoForThumb, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL("image/jpeg", 0.8); // 압축률 추가
+      thumbnailImg.src = dataURL;
+      thumbnailImg.setAttribute("data-video-thumbnail", "loaded");
+
+      console.log("✅ 메인 비디오 썸네일 생성 완료:", videoSrc);
+      cleanup();
+    } catch (error) {
+      console.error("❌ 메인 Canvas 렌더링 실패:", error);
+      handleThumbnailError();
+    }
+  });
+
+  videoForThumb.addEventListener("error", (e) => {
+    console.error("❌ 메인 비디오 로딩 실패:", videoSrc, e);
+    handleThumbnailError();
+  });
+
+  // 🔥 네트워크 상태 체크 추가
+  videoForThumb.addEventListener("stalled", () => {
+    console.warn("⚠️ 메인 비디오 로딩 지연:", videoSrc);
+  });
+
+  // DOM에 추가하여 로딩 시작
+  document.body.appendChild(videoForThumb);
+}
 
 let pointer = 0;
 let row = 0;
@@ -138,7 +253,7 @@ function generateRow() {
       heartSticker.alt = "heart Sticker";
       heartSticker.className = "heart-sticker-row3"; // 클래스 추가로 중복 방지
       heartSticker.style.position = "absolute";
-      heartSticker.style.top = "890px";
+      heartSticker.style.top = "1000px";
       heartSticker.style.left = "calc(71% - 60px)";
       heartSticker.style.width = "130px";
       heartSticker.style.transform = "rotate(0deg) translateY(-20px)";
@@ -150,7 +265,7 @@ function generateRow() {
       heartSticker2.alt = "heart Sticker";
       heartSticker2.className = "heart-sticker2-row3"; // 클래스 추가로 중복 방지
       heartSticker2.style.position = "absolute";
-      heartSticker2.style.top = "870px";
+      heartSticker2.style.top = "1000px";
       heartSticker2.style.left = "calc(78% - 70px)";
       heartSticker2.style.width = "130px";
       heartSticker2.style.transform = "rotate(-12deg) translateY(-20px)";
@@ -208,6 +323,7 @@ function generateRow() {
   if (row % 2 === 1) {
     rowWrapper.style.marginBottom = "100px";
     rowWrapper.style.marginLeft = "60px";
+    rowWrapper.style.marginTop = "50px";
   }
 
   if (row == 1) {
@@ -270,27 +386,11 @@ function generateRow() {
       const thumbnail = document.createElement("img");
       thumbnail.className = "photo-img";
 
-      // 영상 첫 프레임으로 썸네일 생성
-      const videoForThumb = document.createElement("video");
-      videoForThumb.src = media.mainSrc;
-      videoForThumb.crossOrigin = "anonymous";
-      videoForThumb.muted = true;
-      videoForThumb.playsInline = true;
-      videoForThumb.preload = "metadata"; // 메타데이터만 로드하여 트래픽 절약
-
-      videoForThumb.addEventListener("loadedmetadata", () => {
-        videoForThumb.currentTime = 0.1; // 첫 프레임보다 약간 뒤로
-      });
-
-      videoForThumb.addEventListener("seeked", () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 160;
-        canvas.height = 150;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(videoForThumb, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL("image/jpeg");
-        thumbnail.src = dataURL;
-      });
+      // 기본 비디오 플레이스홀더 이미지 설정
+      thumbnail.src =
+        "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='150' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23f0f0f0'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial' font-size='14'>비디오 로딩중...</text></svg>";
+      thumbnail.setAttribute("data-video-src", media.mainSrc);
+      thumbnail.setAttribute("data-video-thumbnail", "pending");
 
       const playIcon = document.createElement("div");
       playIcon.className = "play-icon";
@@ -300,9 +400,21 @@ function generateRow() {
       photoVideoWrapper.appendChild(playIcon);
     } else {
       const img = document.createElement("img");
-      img.src = media.mainSrc;
       img.className = "photo-img";
       img.loading = "lazy";
+
+      // 🔥 이미지 로딩 에러 핸들링 추가
+      img.addEventListener("error", () => {
+        console.error("❌ 메인 이미지 로딩 실패:", media.mainSrc);
+        img.src =
+          "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='150' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='11'>이미지 로딩실패</text></svg>";
+      });
+
+      img.addEventListener("load", () => {
+        console.log("✅ 메인 이미지 로딩 완료:", media.mainSrc);
+      });
+
+      img.src = media.mainSrc;
       photoVideoWrapper.appendChild(img);
     }
 
@@ -355,7 +467,16 @@ function generateRow() {
     photo.appendChild(caption);
 
     photo.addEventListener("click", () => {
-      openDetailPopup(rawMemories[i], rawMemories); // ← 원본 넘기기
+      // 메인 화면에서는 현재 미디어와 전체 미디어 리스트를 넘김
+      console.log(
+        "🔍 메인에서 팝업 열기 - media.id:",
+        mediaList[i].id,
+        "index:",
+        i,
+        "total:",
+        mediaList.length
+      );
+      openDetailPopup(mediaList[i], mediaList);
     });
 
     rowWrapper.appendChild(photo);
