@@ -537,13 +537,14 @@ function generatePopupVideoThumbnail(thumbnailImg, retryCount = 0) {
   let isCompleted = false;
   let timeoutId = null;
 
-  // 🔥 타임아웃 설정 (10초 후 강제 실패)
+  // 🔥 타임아웃 설정 (15초 후 강제 실패 - 재시도 시 더 긴 시간)
+  const timeout = 15000 + (retryCount * 5000); // 재시도마다 5초씩 추가
   timeoutId = setTimeout(() => {
     if (!isCompleted) {
-      console.warn("⏰ 비디오 썸네일 생성 타임아웃:", videoSrc);
+      console.warn(`⏰ 비디오 썸네일 생성 타임아웃 (시도 ${retryCount + 1}):`, videoSrc);
       handleThumbnailError();
     }
-  }, 10000);
+  }, timeout);
 
   function cleanup() {
     isCompleted = true;
@@ -561,11 +562,11 @@ function generatePopupVideoThumbnail(thumbnailImg, retryCount = 0) {
   function handleThumbnailError() {
     cleanup();
     
-    // 🔄 재시도 로직 (최대 2회)
-    if (retryCount < 2) {
-      console.log(`🔄 썸네일 생성 재시도 (${retryCount + 1}/2):`, videoSrc);
+    // 🔄 재시도 로직 (최대 3회)
+    if (retryCount < 3) {
+      console.log(`🔄 썸네일 생성 재시도 (${retryCount + 1}/3):`, videoSrc);
       
-      // 지수적 백오프로 재시도
+      // 지수적 백오프로 재시도 (1초, 2초, 4초)
       const delay = 1000 * Math.pow(2, retryCount);
       setTimeout(() => {
         generatePopupVideoThumbnail(thumbnailImg, retryCount + 1);
@@ -573,9 +574,18 @@ function generatePopupVideoThumbnail(thumbnailImg, retryCount = 0) {
       return;
     }
 
-    // 최종 실패 - 에러 이미지 표시
-    thumbnailImg.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='7'>로딩실패</text></svg>";
+    // 최종 실패 - 재시도 가능한 에러 이미지 표시
+    thumbnailImg.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='53' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='45%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='7'>재시도</text></svg>";
     thumbnailImg.setAttribute("data-video-thumbnail", "error");
+    thumbnailImg.style.cursor = "pointer";
+    
+    // 클릭 시 재시도
+    thumbnailImg.onclick = function() {
+      console.log("👆 수동 재시도:", videoSrc);
+      thumbnailImg.style.cursor = "default";
+      thumbnailImg.onclick = null;
+      generatePopupVideoThumbnail(thumbnailImg, 0); // 재시도 카운트 리셋
+    };
   }
 
   videoForThumb.addEventListener("loadedmetadata", () => {
