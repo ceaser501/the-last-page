@@ -485,7 +485,8 @@
 /* intro 페이지(index.html) 모바일 최적화 - 카카오톡 초대장 스타일 */
 @media (max-width: 768px) {
   /* 배경 이미지 제거 및 스크롤 활성화 */
-  html, body {
+  html,
+  body {
     background-image: none !important;
     background: #fdfcfb !important;
     overflow-x: hidden !important;
@@ -765,6 +766,7 @@
   .photo {
     min-height: 100px;
     cursor: pointer;
+    text-align: left !important;
     -webkit-tap-highlight-color: transparent;
   }
 
