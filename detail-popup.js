@@ -2341,23 +2341,83 @@ function closeMediaUploadModal() {
 
 // 음악변경 모달 표시
 function showMusicChangeModal() {
-  const modal = document.getElementById("music-change-modal");
+  let modal = document.getElementById("music-change-modal");
+  
+  // 모달이 없으면 생성
+  if (!modal) {
+    const modalHTML = `
+      <div id="music-change-modal" class="modal" style="display: none;">
+        <div class="modal-content music-change-modal-content">
+          <h2>🎵 음악 변경</h2>
+          <form id="music-change-form">
+            <div class="form-group">
+              <label for="music-change-file">MP3 파일 선택</label>
+              <input type="file" id="music-change-file" accept="audio/mp3" required />
+            </div>
+            <div class="form-group">
+              <label for="music-change-title">제목</label>
+              <input type="text" id="music-change-title" placeholder="자동으로 추출됩니다" disabled />
+            </div>
+            <div class="form-group">
+              <label for="music-change-artist">아티스트</label>
+              <input type="text" id="music-change-artist" placeholder="자동으로 추출됩니다" disabled />
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="music-change-submit">변경</button>
+              <button type="button" id="music-change-cancel" onclick="closeMusicChangeModal()">닫기</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    modal = document.getElementById("music-change-modal");
+    
+    // 폼 제출 이벤트 추가
+    document.getElementById("music-change-form").addEventListener("submit", handleMusicChange);
+    
+    // 파일 선택 이벤트 추가 - 메타데이터 추출
+    document.getElementById("music-change-file").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (file && typeof musicmetadata !== 'undefined') {
+        musicmetadata(file, function(err, metadata) {
+          if (!err && metadata) {
+            const titleInput = document.getElementById("music-change-title");
+            const artistInput = document.getElementById("music-change-artist");
+            
+            if (titleInput && metadata.title) {
+              titleInput.value = metadata.title;
+            }
+            if (artistInput && metadata.artist && metadata.artist[0]) {
+              artistInput.value = metadata.artist[0];
+            }
+          }
+        });
+      }
+    });
+  }
+  
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
   document.body.classList.add("modal-open");
 
   // 폼 리셋
-  document.getElementById("music-change-form").reset();
-  document.getElementById("music-change-title").value = "";
-  document.getElementById("music-change-artist").value = "";
+  const form = document.getElementById("music-change-form");
+  if (form) form.reset();
+  const titleInput = document.getElementById("music-change-title");
+  if (titleInput) titleInput.value = "";
+  const artistInput = document.getElementById("music-change-artist");
+  if (artistInput) artistInput.value = "";
 }
 
 // 음악변경 모달 닫기
 function closeMusicChangeModal() {
   const modal = document.getElementById("music-change-modal");
-  modal.style.display = "none";
-  document.body.style.overflow = "auto";
-  document.body.classList.remove("modal-open");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("modal-open");
+  }
 }
 
 // 음악변경 취소 버튼 이벤트
