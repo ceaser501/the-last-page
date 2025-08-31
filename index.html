@@ -947,8 +947,16 @@
           setTimeout(createSakuraPetal, i * 150);
         }
 
-        // 주기적으로 새로운 꽃잎 생성
-        setInterval(createSakuraPetal, 1000);
+        // 모바일에서는 간격을 늘려서 자연스럽게
+        const sakuraInterval = window.innerWidth <= 768 ? 2500 : 1000;
+        setInterval(createSakuraPetal, sakuraInterval);
+        
+        // 초기 꽃잎들을 시간차를 두고 생성
+        if (window.innerWidth <= 768) {
+          for (let i = 0; i < 5; i++) {
+            setTimeout(createSakuraPetal, i * 500);
+          }
+        }
 
         // 음악 플레이어 코드
         let introAudio = null;
@@ -1222,6 +1230,29 @@
 
         // 페이지 로드 시 초기화
         initIntroMusicPlayer();
+        
+        // 모바일에서 button-container를 text-section 안의 가장 마지막으로 이동
+        function rearrangeButtonsForMobile() {
+          const buttonContainer = document.querySelector('.button-container');
+          const textSection = document.querySelector('.text-section');
+          const cardContainer = document.querySelector('.card-container');
+          
+          if (buttonContainer && textSection && cardContainer) {
+            if (window.innerWidth <= 768) {
+              // 모바일: text-section의 가장 마지막에 button-container 추가
+              textSection.appendChild(buttonContainer);
+            } else {
+              // PC: 원래 위치(card-container의 마지막)로 복원
+              cardContainer.appendChild(buttonContainer);
+            }
+          }
+        }
+        
+        // 페이지 로드 시 실행
+        rearrangeButtonsForMobile();
+        
+        // 화면 크기 변경 시에도 실행
+        window.addEventListener('resize', rearrangeButtonsForMobile);
 
         // 사용자 첫 상호작용 시 자동재생
         let hasUserInteracted = false;

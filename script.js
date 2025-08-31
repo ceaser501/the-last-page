@@ -419,11 +419,19 @@ function generateRow() {
       console.log("🛤️ 모든 행 로드 완료");
 
       // 모든 행이 로드된 후 최종 경로를 그리고 저장
-      if (photoPositions.length > 0) {
+      if (photoPositions.length > 0 && window.innerWidth > 768) {
         setTimeout(() => {
           createFootprintPath(true); // true = 저장함
         }, 500); // DOM 안정화를 위해 대기
       }
+    }
+    return;
+  }
+
+  // 모바일에서 월별 카테고리 처리 (한 번만 실행)
+  if (window.innerWidth <= 768) {
+    if (!document.querySelector(".mobile-romantic-message")) {
+      generateMobileCategories();
     }
     return;
   }
@@ -758,6 +766,164 @@ function addRomanticMessage() {
     // 줄이 충분하지 않으면 wrapper 끝에 추가
     wrapper.appendChild(message);
   }
+}
+
+// 모바일 카테고리 생성 함수
+function generateMobileCategories() {
+  // 모바일에서 로맨틱 메시지를 맨 위에 추가
+  const mobileMessage = document.createElement("div");
+  mobileMessage.className = "mobile-romantic-message";
+  mobileMessage.innerHTML =
+    '<span class="mobile-heart-left">♥</span> 우리가 함께 했던 이 타임라인들 처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class="mobile-heart-right">♥</span>';
+  mobileMessage.style.fontSize = "13px";
+  mobileMessage.style.lineHeight = "1.6";
+  mobileMessage.style.padding = "40px 15px";
+  mobileMessage.style.textAlign = "center";
+  mobileMessage.style.color = "#666";
+  mobileMessage.style.fontFamily = "'Noto Sans KR', sans-serif";
+  mobileMessage.style.borderBottom = "1px solid #eee";
+  mobileMessage.style.marginBottom = "10px";
+  wrapper.appendChild(mobileMessage);
+
+  // 날짜별로 그룹화
+  const groupedByMonth = {};
+
+  mediaList.forEach((media) => {
+    if (media.date) {
+      const date = new Date(media.date);
+      const yearMonth = `${date.getFullYear()}.${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+      if (!groupedByMonth[yearMonth]) {
+        groupedByMonth[yearMonth] = [];
+      }
+      groupedByMonth[yearMonth].push(media);
+    }
+  });
+
+  // 월별로 정렬 (오래된 순)
+  const sortedMonths = Object.keys(groupedByMonth).sort((a, b) =>
+    a.localeCompare(b)
+  );
+
+  // 각 월별로 카드 생성
+  sortedMonths.forEach((month) => {
+    // 월 카테고리 헤더 생성
+    const monthHeader = document.createElement("div");
+    monthHeader.className = "month-category-header";
+    monthHeader.innerHTML = `<h3>${month}</h3>`;
+    //monthHeader.style.padding = "20px 15px 10px";
+    monthHeader.style.fontSize = "18px";
+    monthHeader.style.fontWeight = "600";
+    monthHeader.style.color = "#444";
+    monthHeader.style.fontFamily = "'Noto Sans KR', sans-serif";
+    wrapper.appendChild(monthHeader);
+
+    // 해당 월의 카드들을 담을 컨테이너
+    const monthContainer = document.createElement("div");
+    monthContainer.className = "month-container";
+    monthContainer.style.display = "flex";
+    monthContainer.style.flexDirection = "column";
+    monthContainer.style.gap = "15px";
+    monthContainer.style.padding = "0 0 20px";
+    monthContainer.style.alignItems = "stretch";
+    monthContainer.style.width = "100%";
+
+    // 해당 월의 미디어들로 카드 생성
+    groupedByMonth[month].forEach((media) => {
+      const card = document.createElement("div");
+      card.className = "photo";
+      card.style.width = "100%";
+
+      // mainSrc 사용 (loadMediaFromSupabase에서 설정한 속성)
+      const mediaSrc = media.mainSrc || media.media_url || media.thumbnail_url;
+      const isVideo = media.type === "video" || media.is_video;
+
+      // 비디오인 경우
+      if (isVideo) {
+        const videoWrapper = document.createElement("div");
+        videoWrapper.className = "photo-video-wrapper";
+
+        // 비디오는 썸네일 생성을 위해 video 태그 사용
+        const video = document.createElement("video");
+        video.src = mediaSrc;
+        video.className = "photo-img";
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+        videoWrapper.appendChild(video);
+
+        // 비디오 썸네일 생성
+        if (mediaSrc) {
+          generateVideoThumbnail(mediaSrc, video);
+        }
+
+        card.appendChild(videoWrapper);
+      } else {
+        // 이미지인 경우
+        const img = document.createElement("img");
+        img.src = mediaSrc;
+        img.alt = media.title || "";
+        img.className = "photo-img";
+        img.loading = "lazy";
+        card.appendChild(img);
+      }
+
+      // 텍스트 정보를 담을 컨테이너
+      const textContainer = document.createElement("div");
+      textContainer.style.flex = "1";
+      textContainer.style.display = "flex";
+      textContainer.style.flexDirection = "column";
+      textContainer.style.gap = "4px";
+      
+      // 타이틀
+      const title = document.createElement("div");
+      title.className = "photo-title";
+      title.textContent = media.thumbnail_title || media.title || "";
+      title.style.marginBottom = "0";
+      textContainer.appendChild(title);
+      
+      // 날짜
+      if (media.date) {
+        const dateElement = document.createElement("div");
+        dateElement.style.fontSize = "11px";
+        dateElement.style.color = "#888";
+        dateElement.style.fontFamily = "'Noto Sans KR', sans-serif";
+        const formattedDate = media.date.replace(/-/g, '.');
+        dateElement.textContent = formattedDate;
+        textContainer.appendChild(dateElement);
+      }
+      
+      // 태그
+      if (media.tags) {
+        const tagsElement = document.createElement("div");
+        tagsElement.style.fontSize = "10px";
+        tagsElement.style.color = "#999";
+        tagsElement.style.fontFamily = "'Noto Sans KR', sans-serif";
+        tagsElement.style.marginTop = "2px";
+        
+        // 태그를 쉼표로 구분하고 # 붙이기
+        const tagList = media.tags.split(',').map(tag => `#${tag.trim()}`).join(' ');
+        tagsElement.textContent = tagList;
+        textContainer.appendChild(tagsElement);
+      }
+      
+      card.appendChild(textContainer);
+
+      // 클릭 이벤트
+      card.addEventListener("click", () => {
+        openDetailPopup(media, mediaList);
+      });
+
+      monthContainer.appendChild(card);
+      observer.observe(card);
+    });
+
+    wrapper.appendChild(monthContainer);
+  });
+
+  isAllRowsLoaded = true;
 }
 
 //setupLazyRender();

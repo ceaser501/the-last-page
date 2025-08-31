@@ -639,8 +639,8 @@ body.modal-open #dark-mode-toggle {
   position: fixed;
   top: 20px;
   left: 20px;
-  width: 45px;
-  height: 45px;
+  width: 35px;
+  height: 35px;
   border-radius: 8px;
   background-color: var(--popup-bg);
   border: 2px solid var(--popup-border);
@@ -681,9 +681,9 @@ body.modal-open #dark-mode-toggle {
 #music-icon {
   position: fixed;
   top: 20px;
-  left: 75px; /* 홈 아이콘 옆으로 이동 */
-  width: 45px; /* 홈 아이콘과 동일 */
-  height: 45px; /* 홈 아이콘과 동일 */
+  left: 64px; /* 홈 아이콘 옆으로 이동 */
+  width: 35px; /* 홈 아이콘과 동일 */
+  height: 35px; /* 홈 아이콘과 동일 */
   border-radius: 8px; /* 둥근 모서리도 축소 */
   background-color: var(--popup-bg);
   border: 2px solid var(--popup-border);
@@ -1201,7 +1201,7 @@ h2 {
 .main-music-wrapper {
   position: fixed;
   top: 20px;
-  left: 130px; /* 홈 아이콘과 음표 아이콘 옆에 배치 */
+  left: 107px; /* 홈 아이콘과 음표 아이콘 옆에 배치 */
   z-index: 100;
   width: 480px; /* 450px -> 480px로 증가 */
   transition: all 0.3s ease;

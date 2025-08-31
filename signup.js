@@ -6,6 +6,12 @@
     const signupForm = document.getElementById('signup-form');
     const signupCancel = document.getElementById('signup-cancel');
     
+    // 요소가 존재하는지 확인
+    if (!signupBtn || !signupModal || !signupForm || !signupCancel) {
+      console.log('Signup elements not found, skipping initialization');
+      return;
+    }
+    
     // 회원가입 버튼 클릭 시 모달 열기
     signupBtn.addEventListener('click', function() {
       signupModal.style.display = 'flex';
@@ -138,14 +144,16 @@
     
     // 전화번호 자동 포맷팅
     const phoneInput = document.getElementById('signup-phone');
-    phoneInput.addEventListener('input', function(e) {
-      let value = e.target.value.replace(/[^0-9]/g, '');
-      if (value.length >= 3 && value.length <= 7) {
-        value = value.replace(/(\d{3})(\d{1,4})/, '$1-$2');
-      } else if (value.length > 7) {
-        value = value.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
-      }
-      e.target.value = value;
-    });
+    if (phoneInput) {
+      phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9]/g, '');
+        if (value.length >= 3 && value.length <= 7) {
+          value = value.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+        } else if (value.length > 7) {
+          value = value.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+        }
+        e.target.value = value;
+      });
+    }
   });
 })();

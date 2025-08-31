@@ -1,227 +1,751 @@
-/* 모바일 반응형 디자인 */
+/* 모바일 반응형 디자인 - 심플하고 깨끗한 카드 레이아웃 */
 
 /* 태블릿 이하 (768px) */
 @media (max-width: 768px) {
+  /* 배경 단순화 */
+  body {
+    background: linear-gradient(135deg, #fafaee 0%, #f5f5e8 100%);
+  }
+
   /* 메인 컨텐츠 여백 조정 */
   .main-content {
-    padding-top: 80px;
+    padding: 60px 10px 80px 10px;
   }
-  
-  /* 홈 버튼 크기 조정 */
+
+  /* PC용 장식 요소들 모두 숨기기 */
+  .footprint-path,
+  .footprint,
+  .footprint-left,
+  .footprint-right,
+  .couple-image,
+  .garland-line,
+  .heart-sticker-row3,
+  .heart-sticker2-row3,
+  .love-sticker-row4,
+  .date-tape {
+    display: none !important;
+  }
+
+  /* 발바닥 관련 모든 요소 숨기기 */
+  svg.footprint-path,
+  path.footprint-line,
+  .photo::before,
+  .photo::after {
+    display: none !important;
+  }
+
+  /* 홈 버튼 심플하게 */
   .home-icon {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     top: 15px;
     left: 15px;
+    opacity: 0.7;
   }
-  
-  /* 음악 플레이어 위치 조정 */
-  .main-music-player {
-    right: 10px;
-    top: 10px;
-    transform: scale(0.85);
-  }
-  
-  /* 폴라로이드 크기 및 간격 조정 */
-  .photo {
-    width: 120px !important;
-    height: 140px !important;
-  }
-  
-  .photo-img,
-  .photo-video-wrapper video {
-    width: 100px !important;
-    height: 110px !important;
-  }
-  
-  /* 갤러리 행 조정 */
-  .garland-row {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    transform: scale(0.7);
-    transform-origin: center;
-  }
-  
-  /* 발자국 경로 숨기기 */
-  .footprint-path {
-    display: none;
-  }
-  
-  /* couple 이미지 조정 */
-  .couple-image {
-    width: 35px;
-    height: 35px;
-    left: 10px;
-    top: 120px;
-  }
-  
-  /* 문구 크기 조정 */
-  .date-graffiti {
-    font-size: 16px;
-    top: 480px;
-    padding: 0 20px;
-    text-align: center;
-  }
-  
-  /* 상세 팝업 조정 */
-  #detail-popup {
-    padding: 15px;
-  }
-  
-  #popup-title {
-    font-size: 20px;
-  }
-  
-  #popup-slideshow img,
-  #popup-slideshow video {
-    max-height: 350px;
-  }
-  
-  /* 썸네일 크기 조정 */
-  #popup-thumbnails {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  #popup-thumbnails img {
-    width: 40px !important;
-    height: 40px !important;
-  }
-  
-  /* 팝업 음악 플레이어 */
-  .popup-music-player {
-    transform: scale(0.9);
-  }
-  
-  /* 하트 스티커 조정 */
-  .heart-sticker-row3,
-  .heart-sticker2-row3 {
-    display: none;
-  }
-}
 
-/* 모바일 (480px 이하) */
-@media (max-width: 480px) {
-  /* 각 줄의 폴라로이드 개수 조정 */
-  .garland-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    transform: scale(0.6);
-    margin: 20px auto !important;
+  /* 음표 아이콘 숨기기 */
+  #intro-music-icon {
+    display: none !important;
   }
-  
-  /* 폴라로이드 배치를 그리드로 변경 */
+
+  /* 음악 플레이어 최소화 */
+  .main-music-player {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+    transform: scale(0.8);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 5px;
+    border-radius: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* garland-wrapper를 카드 컨테이너로 변경 */
+  .garland-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 0;
+  }
+
+  /* 각 줄을 카드로 변경 */
+  .garland-row {
+    width: 100%;
+    margin: 0 !important;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transform: none !important;
+  }
+
+  /* 폴라로이드를 깔끔한 카드로 */
   .photo {
     position: relative !important;
+    width: 100% !important;
+    height: auto !important;
     left: auto !important;
     top: auto !important;
-    margin: 10px;
-    transform: rotate(0deg) !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    transform: none !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 104px; /* 80px(이미지 높이) + 24px(위아래 패딩) */
+    box-sizing: border-box;
   }
-  
-  /* 갈란드 줄 숨기기 */
-  .garland-line {
-    display: none;
+
+  /* 이미지를 왼쪽에 작게 */
+  .photo-img,
+  .photo-video-wrapper {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 8px !important;
+    object-fit: cover;
+    flex-shrink: 0;
   }
-  
-  /* 문구 위치 재조정 */
+
+  .photo-video-wrapper video {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 8px !important;
+  }
+
+  /* 타이틀을 오른쪽에 표시 */
+  .photo-title {
+    position: relative !important;
+    bottom: auto !important;
+    text-align: left !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+    flex: 1;
+    font-size: 14px !important;
+    color: #333 !important;
+    line-height: 1.4;
+    display: block !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+  }
+
+  /* 테이프 효과 제거 */
+  .tape-top,
+  .tape-bottom {
+    display: none !important;
+  }
+
+  /* 날짜 문구 위치 조정 */
   .date-graffiti {
     position: relative;
     top: auto;
     left: auto;
     transform: none;
-    margin: 20px auto;
-    font-size: 14px;
+    text-align: center;
+    margin: 30px auto;
+    padding: 20px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    max-width: 350px;
   }
-  
-  /* 음악 플레이어 하단 고정 */
-  .main-music-player {
-    position: fixed;
-    bottom: 20px;
-    right: 50%;
-    transform: translateX(50%) scale(0.8);
-    top: auto;
+
+  /* 기존 로맨틱 메시지 숨기기 */
+  .wall-graffiti {
+    display: none !important;
   }
-  
-  /* D-day 카운터 조정 */
-  .dday-counter {
-    min-width: 140px;
-    padding: 8px 12px;
-    font-size: 14px;
+
+  /* 영어 문구 숨기기 */
+  .date-graffiti {
+    display: none !important;
   }
-  
-  /* 벚꽃 개수 줄이기 */
-  .sakura-petal {
-    display: none;
+
+  /* 모바일 하트 스타일 - PC와 동일 */
+  .mobile-heart-left {
+    font-size: 16px;
+    color: #ff8fa3;
+    opacity: 0.8;
+    transform: rotate(-20deg);
+    display: inline-block;
+    transition: all 0.3s ease;
   }
-  
-  /* 상세 팝업 전체 화면 */
-  #detail-popup {
-    width: 100%;
-    height: 100vh;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 0;
-    margin: 0;
-    padding: 10px;
-  }
-  
-  #popup-content {
-    padding: 10px;
-  }
-  
-  /* 슬라이드쇼 크기 조정 */
-  #popup-slideshow img,
-  #popup-slideshow video {
-    max-height: 300px;
-    width: 100%;
-    object-fit: contain;
-  }
-  
-  /* 팝업 설명 텍스트 */
-  #popup-description {
-    font-size: 14px;
-    padding: 10px;
-  }
-  
-  /* 팝업 정보 */
-  #popup-date,
-  #popup-location {
-    font-size: 12px;
-  }
-  
-  /* 네비게이션 버튼 */
-  #popup-prev,
-  #popup-next {
-    width: 35px;
-    height: 35px;
+
+  .mobile-heart-right {
     font-size: 18px;
+    color: #ff6b9d;
+    opacity: 0.8;
+    transform: rotate(15deg);
+    display: inline-block;
+    transition: all 0.3s ease;
   }
-  
-  /* 닫기 버튼 위치 조정 */
-  #popup-close {
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    font-size: 20px;
+
+  /* D-day 카운터 숨기기 또는 최소화 */
+  .dday-counter,
+  #wedding-dday,
+  .wedding-dday-container {
+    display: none !important;
+  }
+
+  /* 로그인 링크 숨기기 */
+  .login-link,
+  a[href="/0928"],
+  #before-login,
+  #after-login,
+  #login-btn,
+  .auth-buttons,
+  .auth-btn {
+    display: none !important;
   }
 }
 
-/* 가로 모드 대응 */
-@media (max-width: 768px) and (orientation: landscape) {
-  .garland-row {
-    transform: scale(0.5);
-  }
-  
+/* 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  /* 더 작은 화면에서 패딩 조정 */
   .main-content {
-    padding-top: 60px;
+    padding: 50px 15px 70px 15px;
   }
-  
-  #popup-slideshow img,
-  #popup-slideshow video {
-    max-height: 250px;
+
+  /* 카드 최대 너비 조정 */
+  .garland-row {
+    max-width: calc(100% - 30px);
+  }
+
+  /* 폴라로이드 카드 패딩 줄이기 */
+  .photo {
+    padding: 10px !important;
+  }
+
+  /* 이미지 크기 약간 줄이기 */
+  .photo-img,
+  .photo-video-wrapper,
+  .photo-video-wrapper video {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  /* 타이틀 폰트 크기 조정 */
+  .photo-title {
+    font-size: 13px !important;
+  }
+
+  /* 날짜 문구 폰트 크기 조정 */
+  .date-graffiti {
+    font-size: 14px;
+    padding: 15px;
+    margin: 20px auto;
+  }
+
+  /* 음표 아이콘 숨기기 - 360px에서도 적용 */
+  #music-icon,
+  #intro-music-icon {
+    display: none !important;
+  }
+}
+
+/* 상세 팝업 모바일 최적화 */
+@media (max-width: 768px) {
+  /* 팝업 오버레이 */
+  #popup-overlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 팝업이 열렸을 때만 flex 적용 */
+  #popup-overlay[style*="display: flex"] {
+    display: flex !important;
+  }
+
+  /* 팝업이 열렸을 때 홈 버튼 숨기기 */
+  #popup-overlay[style*="display: flex"] ~ #home-icon,
+  body:has(#popup-overlay[style*="display: flex"]) #home-icon {
+    display: none !important;
+  }
+
+  /* 메인 팝업 컨테이너 */
+  .detail-popup {
+    width: calc(100% - 40px) !important;
+    height: calc(100vh - 40px) !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 15px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #fdfcfb !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    overflow-y: auto !important;
+  }
+
+  /* 팝업 컨트롤 */
+  .popup-controls {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    z-index: 1002 !important;
+    display: flex !important;
+    gap: 5px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .popup-controls button {
+    width: 24px !important;
+    height: 24px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #333 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+    font-size: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+
+  /* 버튼별 아이콘 크기 조정 */
+  #popup-slideshow-btn {
+    font-size: 11px !important;
+  }
+
+  #popup-fullscreen-btn {
+    font-size: 13px !important;
+  }
+
+  #popup-close-btn {
+    font-size: 14px !important;
+  }
+
+  /* 좌측 영역 - 이미지와 썸네일 */
+  .popup-left {
+    padding: 45px 15px 15px 15px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    background: #fdfcfb !important;
+    max-width: 100% !important;
+  }
+
+  /* 메인 이미지 컨테이너 */
+  #popup-main-image-container {
+    width: 90% !important;
+    max-width: 350px !important;
+    height: auto !important;
+    max-height: 400px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 15px !important;
+    background: white !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+  }
+
+  #popup-main-image-container img,
+  #popup-main-image-container video {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 380px !important;
+    object-fit: contain !important;
+    border-radius: 4px !important;
+  }
+
+  /* 썸네일 리스트 */
+  #popup-thumbnails {
+    width: 90% !important;
+    max-width: 350px !important;
+    display: flex !important;
+    justify-content: left !important;
+    gap: 0px !important;
+    padding: 10px !important;
+    overflow-x: auto !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  #popup-thumbnails img,
+  #popup-thumbnails video {
+    width: 50px !important;
+    height: 50px !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    border: 2px solid transparent !important;
+    flex-shrink: 0 !important;
+  }
+
+  #popup-thumbnails img.active,
+  #popup-thumbnails video.active {
+    border-color: #ff8fa3 !important;
+  }
+
+  /* 우측 영역 - 텍스트 정보 */
+  .popup-right {
+    width: 90% !important;
+    padding: 16px !important;
+    background: white !important;
+    border-top: 1px solid #eee !important;
+  }
+
+  .info-texts {
+    padding-right: 0px !important;
+  }
+  .popup-nav {
+    align-items: center !important;
+  }
+
+  /* 타이틀 */
+  #popup-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 15px !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+  }
+
+  /* 설명 */
+  #popup-description {
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+    color: #555 !important;
+    margin-bottom: 20px !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+  }
+
+  /* 메타 정보 */
+  #popup-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding-top: 15px !important;
+    border-top: 1px solid #f0f0f0 !important;
+  }
+
+  #popup-date,
+  #popup-location,
+  #popup-tags {
+    font-size: 13px !important;
+    color: #777 !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+  }
+
+  #popup-tags {
+    color: #999 !important;
+  }
+
+  /* 네비게이션 버튼 */
+  #popup-prev-btn,
+  #popup-next-btn {
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #333 !important;
+    font-size: 20px !important;
+    border: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+    z-index: 1001 !important;
+    cursor: pointer !important;
+  }
+
+  #popup-prev-btn {
+    left: 10px !important;
+  }
+
+  #popup-next-btn {
+    right: 10px !important;
+  }
+
+  /* 음악 플레이어 숨기기 (필요시 나중에 조정) */
+  .music-wrapper {
+    display: none !important;
+  }
+
+  /* 줌 컨트롤 숨기기 */
+  .zoom-controls {
+    display: none !important;
+  }
+
+  /* 스크롤바 스타일링 */
+  .detail-popup::-webkit-scrollbar {
+    width: 0 !important;
+  }
+}
+
+/* intro 페이지(index.html) 모바일 최적화 - 카카오톡 초대장 스타일 */
+@media (max-width: 768px) {
+  /* 배경 이미지 제거 */
+  body {
+    background-image: none !important;
+    background: #fdfcfb !important;
+  }
+
+  /* 기존 카드 컨테이너 스타일 재정의 */
+  .card-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    flex-direction: column !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    box-shadow: none !important;
+    background: #fdfcfb !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 이미지 섹션 - 전체 화면 */
+  .image-wrapper {
+    position: relative !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    background: #fdfcfb !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    outline: none !important;
+  }
+
+  .image-wrapper::before,
+  .image-wrapper::after {
+    display: none !important;
+  }
+
+  .image-wrapper img {
+    margin-top: 30px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    background: white !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 이미지 안쪽 흰색 테두리 */
+  .image-border {
+    position: absolute !important;
+    top: 25px !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    border: 2px solid white !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+  }
+
+  /* Will you marry me 애니메이션 - 사진 안에 위치 */
+  .marry-me-container {
+    position: absolute !important;
+    bottom: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 20 !important;
+    margin: 0 !important;
+  }
+
+  .marry-me-text {
+    font-size: 22px !important;
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    font-family: "Pacifico", cursive !important;
+  }
+
+  /* With love, always 텍스트 - 사진 위에 오버레이 */
+  .promise-title {
+    position: absolute !important;
+    top: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 30px !important;
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    z-index: 20 !important;
+    font-family: "Dancing Script", cursive !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+
+  /* 텍스트 섹션 - 전체 화면 */
+  .text-section {
+    padding: 50px 20px 20px 20px !important;
+    background: #fdfcfb !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 날짜 정보 */
+  .event-info {
+    font-size: 16px !important;
+    line-height: 1.8 !important;
+    color: #333 !important;
+    margin-bottom: 30px !important;
+    font-family: "Noto Serif KR", serif !important;
+  }
+
+  /* PROMISE 섹션 스타일 */
+  .section-title {
+    font-size: 24px !important;
+    color: #444 !important;
+    margin-bottom: 15px !important;
+  }
+
+  .section-content {
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+    color: #555 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .story-text {
+    padding: 20px !important;
+    background: white !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    line-height: 2 !important;
+    color: #444 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .event-info h3 {
+    font-size: 18px !important;
+    margin-bottom: 15px !important;
+    font-weight: 600 !important;
+  }
+
+  /* 초대 메시지 */
+  .intro-description {
+    display: block !important;
+    font-size: 14px !important;
+    line-height: 2 !important;
+    color: #555 !important;
+    margin: 30px 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    border-radius: 10px !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+  }
+
+  .intro-description .highlight {
+    color: #e06d6d !important;
+    font-weight: 600 !important;
+  }
+
+  /* 버튼 컨테이너 */
+  .button-container {
+    position: relative !important;
+    bottom: auto !important;
+    left: unset !important;
+    right: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    padding: 20px !important;
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  .intro-button {
+    padding: 12px 30px !important;
+    font-size: 14px !important;
+    border-radius: 25px !important;
+    font-weight: 600 !important;
+  }
+
+  /* D-day 카운터 모바일 스타일 */
+  .wedding-dday-container {
+    display: block !important;
+    margin: 20px auto !important;
+    padding: 20px !important;
+    background: white !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .dday-title {
+    font-size: 14px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .dday-counter {
+    display: flex !important;
+    gap: 15px !important;
+    justify-content: center !important;
+  }
+
+  .dday-number {
+    font-size: 20px !important;
+  }
+
+  .dday-unit {
+    font-size: 10px !important;
+  }
+
+  /* 음악 플레이어 숨기기 */
+  .intro-music-player {
+    display: none !important;
+  }
+
+  /* 커스텀 알림창 */
+  .custom-alert {
+    width: 90% !important;
+    max-width: 350px !important;
+    padding: 25px !important;
+  }
+
+  .custom-alert-message {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .custom-alert-button {
+    padding: 10px 25px !important;
+    font-size: 14px !important;
+  }
+
+  /* 벚꽃 애니메이션 유지 */
+  #sakuraContainer,
+  .sakura-container {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    z-index: 50 !important;
+  }
+
+  .sakura-petal {
+    display: block !important;
+    opacity: 0.6 !important;
+  }
+
+  /* 벚꽃 개수 줄이기 (모바일은 10개만) */
+  .sakura-petal:nth-child(n + 11) {
+    display: none !important;
   }
 }
 
@@ -229,24 +753,49 @@
 @media (hover: none) and (pointer: coarse) {
   /* 호버 효과 제거 */
   .photo:hover {
-    transform: var(--rotate) !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   }
-  
+
   /* 터치 영역 확대 */
   .photo {
+    min-height: 100px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   /* 스크롤 성능 최적화 */
   .garland-wrapper {
     -webkit-overflow-scrolling: touch;
   }
-  
-  /* 버튼 크기 확대 */
-  button, 
-  .clickable {
+
+  /* 버튼 최소 크기 보장 */
+  button {
     min-height: 44px;
     min-width: 44px;
+  }
+}
+
+/* 가로 모드 대응 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .main-content {
+    padding-top: 40px;
+    padding-bottom: 60px;
+  }
+
+  .photo {
+    padding: 8px !important;
+  }
+
+  .photo-img,
+  .photo-video-wrapper,
+  .photo-video-wrapper video {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  #popup-slideshow img,
+  #popup-slideshow video {
+    max-height: 70vh;
   }
 }
