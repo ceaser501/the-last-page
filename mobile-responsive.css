@@ -48,17 +48,10 @@
     display: none !important;
   }
 
-  /* 음악 플레이어 최소화 */
-  .main-music-player {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    top: auto;
-    transform: scale(0.8);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 5px;
-    border-radius: 25px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  /* 음악 플레이어 숨기기 (모바일) */
+  .main-music-player,
+  #main-music-player {
+    display: none !important;
   }
 
   /* garland-wrapper를 카드 컨테이너로 변경 */
@@ -245,72 +238,101 @@
     margin: 20px auto;
   }
 
-  /* intro 페이지 음표 아이콘 표시 */
+  /* intro 페이지 음표 아이콘 숨기기 */
   #intro-music-icon {
-    display: flex !important;
-    position: fixed !important;
-    top: 15px !important;
-    right: 15px !important;
-    width: 30px !important;
-    height: 30px !important;
-    opacity: 0.7 !important;
-    z-index: 100 !important;
-    cursor: pointer !important;
-    color: inherit !important;
-    font-size: 20px !important;
-    background: transparent !important;
-    border: none !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: none !important;
   }
 
-  /* intro 음표 아이콘 호버/터치 시 강조 */
-  #intro-music-icon:hover,
-  #intro-music-icon:active {
-    opacity: 1 !important;
-  }
-
-  /* intro 음악 플레이어 숨기기 (음표 아이콘 클릭 시 표시) */
+  /* intro 음악 플레이어도 숨기기 */
   .intro-music-wrapper {
     display: none !important;
   }
 
-  /* main 페이지 음표 아이콘 - 홈 아이콘과 완전 동일한 스타일 */
+  /* PC 음표 아이콘 숨기기 */
   #music-icon {
-    display: flex !important;
-    width: 35px !important;
-    height: 35px !important;
+    display: none !important;
+  }
+  
+  /* 음악 토글 스위치 컨테이너 */
+  .music-toggle-container {
     position: fixed !important;
     top: 20px !important;
     right: 20px !important;
     z-index: 10001 !important;
+    display: block !important;
+  }
+  
+  /* 토글 스위치 체크박스 숨기기 */
+  .music-toggle-checkbox {
+    display: none !important;
+  }
+  
+  /* 토글 스위치 라벨 */
+  .music-toggle-label {
+    display: inline-block !important;
+    width: 50px !important;
+    height: 26px !important;
+    background-color: #ccc !important;
+    border-radius: 26px !important;
+    position: relative !important;
     cursor: pointer !important;
-    border-radius: 8px !important;
-    background-color: var(--popup-bg) !important;
-    border: 2px solid var(--popup-border) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.3s ease !important;
-    outline: none !important;
+    transition: background-color 0.3s !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
   }
   
-  #music-icon i {
-    color: var(--text-color) !important;
-    font-size: 16px !important;
-    transition: color 0.3s ease, transform 0.3s ease !important;
-  }
-
-  /* 음표 아이콘 호버/터치 시 강조 */
-  #music-icon:hover,
-  #music-icon:active {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  /* 토글 스위치 원형 버튼 */
+  .music-toggle-switch {
+    position: absolute !important;
+    top: 2px !important;
+    left: 2px !important;
+    width: 22px !important;
+    height: 22px !important;
+    background-color: white !important;
+    border-radius: 50% !important;
+    transition: transform 0.3s !important;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) !important;
   }
   
-  #music-icon:hover i,
-  #music-icon:active i {
-    transform: scale(1.1) !important;
+  /* ON/OFF 텍스트 */
+  .music-toggle-inner::before,
+  .music-toggle-inner::after {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    transition: opacity 0.3s !important;
+  }
+  
+  .music-toggle-inner::before {
+    content: "ON" !important;
+    left: 6px !important;
+    color: white !important;
+    opacity: 0 !important;
+  }
+  
+  .music-toggle-inner::after {
+    content: "OFF" !important;
+    right: 5px !important;
+    color: white !important;
+    opacity: 1 !important;
+  }
+  
+  /* 체크 시 스타일 (ON 상태) */
+  .music-toggle-checkbox:checked + .music-toggle-label {
+    background-color: #4CAF50 !important;
+  }
+  
+  .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-switch {
+    transform: translateX(24px) !important;
+  }
+  
+  .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-inner::before {
+    opacity: 1 !important;
+  }
+  
+  .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-inner::after {
+    opacity: 0 !important;
   }
 }
 
@@ -328,9 +350,11 @@
     display: flex !important;
   }
 
-  /* 팝업이 열렸을 때 홈 버튼 숨기기 */
+  /* 팝업이 열렸을 때 홈 버튼과 음표 아이콘 숨기기 */
   #popup-overlay[style*="display: flex"] ~ #home-icon,
-  body:has(#popup-overlay[style*="display: flex"]) #home-icon {
+  body:has(#popup-overlay[style*="display: flex"]) #home-icon,
+  #popup-overlay[style*="display: flex"] ~ #music-icon,
+  body:has(#popup-overlay[style*="display: flex"]) #music-icon {
     display: none !important;
   }
 

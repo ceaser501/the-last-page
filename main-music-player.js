@@ -48,7 +48,15 @@ function initMainMusicPlayer() {
         $("#main-music-player").addClass("playing");
         mainCheckBuffering();
         mainPlayPauseButton.find("i").attr("class", "fas fa-pause");
-        mainAudio.play().catch(error => console.log("메인 음악 재생 실패:", error));
+        mainAudio.play().then(() => {
+          // 모바일에서 토글 스위치 ON으로 설정
+          if (window.innerWidth <= 768) {
+            const musicToggle = document.getElementById('music-toggle-input');
+            if (musicToggle) {
+              musicToggle.checked = true;
+            }
+          }
+        }).catch(error => console.log("메인 음악 재생 실패:", error));
       } else {
         mainPlayerTrack.removeClass("active");
         mainAlbumArt.removeClass("active");
@@ -57,6 +65,14 @@ function initMainMusicPlayer() {
         mainAlbumArt.removeClass("buffering");
         mainPlayPauseButton.find("i").attr("class", "fas fa-play");
         mainAudio.pause();
+        
+        // 모바일에서 토글 스위치 OFF로 설정
+        if (window.innerWidth <= 768) {
+          const musicToggle = document.getElementById('music-toggle-input');
+          if (musicToggle) {
+            musicToggle.checked = false;
+          }
+        }
       }
     }, 300);
   }
@@ -542,6 +558,14 @@ function startMusicOnFirstInteraction() {
       $("#main-play-pause-button i").attr("class", "fas fa-pause");
       $("#main-music-player").addClass("playing");
       
+      // 모바일에서 토글 스위치 ON으로 설정
+      if (window.innerWidth <= 768) {
+        const musicToggle = document.getElementById('music-toggle-input');
+        if (musicToggle) {
+          musicToggle.checked = true;
+        }
+      }
+      
       // 플레이어는 고정하지 않음 - 오직 음표 아이콘 클릭에만 고정/해제
       console.log('✅ 배경음악 자동 시작 성공! (플레이어 고정 안됨)');
     }).catch((error) => {
@@ -564,6 +588,13 @@ $(document).ready(function() {
     console.log("🎵 index.html에서 사용자 상호작용 후 이동 - 자동재생 시도");
     setTimeout(() => {
       startMusicOnFirstInteraction();
+      // 모바일에서 토글 스위치 ON으로 설정
+      if (window.innerWidth <= 768) {
+        const musicToggle = document.getElementById('music-toggle-input');
+        if (musicToggle) {
+          musicToggle.checked = true;
+        }
+      }
       // 한 번 사용 후 삭제
       sessionStorage.removeItem('fromIndex');
     }, 500);
@@ -578,11 +609,41 @@ $(document).ready(function() {
   // 음표 아이콘 hover 및 클릭 이벤트 처리
   const musicIcon = $("#music-icon");
   const musicPlayer = $("#main-music-player");
+  const musicToggle = $("#music-toggle-input"); // 토글 스위치
   let hoverTimeout;
   let isPlayerPinned = false; // 고정 상태 추적
   
   // 모바일 체크
   const isMobile = window.innerWidth <= 768;
+  
+  // 모바일 토글 스위치 이벤트
+  if (isMobile && musicToggle.length) {
+    musicToggle.on("change", function() {
+      if (mainAudio && mainAudio.src) {
+        if (this.checked) {
+          // ON - 음악 재생
+          mainAudio.play().then(() => {
+            $("#main-player-track").addClass("active");
+            $("#main-album-art").addClass("active");
+            $("#main-play-pause-button i").attr("class", "fas fa-pause");
+            $("#main-music-player").addClass("playing");
+            console.log("🎵 토글 ON - 음악 재생");
+          }).catch((error) => {
+            console.log("🔇 재생 실패:", error.name);
+            this.checked = false; // 실패 시 토글 OFF
+          });
+        } else {
+          // OFF - 음악 정지
+          mainAudio.pause();
+          $("#main-player-track").removeClass("active");
+          $("#main-album-art").removeClass("active");
+          $("#main-play-pause-button i").attr("class", "fas fa-play");
+          $("#main-music-player").removeClass("playing");
+          console.log("⏸️ 토글 OFF - 음악 정지");
+        }
+      }
+    });
+  }
   
   // 클릭으로 고정/해제
   musicIcon.on("click", function(e) {
@@ -599,6 +660,13 @@ $(document).ready(function() {
             $("#main-music-player").addClass("playing");
             // 아이콘 색상 변경으로 재생 상태 표시
             musicIcon.find("i").css("color", "#ff8fa3");
+            
+            // 토글 스위치 ON으로 설정
+            const musicToggle = document.getElementById('music-toggle-input');
+            if (musicToggle) {
+              musicToggle.checked = true;
+            }
+            
             console.log("🎵 모바일 음악 재생");
           }).catch((error) => {
             console.log("🔇 재생 실패:", error.name);
@@ -611,6 +679,13 @@ $(document).ready(function() {
           $("#main-music-player").removeClass("playing");
           // 아이콘 색상 원래대로
           musicIcon.find("i").css("color", "");
+          
+          // 토글 스위치 OFF로 설정
+          const musicToggle = document.getElementById('music-toggle-input');
+          if (musicToggle) {
+            musicToggle.checked = false;
+          }
+          
           console.log("⏸️ 모바일 음악 정지");
         }
       }
