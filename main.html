@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Moments We Shared</title>
+    <!-- 현재 누락되어 있는 코드 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Homemade+Apple&family=Dancing+Script:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Shadows+Into+Light&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <!-- flatpickr CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/public-config//config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/musicmetadata/2.0.2/musicmetadata.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- 벚꽃 애니메이션 컨테이너 -->
+    <div class="sakura-container" id="sakura-container"></div>
+
+    <!-- 홈 아이콘 -->
+    <button id="home-icon" title="처음으로">
+      <i class="fas fa-home"></i>
+    </button>
+
+    <!-- 음표 아이콘 -->
+    <button id="music-icon" title="배경음악">
+      <i class="fas fa-music"></i>
+    </button>
+
+    <!-- 다크모드 토글 버튼 -->
+    <button id="dark-mode-toggle" title="다크모드 전환">
+      <i class="fas fa-sun"></i>
+    </button>
+
+    <!-- 메인 음악 플레이어 -->
+    <div id="main-music-player" class="main-music-wrapper">
+      <div class="main-music-container">
+        <div id="main-player-bg-artwork"></div>
+        <div id="main-player-bg-layer"></div>
+        <div id="main-player-container">
+          <div id="main-player">
+            <div id="main-album-art">
+              <img src="" class="active" id="main-album-img" />
+              <div id="main-buffer-box">Buffering ...</div>
+            </div>
+            <div id="main-player-track">
+              <div id="main-track-info">
+                <span id="main-track-name"></span>
+                <span id="main-album-name"></span>
+              </div>
+              <div id="main-track-time">
+                <div id="main-current-time"></div>
+                <div id="main-track-length"></div>
+              </div>
+              <div id="main-seek-bar-container">
+                <div id="main-seek-time"></div>
+                <div id="main-s-hover"></div>
+                <div id="main-seek-bar"></div>
+              </div>
+            </div>
+            <div id="main-player-controls">
+              <div class="control">
+                <div class="button" id="main-music-toggle">
+                  <i class="fas fa-volume-up"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-prev-button">
+                  <i class="fas fa-step-backward"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-play-pause-button">
+                  <i class="fas fa-play"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-next-button">
+                  <i class="fas fa-step-forward"></i>
+                </div>
+              </div>
+              <div class="control">
+                <div class="button" id="main-playlist-button">
+                  <i class="fas fa-list"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 우측 상단 버튼 영역 -->
+    <div class="top-right-buttons">
+      <!-- D-Day 카운터 (나중에 사용) -->
+      <div id="wedding-dday" class="dday-counter" style="display: none">
+        <div class="dday-title">💍 Wedding D-Day</div>
+        <div class="dday-time">
+          <span class="dday-number" id="days">000</span>
+          <span class="dday-unit">일</span>
+          <span class="dday-number" id="hours">00</span>
+          <span class="dday-unit">시간</span>
+          <span class="dday-number" id="minutes">00</span>
+          <span class="dday-unit">분</span>
+          <span class="dday-number" id="seconds">00</span>
+          <span class="dday-unit">초</span>
+        </div>
+      </div>
+
+      <!-- 로그인 전 버튼들 -->
+      <div id="before-login" class="auth-buttons">
+        <!--
+        <button id="signup-btn" class="auth-btn secondary">회원가입</button>
+        -->
+        <button id="login-btn" class="auth-btn primary">로그인</button>
+      </div>
+
+      <!-- 로그인 후 버튼들 -->
+      <div id="after-login" class="auth-buttons" style="display: none">
+        <span id="welcome-message">태수님 환영합니다.</span>
+        <button id="write-post-btn" class="auth-btn primary">글 등록</button>
+        <button
+          id="bgm-upload-btn"
+          class="auth-btn secondary"
+          style="display: none"
+        >
+          BGM 설정
+        </button>
+        <button id="logout-btn" class="auth-btn secondary">로그아웃</button>
+      </div>
+    </div>
+
+    <!-- 메인 영역 -->
+    <div class="main-content">
+      <!-- 페이지 타이틀 -->
+      <!--<div class="page-title">Moments of Us</div> -->
+
+      <!-- 상단 날짜 낙서 -->
+      <div class="date-graffiti">
+        The last page of our past, and the first page of forever
+      </div>
+
+      <div class="garland-wrapper" id="garland-wrapper"></div>
+    </div>
+
+    <!-- 상세 팝업 영역 -->
+    <div id="popup-overlay" class="popup-overlay" style="display: none">
+      <!-- 네비게이션 버튼들을 overlay 레벨에 배치 -->
+      <button id="popup-prev-btn" class="popup-nav">‹</button>
+      <button id="popup-next-btn" class="popup-nav">›</button>
+
+      <div class="detail-popup">
+        <div class="popup-controls">
+          <button id="popup-slideshow-btn" title="슬라이드쇼">▶</button>
+          <button id="popup-fullscreen-btn" title="전체화면">⛶</button>
+          <button id="popup-close-btn" title="닫기">✕</button>
+        </div>
+
+        <div class="popup-left">
+          <div id="popup-main-image-container" src=""></div>
+          <div id="popup-thumbnails" class="thumbnail-list"></div>
+        </div>
+        <div class="popup-right">
+          <!-- 팝업 내부 우측 [음악 플레이어]-->
+          <div class="music-wrapper">
+            <div class="music-player-container">
+              <div id="player-bg-artwork"></div>
+              <div id="player-bg-layer"></div>
+              <div id="player-container">
+                <div id="player">
+                  <div id="player-track">
+                    <span id="album-name"></span>
+                    <span id="track-name"></span>
+                    <div id="track-time">
+                      <div id="current-time"></div>
+                      <div id="track-length"></div>
+                    </div>
+                    <div id="seek-bar-container">
+                      <div id="seek-time"></div>
+                      <div id="s-hover"></div>
+                      <div id="seek-bar"></div>
+                    </div>
+                  </div>
+                  <div id="player-content">
+                    <div id="album-art">
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/1.jpg"
+                        class="active"
+                        id="_1"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/2.jpg"
+                        id="_2"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/3.jpg"
+                        id="_3"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/4.jpg"
+                        id="_4"
+                      />
+                      <img
+                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/5.jpg"
+                        id="_5"
+                      />
+                      <div id="buffer-box">Buffering ...</div>
+                    </div>
+                    <div id="player-controls">
+                      <div class="control">
+                        <div class="button" id="play-previous">
+                          <i class="fas fa-backward"></i>
+                        </div>
+                      </div>
+                      <div class="control">
+                        <div class="button" id="play-pause-button">
+                          <i class="fas fa-play"></i>
+                        </div>
+                      </div>
+                      <div class="control">
+                        <div class="button" id="play-next">
+                          <i class="fas fa-forward"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-texts">
+            <div id="popup-content-wrapper">
+              <!-- 팝업 내부 우측 [썸네일 제목] (숨김) -->
+              <div
+                id="popup-thumbnail-title"
+                class="popup-meta-thumbnail"
+                style="display: none"
+              ></div>
+              <!-- 팝업 내부 우측 [제목]과 버튼들 -->
+              <div class="popup-title-row">
+                <div id="popup-title" class="popup-meta-title"></div>
+                <div class="popup-action-buttons">
+                  <button
+                    id="popup-music-change-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    음악변경
+                  </button>
+                  <button
+                    id="popup-add-media-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    파일업로드
+                  </button>
+                  <button
+                    id="popup-edit-btn"
+                    class="auth-btn control-btn-group primary"
+                    style="display: none"
+                  >
+                    수정
+                  </button>
+                  <button
+                    id="popup-delete-btn"
+                    class="auth-btn control-btn-group secondary"
+                    style="display: none"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
+              <!-- 팝업 내부 우측 [내용]-->
+              <div id="popup-description" class="popup-meta-description"></div>
+              <!-- 팝업 내부 우측 [달력/날짜]-->
+              <div id="popup-date" class="popup-meta">
+                <i class="icon">📅</i>
+              </div>
+              <!-- 팝업 내부 우측 [장소]-->
+              <div id="popup-location" class="popup-meta"></div>
+              <!-- 팝업 내부 우측 [태그]-->
+              <div id="popup-tags" class="popup-tags"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="signup-modal" class="modal" style="display: none">
+      <div class="modal-content signup-modal-content">
+        <h2>💕 함께할 추억을 만들어요</h2>
+
+        <form id="signup-form">
+          <div class="form-group">
+            <label for="signup-username">사용자명 (필수)</label>
+            <input
+              type="text"
+              id="signup-username"
+              required
+              placeholder="사용자명을 입력해주세요"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-email">이메일 (필수)</label>
+            <input
+              type="email"
+              id="signup-email"
+              required
+              placeholder="email@example.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password">비밀번호 (필수)</label>
+            <input
+              type="password"
+              id="signup-password"
+              required
+              placeholder="비밀번호를 입력해주세요"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password-confirm">비밀번호 확인 (필수)</label>
+            <input
+              type="password"
+              id="signup-password-confirm"
+              required
+              placeholder="비밀번호를 다시 입력해주세요"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-nickname">닉네임 (선택)</label>
+            <input
+              type="text"
+              id="signup-nickname"
+              placeholder="표시될 닉네임을 입력해주세요"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-phone">연락처 (선택)</label>
+            <input type="tel" id="signup-phone" placeholder="010-0000-0000" />
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="signup-agree" required />
+              개인정보 수집 및 이용에 동의합니다 (필수)
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="signup-cancel">취소</button>
+            <button type="submit" id="signup-submit">회원가입</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- BGM 업로드 모달 -->
+    <div id="bgm-upload-modal" class="modal" style="display: none">
+      <div class="modal-content bgm-upload-modal-content">
+        <h2>🎵 배경음악(BGM) 설정</h2>
+        <p class="bgm-description">
+          메인 페이지에서 재생될 배경음악을 업로드하세요.
+        </p>
+
+        <form id="bgm-upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="bgm-file">음악 파일</label>
+            <input type="file" id="bgm-file" accept=".mp3" required />
+            <div class="bgm-file-info">
+              <small>• MP3 파일만 지원됩니다</small>
+              <small
+                >• 파일명은 "아티스트 - 곡제목.mp3" 형식을 권장합니다</small
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bgm-title">곡 제목</label>
+            <input
+              type="text"
+              id="bgm-title"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="bgm-artist">아티스트</label>
+            <input
+              type="text"
+              id="bgm-artist"
+              placeholder="자동으로 추출됩니다"
+              disabled
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="bgm-submit">업로드</button>
+            <button
+              type="button"
+              id="bgm-cancel"
+              style="
+                background-color: #eee;
+                color: #333;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              "
+              onmouseover="this.style.boxShadow='0 2px 8px rgba(128, 128, 128, 0.3)'"
+              onmouseout="this.style.boxShadow='none'"
+            >
+              닫기
+            </button>
+          </div>
+        </form>
+
+        <div id="bgm-current-info" class="bgm-current-section">
+          <h4 class="bgm-current-title">현재 설정된 BGM</h4>
+          <div id="bgm-current-display">로딩 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 사진/영상 추가 모달 -->
+    <div id="media-upload-modal" class="modal" style="display: none">
+      <div class="modal-content media-upload-modal-content">
+        <h2>📎 사진/영상 추가</h2>
+        <p class="upload-description">
+          현재 메모리에 새로운 사진이나 영상을 추가합니다. (최대 21개)
+        </p>
+
+        <div class="upload-info">
+          <div id="current-files-info">현재 파일 개수를 확인하는 중...</div>
+          <div id="remaining-slots-info"></div>
+        </div>
+
+        <form id="media-upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="media-files">파일 선택</label>
+            <input
+              type="file"
+              id="media-files"
+              name="media-files"
+              accept="image/*,video/*"
+              multiple
+              required
+            />
+            <div class="upload-file-info">
+              <small>• 이미지: JPG, PNG, GIF, WEBP</small>
+              <small>• 동영상: MP4, MOV, AVI, WEBM</small>
+              <small>• 한 번에 여러 파일을 선택할 수 있습니다</small>
+            </div>
+          </div>
+
+          <div id="selected-files-preview" class="selected-files-preview"></div>
+
+          <div class="form-actions">
+            <button type="submit" id="media-upload-submit">업로드</button>
+            <button type="button" id="media-upload-cancel">닫기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 플레이리스트 모달 -->
+    <div id="playlist-modal" class="modal" style="display: none">
+      <div class="modal-content playlist-modal-content">
+        <h2>🎵 플레이리스트</h2>
+        <div id="playlist-container">
+          <div id="playlist-list">
+            <!-- 플레이리스트 항목들이 여기에 동적으로 추가됩니다 -->
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="playlist-close">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase 설정 -->
+    <script>
+      window.supabaseClient = supabase.createClient(
+        window.SUPABASE_CONFIG.url,
+        window.SUPABASE_CONFIG.anonKey
+      );
+      window.sbClient = window.supabaseClient;
+    </script>
+
+    <!-- 기능별 스크립트 -->
+    <script src="dark-mode.js"></script>
+    <script src="signup.js"></script>
+    <script src="wedding-dday.js"></script>
+    <script src="main-music-player.js"></script>
+    <script src="detail-popup.js"></script>
+    <script src="script.js"></script>
+    <script src="admin.js"></script>
+    <!-- flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  </body>
+</html>

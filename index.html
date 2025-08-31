@@ -2,553 +2,1268 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>Moments We Shared</title>
-    <!-- 현재 누락되어 있는 코드 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Last Page - Intro</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Homemade+Apple&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Homemade+Apple&family=Dancing+Script:wght@400;700&family=Pacifico&family=Satisfy&family=Playfair+Display:wght@400;700;900&family=Noto+Serif+KR:wght@300;400;700&display=swap"
       rel="stylesheet"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Shadows+Into+Light&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
-    />
-    <link rel="stylesheet" href="style.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
-    <!-- flatpickr CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-    />
-    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/public-config//config.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/musicmetadata/2.0.2/musicmetadata.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    />
+    <style>
+      :root {
+        --bg-color: #fafaee;
+        --text-color: #4a4a4a;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100vw;
+        height: 100vh;
+        background-color: var(--bg-color);
+        background-image: url("data/background.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* 배경 오버레이 (index.html과 동일) */
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(250, 250, 238, 0.3);
+        pointer-events: none;
+      }
+
+      .intro-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        z-index: 1;
+        max-width: 90vw;
+        max-height: 80vh;
+      }
+
+      .card-container {
+        display: flex;
+        background: white;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+
+      .image-wrapper {
+        position: relative;
+        width: 400px;
+        height: 600px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-color);
+      }
+
+      .text-section {
+        width: 400px;
+        height: 600px;
+        background: repeating-linear-gradient(
+            45deg,
+            #fefefe,
+            #fefefe 1px,
+            #fcfcfc 1px,
+            #fcfcfc 2px
+          ),
+          linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        box-sizing: border-box;
+        position: relative;
+        box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.02),
+          inset 0 0 10px rgba(0, 0, 0, 0.01);
+      }
+
+      /* 종이 질감 효과 - 미세한 섬유질 패턴 */
+      .text-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 3px,
+            rgba(0, 0, 0, 0.01) 3px,
+            rgba(0, 0, 0, 0.01) 4px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 3px,
+            rgba(0, 0, 0, 0.01) 3px,
+            rgba(0, 0, 0, 0.01) 4px
+          );
+        opacity: 0.4;
+        pointer-events: none;
+      }
+
+      /* 고급 종이 느낌의 미세한 노이즈 */
+      .text-section::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.015;
+        background-image: repeating-conic-gradient(
+          #ffffff 0%,
+          #f5f5f5 25%,
+          #ffffff 50%,
+          #f5f5f5 75%,
+          #ffffff 100%
+        );
+        background-size: 100px 100px;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+      }
+
+      .graffiti-heart-left {
+        opacity: 1;
+        transform: rotate(-20deg) scale(1.1);
+        color: #ff5722;
+      }
+
+      /* 텍스트 섹션 제목 */
+      .section-title {
+        font-family: "Playfair Display", serif;
+        font-size: 32px;
+        font-weight: 900;
+        color: #2a2a2a;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        z-index: 1;
+      }
+
+      /* 텍스트 섹션 내용 */
+      .section-content {
+        font-family: "Noto Serif KR", serif;
+        font-size: 16px;
+        font-weight: 300;
+        color: #4a4a4a;
+        line-height: 2;
+        text-align: center;
+        z-index: 1;
+      }
+
+      /* 스토리 텍스트 */
+      .story-text {
+        font-family: "Noto Serif KR", serif;
+        font-size: 14px;
+        font-weight: 300;
+        color: #5a5a5a;
+        line-height: 1.8;
+        text-align: center;
+        margin-top: 30px;
+        z-index: 1;
+      }
+
+      /* 마지막 질문 */
+      .final-question {
+        font-family: "Playfair Display", serif;
+        font-size: 32px;
+        font-weight: 900;
+        color: #2a2a2a;
+        letter-spacing: 2px;
+        margin-top: 20px;
+        z-index: 1;
+      }
+
+      /* 음표 아이콘 - 크기 조정 */
+      #intro-music-icon {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: 38px;
+        height: 38px;
+        background: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #intro-music-icon:hover {
+        background: #f0f0f0;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* 메인 음악 플레이어 스타일 (intro.html 전용) - 크기 조정 */
+      .intro-music-wrapper {
+        position: fixed;
+        left: 65px;
+        top: 20px;
+        z-index: 999;
+        opacity: 0;
+        transform: translateX(-20px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+
+      .intro-music-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        width: 300px;
+        backdrop-filter: blur(10px);
+      }
+
+      .intro-music-player {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .intro-album-art {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .intro-album-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .intro-track-info {
+        flex: 1;
+      }
+
+      .intro-track-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 3px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .intro-artist-name {
+        font-size: 11px;
+        color: #666;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .intro-controls {
+        display: flex;
+        gap: 6px;
+      }
+
+      .intro-control-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #f88;
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+      }
+
+      .intro-control-btn:hover {
+        transform: scale(1.1);
+        background: #f66;
+      }
+
+      .intro-seek-bar-container {
+        width: 100%;
+        height: 3px;
+        background: #eee;
+        border-radius: 2px;
+        margin-top: 8px;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .intro-seek-bar {
+        height: 100%;
+        background: #f88;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.1s linear;
+      }
+
+      /* Wedding D-Day 카운터 스타일 */
+      .wedding-dday-container {
+        margin-top: 30px;
+        z-index: 1;
+      }
+
+      .dday-title {
+        font-family: "Noto Serif KR", serif;
+        font-size: 12px;
+        font-weight: 300;
+        color: #999;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .dday-counter {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .dday-item {
+        text-align: center;
+      }
+
+      .dday-number {
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #f88;
+        display: block;
+      }
+
+      .dday-unit {
+        font-family: "Noto Serif KR", serif;
+        font-size: 10px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 2px;
+        display: block;
+      }
+
+      /* 필기체 텍스트 스타일 */
+      .love-text {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%) rotate(-5deg);
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .love-line {
+        font-family: "Dancing Script", cursive;
+        font-size: 36px;
+        font-weight: 700;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+        letter-spacing: 2px;
+      }
+
+      .date-line {
+        font-family: "Dancing Script", cursive;
+        font-size: 28px;
+        font-weight: 400;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+        letter-spacing: 1px;
+      }
+
+      .love-text span {
+        display: inline-block;
+        opacity: 0;
+        animation: typeWriter 0.3s forwards;
+        animation-delay: calc(var(--index) * 0.1s);
+      }
+
+      @keyframes typeWriter {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      .intro-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* 얇은 흰색 테두리 */
+      .image-border {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* 벚꽃 애니메이션 */
+      .sakura-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 10;
+      }
+
+      .sakura-petal {
+        position: absolute;
+        background: radial-gradient(
+          circle,
+          rgba(255, 192, 203, 0.8) 0%,
+          rgba(255, 182, 193, 0.6) 100%
+        );
+        border-radius: 150% 0 150% 0;
+        pointer-events: none;
+        animation: sakuraFall linear infinite;
+      }
+
+      .sakura-petal::after {
+        content: "";
+        position: absolute;
+        top: -14%;
+        left: -10%;
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 192, 203, 0.8) 0%,
+          rgba(255, 182, 193, 0.6) 100%
+        );
+        border-radius: 150% 0 150% 0;
+        transform: rotate(15deg);
+      }
+
+      @keyframes sakuraFall {
+        0% {
+          top: -10%;
+          transform: translateX(0) rotateZ(0deg);
+          opacity: 1;
+        }
+        25% {
+          transform: translateX(-20px) rotateZ(90deg);
+        }
+        50% {
+          transform: translateX(20px) rotateZ(180deg);
+        }
+        75% {
+          transform: translateX(-20px) rotateZ(270deg);
+        }
+        100% {
+          top: 110%;
+          transform: translateX(30px) rotateZ(360deg);
+          opacity: 0;
+        }
+      }
+
+      .button-container {
+        display: flex;
+        gap: 60px;
+        margin-top: 40px;
+        position: absolute;
+        bottom: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .intro-button {
+        padding: 10px 30px;
+        font-size: 14px;
+        font-family: "Noto Serif KR", serif;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 25px;
+        text-decoration: none;
+        display: inline-block;
+        border: 1px solid;
+      }
+
+      .intro-button.yes {
+        background: #ffe2e3;
+        color: #333;
+        border-color: #ffb8ba;
+      }
+
+      .intro-button.yes:hover {
+        background: #f88;
+        color: white;
+        border-color: #f88;
+        transform: translateY(-2px) scale(1.1);
+        box-shadow: 0 4px 15px rgba(248, 136, 136, 0.3);
+      }
+
+      .intro-button.no {
+        background: #f0f0f0;
+        color: #666;
+        border-color: #ccc;
+      }
+
+      .intro-button.no:hover {
+        background: #999;
+        color: white;
+        border-color: #999;
+        transform: translateY(-2px) scale(1.1);
+        box-shadow: 0 4px 15px rgba(153, 153, 153, 0.3);
+      }
+
+      /* 커스텀 알림 메시지 */
+      .custom-alert {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        text-align: center;
+        opacity: 0;
+        transition: all 0.3s ease;
+        max-width: 400px;
+      }
+
+      .custom-alert.show {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      .custom-alert-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        display: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .custom-alert-overlay.show {
+        display: block;
+        opacity: 1;
+      }
+
+      .custom-alert-message {
+        font-family: "Noto Serif KR", serif;
+        font-size: 14px;
+        font-weight: 300;
+        color: #333;
+        margin-bottom: 20px;
+        line-height: 1.8;
+      }
+
+      .custom-alert-button {
+        background: #f88;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        border-radius: 20px;
+        font-family: "Noto Serif KR", serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .custom-alert-button:hover {
+        background: #e77;
+        transform: scale(1.05);
+      }
+
+      /* 모바일 대응 */
+      @media (max-width: 768px) {
+        .card-container {
+          flex-direction: column;
+          max-width: 90vw;
+        }
+
+        .image-wrapper,
+        .text-section {
+          width: 90vw;
+          height: 45vh;
+        }
+
+        .button-container {
+          gap: 30px;
+          position: relative;
+          bottom: auto;
+          margin-top: 20px;
+        }
+
+        .intro-button {
+          padding: 8px 25px;
+          font-size: 13px;
+        }
+        .graffiti-heart-left {
+          opacity: 1;
+          transform: rotate(-20deg) scale(1.1);
+          color: #ff5722;
+        }
+      }
+    </style>
   </head>
   <body>
     <!-- 음표 아이콘 -->
-    <button id="music-icon" title="배경음악">
+    <button id="intro-music-icon" title="배경음악">
       <i class="fas fa-music"></i>
     </button>
 
-    <!-- 다크모드 토글 버튼 -->
-    <button id="dark-mode-toggle" title="다크모드 전환">
-      <i class="fas fa-sun"></i>
-    </button>
-
-    <!-- 메인 음악 플레이어 -->
-    <div id="main-music-player" class="main-music-wrapper">
-      <div class="main-music-container">
-        <div id="main-player-bg-artwork"></div>
-        <div id="main-player-bg-layer"></div>
-        <div id="main-player-container">
-          <div id="main-player">
-            <div id="main-album-art">
-              <img src="" class="active" id="main-album-img" />
-              <div id="main-buffer-box">Buffering ...</div>
-            </div>
-            <div id="main-player-track">
-              <div id="main-track-info">
-                <span id="main-track-name"></span>
-                <span id="main-album-name"></span>
-              </div>
-              <div id="main-track-time">
-                <div id="main-current-time"></div>
-                <div id="main-track-length"></div>
-              </div>
-              <div id="main-seek-bar-container">
-                <div id="main-seek-time"></div>
-                <div id="main-s-hover"></div>
-                <div id="main-seek-bar"></div>
-              </div>
-            </div>
-            <div id="main-player-controls">
-              <div class="control">
-                <div class="button" id="main-music-toggle">
-                  <i class="fas fa-volume-up"></i>
-                </div>
-              </div>
-              <div class="control">
-                <div class="button" id="main-prev-button">
-                  <i class="fas fa-step-backward"></i>
-                </div>
-              </div>
-              <div class="control">
-                <div class="button" id="main-play-pause-button">
-                  <i class="fas fa-play"></i>
-                </div>
-              </div>
-              <div class="control">
-                <div class="button" id="main-next-button">
-                  <i class="fas fa-step-forward"></i>
-                </div>
-              </div>
-              <div class="control">
-                <div class="button" id="main-playlist-button">
-                  <i class="fas fa-list"></i>
-                </div>
-              </div>
-            </div>
+    <!-- 음악 플레이어 -->
+    <div id="intro-music-player" class="intro-music-wrapper">
+      <div class="intro-music-container">
+        <div class="intro-music-player">
+          <div class="intro-album-art">
+            <img id="intro-album-img" src="" alt="Album Art" />
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 우측 상단 버튼 영역 -->
-    <div class="top-right-buttons">
-      <!-- 로그인 전 버튼들 -->
-      <div id="before-login" class="auth-buttons">
-        <button id="signup-btn" class="auth-btn secondary">회원가입</button>
-        <button id="login-btn" class="auth-btn primary">로그인</button>
-      </div>
-
-      <!-- 로그인 후 버튼들 -->
-      <div id="after-login" class="auth-buttons" style="display: none">
-        <span id="welcome-message">보연사랑님 환영합니다.</span>
-        <button id="write-post-btn" class="auth-btn primary">글 등록</button>
-        <button
-          id="bgm-upload-btn"
-          class="auth-btn secondary"
-          style="display: none"
-        >
-          BGM 설정
-        </button>
-        <button id="logout-btn" class="auth-btn secondary">로그아웃</button>
-      </div>
-    </div>
-
-    <!-- 메인 영역 -->
-    <div class="main-content">
-      <!-- 상단 날짜 낙서 -->
-      <div class="date-graffiti">
-        The last page of our past, and the first page of forever
-      </div>
-
-      <div class="garland-wrapper" id="garland-wrapper"></div>
-    </div>
-
-    <!-- 상세 팝업 영역 -->
-    <div id="popup-overlay" class="popup-overlay" style="display: none">
-      <!-- 네비게이션 버튼들을 overlay 레벨에 배치 -->
-      <button id="popup-prev-btn" class="popup-nav">‹</button>
-      <button id="popup-next-btn" class="popup-nav">›</button>
-
-      <div class="detail-popup">
-        <div class="popup-controls">
-          <button id="popup-slideshow-btn" title="슬라이드쇼">▶</button>
-          <button id="popup-fullscreen-btn" title="전체화면">⛶</button>
-          <button id="popup-close-btn" title="닫기">✕</button>
-        </div>
-
-        <div class="popup-left">
-          <div id="popup-main-image-container" src=""></div>
-          <div id="popup-thumbnails" class="thumbnail-list"></div>
-        </div>
-        <div class="popup-right">
-          <!-- 팝업 내부 우측 [음악 플레이어]-->
-          <div class="music-wrapper">
-            <div class="music-player-container">
-              <div id="player-bg-artwork"></div>
-              <div id="player-bg-layer"></div>
-              <div id="player-container">
-                <div id="player">
-                  <div id="player-track">
-                    <span id="album-name"></span>
-                    <span id="track-name"></span>
-                    <div id="track-time">
-                      <div id="current-time"></div>
-                      <div id="track-length"></div>
-                    </div>
-                    <div id="seek-bar-container">
-                      <div id="seek-time"></div>
-                      <div id="s-hover"></div>
-                      <div id="seek-bar"></div>
-                    </div>
-                  </div>
-                  <div id="player-content">
-                    <div id="album-art">
-                      <img
-                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/1.jpg"
-                        class="active"
-                        id="_1"
-                      />
-                      <img
-                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/2.jpg"
-                        id="_2"
-                      />
-                      <img
-                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/3.jpg"
-                        id="_3"
-                      />
-                      <img
-                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/4.jpg"
-                        id="_4"
-                      />
-                      <img
-                        src="https://singhimalaya.github.io/Codepen/assets/img/album-arts/5.jpg"
-                        id="_5"
-                      />
-                      <div id="buffer-box">Buffering ...</div>
-                    </div>
-                    <div id="player-controls">
-                      <div class="control">
-                        <div class="button" id="play-previous">
-                          <i class="fas fa-backward"></i>
-                        </div>
-                      </div>
-                      <div class="control">
-                        <div class="button" id="play-pause-button">
-                          <i class="fas fa-play"></i>
-                        </div>
-                      </div>
-                      <div class="control">
-                        <div class="button" id="play-next">
-                          <i class="fas fa-forward"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-texts">
-            <div id="popup-content-wrapper">
-              <!-- 팝업 내부 우측 [썸네일 제목] (숨김) -->
-              <div
-                id="popup-thumbnail-title"
-                class="popup-meta-thumbnail"
-                style="display: none"
-              ></div>
-              <!-- 팝업 내부 우측 [제목]과 버튼들 -->
-              <div class="popup-title-row">
-                <div id="popup-title" class="popup-meta-title"></div>
-                <div class="popup-action-buttons">
-                  <button
-                    id="popup-music-change-btn"
-                    class="auth-btn control-btn-group primary"
-                    style="display: none"
-                  >
-                    음악변경
-                  </button>
-                  <button
-                    id="popup-add-media-btn"
-                    class="auth-btn control-btn-group primary"
-                    style="display: none"
-                  >
-                    파일업로드
-                  </button>
-                  <button
-                    id="popup-edit-btn"
-                    class="auth-btn control-btn-group primary"
-                    style="display: none"
-                  >
-                    수정
-                  </button>
-                  <button
-                    id="popup-delete-btn"
-                    class="auth-btn control-btn-group secondary"
-                    style="display: none"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-              <!-- 팝업 내부 우측 [내용]-->
-              <div id="popup-description" class="popup-meta-description"></div>
-              <!-- 팝업 내부 우측 [달력/날짜]-->
-              <div id="popup-date" class="popup-meta">
-                <i class="icon">📅</i>
-              </div>
-              <!-- 팝업 내부 우측 [장소]-->
-              <div id="popup-location" class="popup-meta"></div>
-              <!-- 팝업 내부 우측 [태그]-->
-              <div id="popup-tags" class="popup-tags"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 회원가입 모달 -->
-    <div id="signup-modal" class="modal" style="display: none">
-      <div class="modal-content signup-modal-content">
-        <h2>💕 함께할 추억을 만들어요</h2>
-
-        <form id="signup-form">
-          <div class="form-group">
-            <label for="signup-username">사용자명 (필수)</label>
-            <input
-              type="text"
-              id="signup-username"
-              required
-              placeholder="사용자명을 입력해주세요"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-email">이메일 (필수)</label>
-            <input
-              type="email"
-              id="signup-email"
-              required
-              placeholder="email@example.com"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-password">비밀번호 (필수)</label>
-            <input
-              type="password"
-              id="signup-password"
-              required
-              placeholder="비밀번호를 입력해주세요"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-password-confirm">비밀번호 확인 (필수)</label>
-            <input
-              type="password"
-              id="signup-password-confirm"
-              required
-              placeholder="비밀번호를 다시 입력해주세요"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-nickname">닉네임 (선택)</label>
-            <input
-              type="text"
-              id="signup-nickname"
-              placeholder="표시될 닉네임을 입력해주세요"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-phone">연락처 (선택)</label>
-            <input type="tel" id="signup-phone" placeholder="010-0000-0000" />
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="signup-agree" required />
-              개인정보 수집 및 이용에 동의합니다 (필수)
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" id="signup-cancel">취소</button>
-            <button type="submit" id="signup-submit">회원가입</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- BGM 업로드 모달 -->
-    <div id="bgm-upload-modal" class="modal" style="display: none">
-      <div class="modal-content bgm-upload-modal-content">
-        <h2>🎵 배경음악(BGM) 설정</h2>
-        <p class="bgm-description">
-          메인 페이지에서 재생될 배경음악을 업로드하세요.
-        </p>
-
-        <form id="bgm-upload-form" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="bgm-file">음악 파일</label>
-            <input type="file" id="bgm-file" accept=".mp3" required />
-            <div class="bgm-file-info">
-              <small>• MP3 파일만 지원됩니다</small>
-              <small
-                >• 파일명은 "아티스트 - 곡제목.mp3" 형식을 권장합니다</small
-              >
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="bgm-title">곡 제목</label>
-            <input
-              type="text"
-              id="bgm-title"
-              placeholder="자동으로 추출됩니다"
-              disabled
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="bgm-artist">아티스트</label>
-            <input
-              type="text"
-              id="bgm-artist"
-              placeholder="자동으로 추출됩니다"
-              disabled
-            />
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" id="bgm-submit">업로드</button>
-            <button
-              type="button"
-              id="bgm-cancel"
-              style="
-                background-color: #eee;
-                color: #333;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 14px;
-              "
-              onmouseover="this.style.boxShadow='0 2px 8px rgba(128, 128, 128, 0.3)'"
-              onmouseout="this.style.boxShadow='none'"
+          <div class="intro-track-info">
+            <span class="intro-track-name" id="intro-track-name"
+              >Loading...</span
             >
-              닫기
+            <span class="intro-artist-name" id="intro-artist-name"
+              >Loading...</span
+            >
+            <div class="intro-seek-bar-container">
+              <div class="intro-seek-bar" id="intro-seek-bar"></div>
+            </div>
+          </div>
+          <div class="intro-controls">
+            <button class="intro-control-btn" id="intro-prev-btn">
+              <i class="fas fa-backward"></i>
+            </button>
+            <button class="intro-control-btn" id="intro-play-btn">
+              <i class="fas fa-play"></i>
+            </button>
+            <button class="intro-control-btn" id="intro-next-btn">
+              <i class="fas fa-forward"></i>
             </button>
           </div>
-        </form>
-
-        <div id="bgm-current-info" class="bgm-current-section">
-          <h4 class="bgm-current-title">현재 설정된 BGM</h4>
-          <div id="bgm-current-display">로딩 중...</div>
         </div>
       </div>
     </div>
 
-    <!-- 사진/영상 추가 모달 -->
-    <div id="media-upload-modal" class="modal" style="display: none">
-      <div class="modal-content media-upload-modal-content">
-        <h2>📎 사진/영상 추가</h2>
-        <p class="upload-description">
-          현재 메모리에 새로운 사진이나 영상을 추가합니다. (최대 21개)
-        </p>
-
-        <div class="upload-info">
-          <div id="current-files-info">현재 파일 개수를 확인하는 중...</div>
-          <div id="remaining-slots-info"></div>
+    <div class="sakura-container" id="sakuraContainer"></div>
+    <div class="intro-container">
+      <div class="card-container">
+        <div class="image-wrapper">
+          <img src="data/intro1.jpeg" alt="Intro" class="intro-image" />
+          <div class="image-border"></div>
+          <div class="love-text" id="loveText"></div>
         </div>
-
-        <form id="media-upload-form" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="media-files">파일 선택</label>
-            <input
-              type="file"
-              id="media-files"
-              name="media-files"
-              accept="image/*,video/*"
-              multiple
-              required
-            />
-            <div class="upload-file-info">
-              <small>• 이미지: JPG, PNG, GIF, WEBP</small>
-              <small>• 동영상: MP4, MOV, AVI, WEBM</small>
-              <small>• 한 번에 여러 파일을 선택할 수 있습니다</small>
+        <div class="text-section">
+          <div class="section-title">PROMISE</div>
+          <div class="section-content">
+            나의 오늘 그리고 모든 내일을,<br />
+            우리라는 이름으로 함께 해 주길 원해
+          </div>
+          <!-- 우리라는 이름으로 함께 해주었으면 해 -->
+          <div class="story-text">
+            2024년 9월 21일 소개팅 날,<br />
+            보연이가 문을 열고 들어오는 순간 느꼈어<br />
+            "어쩌면 내가 찾던 마지막 인연이<br />
+            이 사람일지도 모르겠다"<br /><br />
+            그날부터 오늘 이 순간까지,<br />
+            온 진심을 다해 사랑하고 기다려왔어<br />
+            그리고 드디어 오늘 <br />그 답을 구하려 해<br /><br />
+            <span style="font-weight: bold">보연아, 나랑 결혼 해 줄래</span>
+            <span class="graffiti-heart-left">♥</span>
+          </div>
+          <div class="wedding-dday-container">
+            <div class="dday-title">우리의 새로운 시작까지</div>
+            <div class="dday-counter">
+              <div class="dday-item">
+                <span class="dday-number" id="days">000</span>
+                <span class="dday-unit">Days</span>
+              </div>
+              <div class="dday-item">
+                <span class="dday-number" id="hours">00</span>
+                <span class="dday-unit">Hours</span>
+              </div>
+              <div class="dday-item">
+                <span class="dday-number" id="minutes">00</span>
+                <span class="dday-unit">Minutes</span>
+              </div>
+              <div class="dday-item">
+                <span class="dday-number" id="seconds">00</span>
+                <span class="dday-unit">Seconds</span>
+              </div>
             </div>
           </div>
-
-          <div id="selected-files-preview" class="selected-files-preview"></div>
-
-          <div class="form-actions">
-            <button type="submit" id="media-upload-submit">업로드</button>
-            <button type="button" id="media-upload-cancel">닫기</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 음악변경 모달 -->
-    <div id="music-change-modal" class="modal" style="display: none">
-      <div class="modal-content music-change-modal-content">
-        <h2>🎵 음악 변경</h2>
-        <p class="music-change-description">
-          현재 메모리의 배경음악을 변경합니다.
-        </p>
-
-        <form id="music-change-form" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="music-change-file">음악 파일</label>
-            <input type="file" id="music-change-file" accept=".mp3" required />
-            <div class="upload-file-info">
-              <small>• MP3 파일만 지원됩니다</small>
-              <small>• 파일명은 "아티스트 - 곡제목.mp3" 형식을 권장합니다</small>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="music-change-title">곡 제목</label>
-            <input
-              type="text"
-              id="music-change-title"
-              placeholder="자동으로 추출됩니다"
-              disabled
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="music-change-artist">아티스트</label>
-            <input
-              type="text"
-              id="music-change-artist"
-              placeholder="자동으로 추출됩니다"
-              disabled
-            />
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" id="music-change-submit">변경</button>
-            <button type="button" id="music-change-cancel">취소</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 플레이리스트 모달 -->
-    <div id="playlist-modal" class="modal" style="display: none">
-      <div class="modal-content playlist-modal-content">
-        <h2>🎵 플레이리스트</h2>
-        <div id="playlist-container">
-          <div id="playlist-list">
-            <!-- 플레이리스트 항목들이 여기에 동적으로 추가됩니다 -->
-          </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" id="playlist-close">닫기</button>
         </div>
       </div>
+      <div class="button-container">
+        <button class="intro-button yes" onclick="handleYes()">YES!</button>
+        <button class="intro-button no" onclick="handleNo()">NO</button>
+      </div>
     </div>
 
-    <!-- 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+    <!-- 커스텀 알림 오버레이 -->
+    <div class="custom-alert-overlay" id="alertOverlay"></div>
+    <div class="custom-alert" id="customAlert">
+      <div class="custom-alert-message" id="alertMessage"></div>
+      <button class="custom-alert-button" onclick="closeAlert()">확인</button>
+    </div>
+
+    <!-- 음악 플레이어를 위한 스크립트 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/public-config//config.js"></script>
 
-    <!-- Supabase 설정 -->
+    <script src="wedding-dday.js"></script>
     <script>
+      // Supabase 클라이언트 초기화
       window.supabaseClient = supabase.createClient(
         window.SUPABASE_CONFIG.url,
         window.SUPABASE_CONFIG.anonKey
       );
-      window.sbClient = window.supabaseClient;
     </script>
+    <script>
+      let isYesClicked = false;
 
-    <!-- 기능별 스크립트 -->
-    <script src="dark-mode.js"></script>
-    <script src="signup.js"></script>
-    <script src="main-music-player.js"></script>
-    <script src="detail-popup.js"></script>
-    <script src="script.js"></script>
-    <script src="admin.js"></script>
-    <!-- flatpickr JS -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+      function showCustomAlert(message, callback) {
+        const overlay = document.getElementById("alertOverlay");
+        const alertBox = document.getElementById("customAlert");
+        const messageEl = document.getElementById("alertMessage");
+
+        messageEl.innerHTML = message;
+        overlay.classList.add("show");
+        alertBox.classList.add("show");
+
+        if (callback) {
+          window.alertCallback = callback;
+        }
+      }
+
+      function closeAlert() {
+        const overlay = document.getElementById("alertOverlay");
+        const alertBox = document.getElementById("customAlert");
+
+        overlay.classList.remove("show");
+        alertBox.classList.remove("show");
+
+        if (window.alertCallback) {
+          window.alertCallback();
+          window.alertCallback = null;
+        }
+      }
+
+      function handleYes() {
+        if (isYesClicked) return;
+        isYesClicked = true;
+
+        showCustomAlert(
+          "좋아🙂 <br> 그런데 우린 어떻게 연애 해 왔을까?",
+          function () {
+            window.location.href = "main.html";
+          }
+        );
+      }
+
+      function handleNo() {
+        showCustomAlert(
+          "거절은 거절한다🤫 <br> 어딜~~ 오빤데? NO를 누르고 있어~"
+        );
+      }
+
+      // 타이핑 효과 텍스트
+      window.addEventListener("DOMContentLoaded", function () {
+        const text = "Will you marry me?";
+        const loveTextElement = document.getElementById("loveText");
+
+        // Will you marry me? 텍스트 애니메이션
+        function animateText() {
+          loveTextElement.innerHTML = ""; // 기존 내용 지우기
+
+          const loveLine = document.createElement("div");
+          loveLine.className = "love-line";
+
+          text.split("").forEach((char, index) => {
+            const span = document.createElement("span");
+            span.textContent = char === " " ? "\u00A0" : char;
+            span.style.setProperty("--index", index);
+            span.style.opacity = "0";
+            span.style.animation = "typeWriter 0.3s forwards";
+            span.style.animationDelay = `${index * 0.1}s`;
+
+            // 뒤로 갈수록 약간씩 위로 올리기
+            const upOffset = (index / text.length) * 3; // 최대 3px까지 올라감
+            span.style.transform = `translateY(-${upOffset}px)`;
+
+            loveLine.appendChild(span);
+          });
+
+          loveTextElement.appendChild(loveLine);
+
+          // 모든 글자가 나타난 후 2초 대기 후 사라지고 다시 시작
+          setTimeout(() => {
+            loveLine.style.animation = "fadeOut 1s forwards";
+            setTimeout(() => {
+              animateText(); // 재귀적으로 다시 호출
+            }, 1500); // 사라진 후 0.5초 대기
+          }, text.length * 100 + 2000); // 모든 글자 표시 + 2초 대기
+        }
+
+        // 초기 실행
+        animateText();
+
+        // Wedding D-Day 카운터
+        const WEDDING_DATE = new Date("2026-04-12T00:00:00").getTime();
+
+        function updateDDayCounter() {
+          const now = new Date().getTime();
+          const distance = WEDDING_DATE - now;
+
+          if (distance < 0) {
+            document.querySelector(".dday-counter").innerHTML = `
+              <div class="dday-item">
+                <span class="dday-number">❤️</span>
+                <span class="dday-unit">Forever</span>
+              </div>
+            `;
+            return;
+          }
+
+          const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+          const hours = Math.floor(
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          );
+          const minutes = Math.floor(
+            (distance % (1000 * 60 * 60)) / (1000 * 60)
+          );
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          const formatNumber = (num) => num.toString().padStart(2, "0");
+          const formatDays = (num) => num.toString().padStart(3, "0");
+
+          document.getElementById("days").textContent = formatDays(days);
+          document.getElementById("hours").textContent = formatNumber(hours);
+          document.getElementById("minutes").textContent =
+            formatNumber(minutes);
+          document.getElementById("seconds").textContent =
+            formatNumber(seconds);
+        }
+
+        updateDDayCounter();
+        setInterval(updateDDayCounter, 1000);
+
+        // 벚꽃 꽃잎 생성
+        const sakuraContainer = document.getElementById("sakuraContainer");
+
+        function createSakuraPetal() {
+          const petal = document.createElement("div");
+          petal.className = "sakura-petal";
+
+          // 랜덤 크기
+          const size = Math.random() * 15 + 10;
+          petal.style.width = size + "px";
+          petal.style.height = size + "px";
+
+          // 랜덤 시작 위치 (화면 전체 상단에서 시작)
+          petal.style.left = Math.random() * 100 + "%";
+
+          // 랜덤 애니메이션 지속 시간
+          petal.style.animationDuration = Math.random() * 10 + 10 + "s";
+
+          // 랜덤 애니메이션 지연
+          petal.style.animationDelay = Math.random() * 5 + "s";
+
+          // 투명도 설정
+          petal.style.opacity = Math.random() * 0.5 + 0.3;
+
+          sakuraContainer.appendChild(petal);
+
+          // 애니메이션 종료 후 제거
+          setTimeout(() => {
+            petal.remove();
+          }, 20000);
+        }
+
+        // 초기 꽃잎 생성
+        for (let i = 0; i < 20; i++) {
+          setTimeout(createSakuraPetal, i * 150);
+        }
+
+        // 주기적으로 새로운 꽃잎 생성
+        setInterval(createSakuraPetal, 1000);
+
+        // 음악 플레이어 코드
+        let introAudio = null;
+        let introPlaylist = [];
+        let introCurrentTrackIndex = 0;
+        let isIntroPlayerVisible = false;
+
+        // 기본 앨범 커버 URL
+        const { data: defaultCoverData } = window.supabaseClient.storage
+          .from("media")
+          .getPublicUrl("album/default-cover.jpg");
+        const DEFAULT_ALBUM_COVER_URL = defaultCoverData.publicUrl;
+
+        // 음악 플레이어 초기화
+        async function initIntroMusicPlayer() {
+          introAudio = new Audio();
+          introAudio.volume = 0.7;
+
+          // 음악 데이터 로드
+          await loadIntroMusic();
+
+          // 이벤트 리스너 등록
+          document
+            .getElementById("intro-play-btn")
+            .addEventListener("click", togglePlay);
+          document
+            .getElementById("intro-prev-btn")
+            .addEventListener("click", playPrevTrack);
+          document
+            .getElementById("intro-next-btn")
+            .addEventListener("click", playNextTrack);
+
+          // 시크바 업데이트
+          introAudio.addEventListener("timeupdate", updateSeekBar);
+
+          // 곡이 끝났을 때 처리 (1곡일 때는 loop가 자동 처리)
+          introAudio.addEventListener("ended", function () {
+            if (introPlaylist.length > 1) {
+              playNextTrack();
+            }
+          });
+
+          // 음표 아이콘 클릭 이벤트
+          const musicIcon = document.getElementById("intro-music-icon");
+          const musicPlayer = document.getElementById("intro-music-player");
+
+          musicIcon.addEventListener("click", function (e) {
+            e.stopPropagation();
+            isIntroPlayerVisible = !isIntroPlayerVisible;
+
+            if (isIntroPlayerVisible) {
+              musicPlayer.style.opacity = "1";
+              musicPlayer.style.transform = "translateX(0)";
+              musicPlayer.style.pointerEvents = "auto";
+
+              // 처음 열 때 자동 재생 시도
+              if (introAudio.paused && introAudio.src) {
+                introAudio.play().catch(console.log);
+              }
+            } else {
+              musicPlayer.style.opacity = "0";
+              musicPlayer.style.transform = "translateX(-20px)";
+              musicPlayer.style.pointerEvents = "none";
+            }
+          });
+
+          // 호버 이벤트
+          musicIcon.addEventListener("mouseenter", function () {
+            if (!isIntroPlayerVisible) {
+              musicPlayer.style.opacity = "1";
+              musicPlayer.style.transform = "translateX(0)";
+              musicPlayer.style.pointerEvents = "auto";
+            }
+          });
+
+          musicPlayer.addEventListener("mouseenter", function () {
+            clearTimeout(window.introHideTimeout);
+          });
+
+          musicIcon.addEventListener("mouseleave", function () {
+            if (!isIntroPlayerVisible) {
+              window.introHideTimeout = setTimeout(() => {
+                if (!musicPlayer.matches(":hover")) {
+                  musicPlayer.style.opacity = "0";
+                  musicPlayer.style.transform = "translateX(-20px)";
+                  musicPlayer.style.pointerEvents = "none";
+                }
+              }, 100);
+            }
+          });
+
+          musicPlayer.addEventListener("mouseleave", function () {
+            if (!isIntroPlayerVisible) {
+              window.introHideTimeout = setTimeout(() => {
+                if (!musicIcon.matches(":hover")) {
+                  musicPlayer.style.opacity = "0";
+                  musicPlayer.style.transform = "translateX(-20px)";
+                  musicPlayer.style.pointerEvents = "none";
+                }
+              }, 100);
+            }
+          });
+        }
+
+        // 음악 데이터 로드
+        async function loadIntroMusic() {
+          try {
+            console.log("음악 데이터 로드 시작");
+            const { data: mainMemories, error: memoriesError } =
+              await window.supabaseClient
+                .from("memories")
+                .select("id, created_at")
+                .eq("tags", "#MAIN_BGM_ONLY")
+                .order("created_at", { ascending: false });
+
+            if (memoriesError) {
+              console.error("BGM 조회 오류:", memoriesError);
+              return;
+            }
+
+            if (!mainMemories || mainMemories.length === 0) {
+              console.log("BGM 데이터 없음");
+              return;
+            }
+
+            console.log("BGM memories 발견:", mainMemories.length);
+
+            const playlistData = [];
+            for (const memory of mainMemories) {
+              const { data: musicData, error } = await window.supabaseClient
+                .from("memory_music")
+                .select("*")
+                .eq("memory_id", memory.id);
+
+              if (!error && musicData && musicData.length > 0) {
+                playlistData.push(...musicData);
+              }
+            }
+
+            if (playlistData.length === 0) {
+              console.log("음악 데이터 없음");
+              return;
+            }
+
+            introPlaylist = playlistData;
+            console.log("플레이리스트 로드 완료:", playlistData.length, "곡");
+            loadTrackByIndex(0);
+          } catch (error) {
+            console.error("음악 로드 실패:", error);
+          }
+        }
+
+        // 특정 트랙 로드
+        function loadTrackByIndex(index) {
+          if (index < 0 || index >= introPlaylist.length) return;
+
+          introCurrentTrackIndex = index;
+          const musicData = introPlaylist[index];
+
+          // 음악 URL 생성
+          let musicUrl = null;
+          if (musicData.music_path) {
+            const { data: musicUrlData } = window.supabaseClient.storage
+              .from("media")
+              .getPublicUrl(musicData.music_path);
+            musicUrl = musicUrlData?.publicUrl;
+          }
+
+          // 앨범 커버 URL 생성
+          let albumUrl = null;
+          if (musicData.album_path) {
+            const { data: albumUrlData } = window.supabaseClient.storage
+              .from("media")
+              .getPublicUrl(musicData.album_path);
+            albumUrl = albumUrlData?.publicUrl;
+          }
+
+          if (!musicUrl) return;
+
+          // UI 업데이트
+          document.getElementById("intro-track-name").textContent =
+            musicData.music_title || "알 수 없는 제목";
+          document.getElementById("intro-artist-name").textContent =
+            musicData.artist_name || "알 수 없는 가수";
+          document.getElementById("intro-album-img").src =
+            albumUrl || DEFAULT_ALBUM_COVER_URL;
+
+          // 오디오 설정
+          console.log("음악 URL 설정:", musicUrl);
+          introAudio.src = musicUrl;
+          introAudio.load();
+
+          // 플레이리스트가 1곡만 있으면 루프 설정
+          if (introPlaylist.length === 1) {
+            introAudio.loop = true;
+          } else {
+            introAudio.loop = false;
+          }
+
+          // 로드 완료 이벤트
+          introAudio.onloadeddata = () => {
+            console.log("음악 로드 완료, 재생 가능");
+          };
+        }
+
+        // 재생/일시정지 토글
+        function togglePlay() {
+          const playBtn = document.getElementById("intro-play-btn");
+          const icon = playBtn.querySelector("i");
+
+          if (!introAudio.src) {
+            console.log("음악 소스가 설정되지 않았습니다");
+            return;
+          }
+
+          if (introAudio.paused) {
+            introAudio
+              .play()
+              .then(() => {
+                icon.className = "fas fa-pause";
+                console.log("음악 재생 시작");
+              })
+              .catch((error) => {
+                console.error("재생 실패:", error);
+              });
+          } else {
+            introAudio.pause();
+            icon.className = "fas fa-play";
+            console.log("음악 일시정지");
+          }
+        }
+
+        // 이전 곡
+        function playPrevTrack() {
+          const prevIndex =
+            introCurrentTrackIndex > 0
+              ? introCurrentTrackIndex - 1
+              : introPlaylist.length - 1;
+          loadTrackByIndex(prevIndex);
+          if (!introAudio.paused) {
+            introAudio.play();
+          }
+        }
+
+        // 다음 곡
+        function playNextTrack() {
+          const nextIndex =
+            introCurrentTrackIndex < introPlaylist.length - 1
+              ? introCurrentTrackIndex + 1
+              : 0;
+          loadTrackByIndex(nextIndex);
+          introAudio
+            .play()
+            .then(() => {
+              document
+                .getElementById("intro-play-btn")
+                .querySelector("i").className = "fas fa-pause";
+            })
+            .catch(console.log);
+        }
+
+        // 시크바 업데이트
+        function updateSeekBar() {
+          if (introAudio.duration) {
+            const percent =
+              (introAudio.currentTime / introAudio.duration) * 100;
+            document.getElementById("intro-seek-bar").style.width =
+              percent + "%";
+          }
+        }
+
+        // 페이지 로드 시 초기화
+        initIntroMusicPlayer();
+
+        // 사용자 첫 상호작용 시 자동재생
+        let hasUserInteracted = false;
+        function startMusicOnFirstInteraction() {
+          if (
+            !hasUserInteracted &&
+            introAudio &&
+            introAudio.src &&
+            introAudio.paused
+          ) {
+            hasUserInteracted = true;
+            introAudio
+              .play()
+              .then(() => {
+                document
+                  .getElementById("intro-play-btn")
+                  .querySelector("i").className = "fas fa-pause";
+                console.log("🎵 음악 자동 재생 시작");
+              })
+              .catch((error) => {
+                console.log("🔇 자동 재생 실패:", error.name);
+              });
+
+            // 이벤트 리스너 제거
+            document.removeEventListener("click", startMusicOnFirstInteraction);
+            document.removeEventListener(
+              "touchstart",
+              startMusicOnFirstInteraction
+            );
+          }
+        }
+
+        // 클릭 또는 터치 이벤트 리스너 추가
+        document.addEventListener("click", startMusicOnFirstInteraction);
+        document.addEventListener("touchstart", startMusicOnFirstInteraction);
+
+        // 3초 후 안내 메시지 (선택사항)
+        setTimeout(() => {
+          if (!hasUserInteracted && introAudio && introAudio.src) {
+            console.log("💡 화면을 클릭하면 배경음악이 재생됩니다");
+          }
+        }, 3000);
+      });
+    </script>
   </body>
 </html>

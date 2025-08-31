@@ -2,6 +2,7 @@
 let mainAudio = null;
 let mainMusicMinimized = false;
 let isPopupOpen = false;
+let detailMusicWasPlayed = false; // 상세팝업에서 실제로 음악이 재생되었는지 추적
 
 // 플레이리스트 관련 변수
 let playlist = [];
@@ -237,8 +238,8 @@ async function loadMainMusic() {
     playlist = playlistData;
     currentTrackIndex = 0;
 
-    // 첫 번째 곡 로드
-    loadTrackByIndex(0);
+    // 첫 번째 곡 로드 및 자동 재생 시도
+    loadTrackByIndex(0, true);
 
     // 항상 고정된 형태로 표시
     $("#main-music-player").removeClass("minimized").show();
@@ -293,6 +294,13 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
   const wasPlaying = !mainAudio.paused;
   mainAudio.src = musicUrl;
   mainAudio.load();
+  
+  // 플레이리스트가 1곡만 있으면 루프 설정
+  if (playlist.length === 1) {
+    mainAudio.loop = true;
+  } else {
+    mainAudio.loop = false;
+  }
 
   mainAudio.onloadedmetadata = () => {
     const duration = mainAudio.duration;
@@ -300,16 +308,26 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
     const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
     $("#main-track-length").text(`${minutes}:${seconds}`);
 
-    // 이미 재생 중이었던 경우나 자동 재생 요청인 경우에만 재생 (페이지 로드 시 자동재생 방지)
-    if (shouldAutoPlay && (wasPlaying || shouldAutoPlay) && !isPopupOpen) {
+    // 자동 재생 요청이 있는 경우 재생 시도 (페이지 로드 시 자동재생 포함)
+    if (shouldAutoPlay && !isPopupOpen) {
+      // 브라우저 자동재생 정책으로 인해 실패할 수 있음
       mainAudio.play().then(() => {
         $("#main-player-track").addClass("active");
         $("#main-album-art").addClass("active");
         $("#main-play-pause-button i").attr("class", "fas fa-pause");
         $("#main-music-player").addClass("playing");
-        console.log("🎵 트랙 재생:", musicData.music_title);
+        console.log("🎵 자동 재생 성공:", musicData.music_title);
       }).catch((error) => {
-        console.log("🔇 트랙 재생 실패:", error.name);
+        console.log("🔇 자동 재생 실패 (브라우저 정책):", error.name);
+        console.log("💡 사용자가 직접 재생 버튼을 눌러주세요.");
+        
+        // 자동재생 실패 시 UI 설정
+        $("#main-player-track").removeClass("active");
+        $("#main-album-art").removeClass("active");
+        $("#main-play-pause-button i").attr("class", "fas fa-play");
+        $("#main-music-player").removeClass("playing");
+        
+        // 자동재생 실패 - 조용히 로그만 출력
       });
     } else {
       // 자동재생 안 할 때는 정지 상태로 UI 설정
@@ -320,13 +338,30 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
     }
   };
 
-  // 곡이 끝나면 정지 (자동으로 다음 곡 재생 안함)
+  // 곡이 끝나면 자동으로 다음 곡 재생 (1곡일 때는 loop가 처리함)
   mainAudio.onended = () => {
-    console.log("🎵 곡 재생 완료 - 정지 상태로 변경");
-    $("#main-player-track").removeClass("active");
-    $("#main-album-art").removeClass("active");
-    $("#main-play-pause-button i").attr("class", "fas fa-play");
-    $("#main-music-player").removeClass("playing");
+    if (playlist.length > 1) {
+      console.log("🎵 곡 재생 완료 - 다음 곡 재생");
+      playNextTrack();
+      // 다음 곡 자동 재생
+      setTimeout(() => {
+        if (!isPopupOpen && mainAudio.src) {
+          mainAudio.play().then(() => {
+            $("#main-player-track").addClass("active");
+            $("#main-album-art").addClass("active");
+            $("#main-play-pause-button i").attr("class", "fas fa-pause");
+            $("#main-music-player").addClass("playing");
+            console.log("🎵 다음 곡 자동 재생 시작");
+          }).catch((error) => {
+            console.log("🔇 다음 곡 자동 재생 실패:", error.name);
+            $("#main-player-track").removeClass("active");
+            $("#main-album-art").removeClass("active");
+            $("#main-play-pause-button i").attr("class", "fas fa-play");
+            $("#main-music-player").removeClass("playing");
+          });
+        }
+      }, 100);
+    }
   };
 
   console.log("✅ 트랙 로드:", musicData.music_title);
@@ -417,56 +452,114 @@ function renderPlaylist() {
   });
 }
 
-// 팝업 상태 업데이트 함수들
+// 팝업 상태 업데이트 함수들 - 스마트 음악 전환
+let wasPlayingBeforeDetailMusic = false; // 상세팝업 음악 재생 전 배경음악 상태 저장
+
 function pauseMainMusic() {
-  console.log("🔇 pauseMainMusic 함수 호출됨");
-  console.log("🔇 [디버그] mainAudio 상태:", mainAudio ? "존재" : "없음");
-  console.log("🔇 [디버그] mainAudio.paused:", mainAudio ? mainAudio.paused : "N/A");
-  console.log("🔇 [디버그] mainAudio.muted:", mainAudio ? mainAudio.muted : "N/A");
-  console.log("🔇 [디버그] mainAudio.currentTime:", mainAudio ? mainAudio.currentTime : "N/A");
-  console.log("🔇 [디버그] mainAudio.src:", mainAudio ? mainAudio.src : "N/A");
+  console.log("🎵 pauseMainMusic 호출 - 상세팝업 열기 (배경음악은 계속 재생)");
+  isPopupOpen = true;
+  detailMusicWasPlayed = false; // 팝업이 새로 열릴 때마다 초기화
   
-  if (mainAudio && mainAudio.src) {
-    console.log("🔇 [디버그] 메인 음악 강제 일시정지 실행 중...");
-    // 재생 중이거나 음소거 상태와 관계없이 무조건 정지
+  // 팝업이 열리기만 해서는 배경음악을 정지하지 않음
+  console.log("🎵 배경음악 계속 재생 중 - 상세팝업 음악 재생 시에만 일시정지됩니다");
+}
+
+// 상세팝업에서 음악이 실제로 재생되었을 때 호출되는 함수
+function pauseMainMusicForDetailMusic() {
+  console.log("🔇 상세팝업 음악 재생으로 인한 배경음악 일시정지");
+  detailMusicWasPlayed = true;
+  
+  // 현재 배경음악 재생 상태를 저장
+  wasPlayingBeforeDetailMusic = mainAudio && mainAudio.src && !mainAudio.paused;
+  
+  if (wasPlayingBeforeDetailMusic) {
+    console.log("🔇 배경음악 일시정지 실행 중...");
     mainAudio.pause();
-    // 추가 보안: 볼륨도 0으로 설정
-    mainAudio.volume = 0;
     $("#main-player-track").removeClass("active");
     $("#main-album-art").removeClass("active");
     $("#main-play-pause-button i").attr("class", "fas fa-play");
     $("#main-music-player").removeClass("playing");
-    console.log("🔇 [디버그] 메인 음악 강제 일시정지 완료");
-    console.log("🔇 [디버그] 일시정지 후 mainAudio.paused:", mainAudio.paused);
-    console.log("🔇 [디버그] 일시정지 후 mainAudio.volume:", mainAudio.volume);
+    console.log("🔇 배경음악 일시정지 완료 (상세팝업 닫으면 재개됩니다)");
   } else {
-    console.log("🔇 [디버그] mainAudio가 없거나 src가 없음");
+    console.log("🎵 배경음악이 재생 중이 아니었으므로 상태 유지");
   }
-  isPopupOpen = true;
-  console.log("🔇 [디버그] isPopupOpen 설정 완료:", isPopupOpen);
 }
 
 function resumeMainMusic() {
-  console.log("🎵 resumeMainMusic 함수 호출됨 - 자동재생 안함");
+  console.log("🎵 resumeMainMusic 호출 - 팝업 닫기 시 배경음악 재개");
   isPopupOpen = false;
+  
   if (mainAudio && mainAudio.src) {
-    // 볼륨만 복구하고 자동재생은 하지 않음
-    mainAudio.volume = 0.7;
-    console.log("🎵 [디버그] 볼륨 복구:", mainAudio.volume);
-    console.log("🎵 자동재생 방지: 사용자가 플레이 버튼을 직접 눌러야 재생됨");
+    // 상세팝업에서 음악이 재생되어 배경음악이 일시정지되었다면 재개
+    if (detailMusicWasPlayed && wasPlayingBeforeDetailMusic) {
+      console.log("🎵 팝업 닫기 - 상세팝업 음악으로 일시정지된 배경음악 재개");
+      mainAudio.play().then(() => {
+        $("#main-player-track").addClass("active");
+        $("#main-album-art").addClass("active");
+        $("#main-play-pause-button i").attr("class", "fas fa-pause");
+        $("#main-music-player").addClass("playing");
+        console.log("✅ 배경음악 재생 재개 완료");
+      }).catch((error) => {
+        console.log("🔇 배경음악 재개 실패:", error.name);
+        // 재생 실패 시 UI를 정지 상태로 설정
+        $("#main-player-track").removeClass("active");
+        $("#main-album-art").removeClass("active");
+        $("#main-play-pause-button i").attr("class", "fas fa-play");
+        $("#main-music-player").removeClass("playing");
+      });
+    } else if (detailMusicWasPlayed && !wasPlayingBeforeDetailMusic) {
+      console.log("🎵 상세팝업 음악 재생 전에 배경음악이 정지 상태였으므로 정지 상태 유지");
+    } else {
+      console.log("🎵 상세팝업에서 음악이 재생되지 않았으므로 배경음악 상태는 그대로 유지");
+    }
   } else {
     console.log("🔇 메인 오디오가 없거나 소스가 설정되지 않음");
   }
+  
+  // 상태 초기화
+  detailMusicWasPlayed = false;
+  wasPlayingBeforeDetailMusic = false;
 }
+
+// 자동재생 알림 함수 제거됨
 
 // 전역 함수로 명시적으로 등록
 window.pauseMainMusic = pauseMainMusic;
+window.pauseMainMusicForDetailMusic = pauseMainMusicForDetailMusic;
 window.resumeMainMusic = resumeMainMusic;
+
+// 사용자 첫 상호작용 시 자동재생 시작
+let userHasInteracted = false;
+
+function startMusicOnFirstInteraction() {
+  if (!userHasInteracted && mainAudio && mainAudio.src && mainAudio.paused) {
+    userHasInteracted = true;
+    console.log('🎵 사용자 상호작용 감지 - 배경음악 자동 시작');
+    
+    mainAudio.play().then(() => {
+      $("#main-player-track").addClass("active");
+      $("#main-album-art").addClass("active");
+      $("#main-play-pause-button i").attr("class", "fas fa-pause");
+      $("#main-music-player").addClass("playing");
+      
+      // 플레이어는 고정하지 않음 - 오직 음표 아이콘 클릭에만 고정/해제
+      console.log('✅ 배경음악 자동 시작 성공! (플레이어 고정 안됨)');
+    }).catch((error) => {
+      console.log('🔇 자동 시작 실패:', error.name);
+    });
+  }
+}
 
 // DOM 로드 후 초기화
 $(document).ready(function() {
   initMainMusicPlayer();
   loadMainMusic();
+  
+  // 사용자 첫 상호작용 감지 (클릭, 터치, 키보드)
+  const interactionEvents = ['click', 'touchstart', 'keydown'];
+  interactionEvents.forEach(event => {
+    document.addEventListener(event, startMusicOnFirstInteraction, { once: true });
+  });
   
   // 음표 아이콘 hover 및 클릭 이벤트 처리
   const musicIcon = $("#music-icon");
@@ -488,8 +581,18 @@ $(document).ready(function() {
         "pointer-events": "auto"
       });
       
-      // 자동재생 제거: 사용자가 플레이 버튼을 직접 눌러야 함
-      console.log("🎵 플레이어 표시됨 - 자동재생하지 않음");
+      // 플레이어 고정하고 자동재생 시작
+      if (mainAudio && mainAudio.src && mainAudio.paused) {
+        mainAudio.play().then(() => {
+          $("#main-player-track").addClass("active");
+          $("#main-album-art").addClass("active");
+          $("#main-play-pause-button i").attr("class", "fas fa-pause");
+          $("#main-music-player").addClass("playing");
+          console.log("🎵 음표 아이콘 클릭 - 자동재생 시작");
+        }).catch((error) => {
+          console.log("🔇 재생 실패:", error.name);
+        });
+      }
     } else {
       // 플레이어 숨김
       musicPlayer.css({
@@ -549,8 +652,8 @@ $(document).ready(function() {
     }
   });
   
-  // 자동재생 기능 완전 제거: 사용자가 플레이 버튼을 직접 눌러야만 재생됨
-  console.log("🎵 자동재생 기능 비활성화 - 플레이 버튼을 직접 눌러주세요");
+  // 자동재생 기능 활성화됨
+  console.log("🎵 자동재생 기능 활성화 - index.html 진입 시 자동 시작");
   
   console.log("✅ 메인 음악 플레이어 초기화 완료");
 });

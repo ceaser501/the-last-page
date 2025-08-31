@@ -1,6 +1,17 @@
 const supabase = window.supabaseClient;
 const wrapper = document.getElementById("garland-wrapper");
 
+// 홈 버튼 클릭 이벤트 추가
+document.addEventListener("DOMContentLoaded", function () {
+  const homeIcon = document.getElementById("home-icon");
+  if (homeIcon) {
+    homeIcon.addEventListener("click", function () {
+      console.log("홈 버튼 클릭됨");
+      window.location.href = "index.html";
+    });
+  }
+});
+
 // Supabase 작업 재시도 함수
 async function retrySupabaseOperation(operation, maxRetries = 3, delay = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -43,7 +54,194 @@ function isVideo(src) {
 }
 
 let mediaList = [];
+let pathUpdateTimer = null; // 경로 업데이트 디바운싱 타이머
 let rawMemories = [];
+let photoPositions = []; // 발자취 경로를 위한 폴라로이드 위치 저장
+let savedPathElement = null; // 저장된 발자취 경로 DOM 요소
+let isAllRowsLoaded = false; // 모든 행이 로드되었는지 확인
+
+// 발자취 경로를 그리는 함수
+function createFootprintPath(saveAfterDraw = true) {
+  console.log("🛤️ createFootprintPath 호출됨, saveAfterDraw:", saveAfterDraw);
+
+  // 기존 경로 제거
+  const existingPath = document.querySelector(".footprint-path");
+  if (existingPath) {
+    console.log("🛤️ 기존 경로 제거");
+    existingPath.remove();
+  }
+
+  if (photoPositions.length < 2) return;
+
+  // 이미지 순서대로 정렬하고 실제 DOM 위치 계산
+  const sortedPositions = [...photoPositions]
+    .sort((a, b) => a.index - b.index)
+    .map((photo) => {
+      const rect = photo.element.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+
+      // wrapper 기준 상대 좌표로 계산
+      const centerX = rect.left - wrapperRect.left + rect.width / 2;
+      const centerY = rect.top - wrapperRect.top + rect.height / 2;
+
+      return {
+        x: centerX,
+        y: centerY,
+        row: photo.row,
+        index: photo.index,
+      };
+    });
+
+  // SVG 컨테이너 생성
+  const pathContainer = document.createElement("div");
+  pathContainer.className = "footprint-path";
+  const wrapperHeight = wrapper.scrollHeight || 2000;
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 1500 ${wrapperHeight}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+  // 경로 데이터 생성 (부드러운 곡선)
+  if (sortedPositions.length === 0) return;
+
+  // 시작점을 첫 번째 폴라로이드보다 더 길게 왼쪽으로 이동
+  const startX = sortedPositions[0].x - 250;
+  const startY = sortedPositions[0].y;
+  let pathData = `M ${startX} ${startY} L ${sortedPositions[0].x} ${sortedPositions[0].y}`;
+
+  for (let i = 1; i < sortedPositions.length; i++) {
+    const prev = sortedPositions[i - 1];
+    const curr = sortedPositions[i];
+
+    // 행이 바뀌는 경우 실제로 바깥쪽으로 돌아가는 경로
+    if (prev.row !== curr.row) {
+      const midY = (prev.y + curr.y) / 2;
+
+      // 실제 폴라로이드 번호 기반 패턴 결정
+      // 7→8번: 오른쪽→오른쪽
+      // 12→13번: 왼쪽→왼쪽
+      // 19→20번: 오른쪽→오른쪽 (7→8과 동일)
+
+      // 실제 인덱스로 패턴 결정
+      const transitionIndex = prev.index + 1; // 1-based index
+      let shouldGoRight;
+
+      if (transitionIndex === 7) {
+        // 7→8
+        shouldGoRight = true;
+      } else if (transitionIndex === 12) {
+        // 12→13
+        shouldGoRight = false;
+      } else if (transitionIndex === 19) {
+        // 19→20
+        shouldGoRight = true;
+      } else {
+        // 다른 전환은 기본 패턴 사용 (행 번호 기준)
+        shouldGoRight = prev.row % 2 === 0;
+      }
+
+      if (shouldGoRight) {
+        // 오른쪽 패턴: 자연스러운 S자 곡선
+        const extendX = prev.x + 70; // 적당히 오른쪽으로
+
+        // 부드러운 Quadratic Bezier 곡선으로 연결
+        pathData += ` Q ${extendX} ${prev.y + 50}, ${extendX} ${midY}`;
+        pathData += ` Q ${extendX} ${curr.y - 50}, ${curr.x} ${curr.y}`;
+
+        // 발자국 이미지 추가 (중간 지점에 1개 - 아래쪽 방향)
+        const footprint = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "image"
+        );
+        footprint.setAttribute("href", "data/footprint.png");
+        footprint.setAttribute("x", "-40");
+        footprint.setAttribute("y", "-60");
+        footprint.setAttribute("width", "80");
+        footprint.setAttribute("height", "120");
+        footprint.setAttribute(
+          "transform",
+          `translate(${extendX}, ${midY + 40}) rotate(180)`
+        ); // 위치를 40px 아래로
+        footprint.setAttribute("opacity", "0.5");
+        //svg.appendChild(footprint);
+      } else {
+        // 왼쪽 패턴: 12번째 왼쪽으로 나와서 13번째 왼쪽으로 들어가는 곡선
+        const extendX = Math.min(prev.x, curr.x) - 70; // 적당히 왼쪽으로
+
+        // 부드러운 Quadratic Bezier 곡선으로 연결
+        pathData += ` Q ${extendX} ${prev.y + 50}, ${extendX} ${midY}`;
+        pathData += ` Q ${extendX} ${curr.y - 50}, ${curr.x} ${curr.y}`;
+
+        // 12→13번은 발자국 없음
+      }
+    } else {
+      // 같은 행 내에서는 간단한 곡선으로
+      const controlX = (prev.x + curr.x) / 2;
+      const controlY = prev.y - 25;
+      pathData += ` Q ${controlX} ${controlY}, ${curr.x} ${curr.y}`;
+    }
+  }
+
+  // 마지막에 끝점 추가 (마지막 폴라로이드에서 더 길게 나가기)
+  if (sortedPositions.length > 0) {
+    const lastPhoto = sortedPositions[sortedPositions.length - 1];
+    const endX = lastPhoto.x + 150;
+    const endY = lastPhoto.y;
+    pathData += ` L ${endX} ${endY}`;
+  }
+
+  path.setAttribute("d", pathData);
+  svg.appendChild(path);
+  pathContainer.appendChild(svg);
+
+  // wrapper에 추가
+  wrapper.appendChild(pathContainer);
+
+  // 경로 요소 저장 (나중에 복원용) - saveAfterDraw가 true일 때만
+  if (saveAfterDraw && isAllRowsLoaded) {
+    savedPathElement = pathContainer;
+    console.log(
+      "🛤️ 발자취 경로 생성 및 저장:",
+      sortedPositions.length,
+      "개 지점"
+    );
+  } else {
+    console.log(
+      "🛤️ 발자취 경로 생성 (저장 안 함):",
+      sortedPositions.length,
+      "개 지점"
+    );
+  }
+}
+
+// 저장된 발자취 경로를 복원하는 함수
+function restoreSavedPath() {
+  console.log("🛤️ restoreSavedPath 호출됨");
+
+  // 기존 경로 확인
+  const existingPath = document.querySelector(".footprint-path");
+  console.log("🛤️ 기존 경로 존재:", !!existingPath);
+
+  if (existingPath) {
+    console.log("🛤️ 기존 경로가 이미 있음 - 유지");
+    return; // 이미 경로가 있으면 그대로 둠
+  }
+
+  // 저장된 경로가 있으면 복원
+  if (savedPathElement) {
+    // 저장된 요소를 복제하여 추가
+    const clonedPath = savedPathElement.cloneNode(true);
+    wrapper.appendChild(clonedPath);
+    console.log("🛤️ 저장된 발자취 경로 복원 완료");
+  } else {
+    console.log("⚠️ 저장된 발자취 경로가 없음");
+  }
+}
+
+// 전역으로 사용 가능하도록 window 객체에 추가
+window.restoreSavedPath = restoreSavedPath;
 
 async function loadMediaFromSupabase() {
   // 메인 화면에서는 대표 이미지만 먼저 로드하여 초기 로딩 성능 향상
@@ -214,7 +412,21 @@ let pointer = 0;
 let row = 0;
 
 function generateRow() {
-  if (pointer >= mediaList.length) return;
+  if (pointer >= mediaList.length) {
+    // 모든 행이 로드됨
+    if (!isAllRowsLoaded) {
+      isAllRowsLoaded = true;
+      console.log("🛤️ 모든 행 로드 완료");
+
+      // 모든 행이 로드된 후 최종 경로를 그리고 저장
+      if (photoPositions.length > 0) {
+        setTimeout(() => {
+          createFootprintPath(true); // true = 저장함
+        }, 500); // DOM 안정화를 위해 대기
+      }
+    }
+    return;
+  }
 
   /*
   if (row === 1) {
@@ -251,29 +463,16 @@ function generateRow() {
       const heartSticker = document.createElement("img");
       heartSticker.src = "./data/heart.png";
       heartSticker.alt = "heart Sticker";
-      heartSticker.className = "heart-sticker-row3"; // 클래스 추가로 중복 방지
+      heartSticker.className = "heart-sticker2-row3"; // 클래스 추가로 중복 방지
       heartSticker.style.position = "absolute";
-      heartSticker.style.top = "1000px";
-      heartSticker.style.left = "calc(71% - 60px)";
-      heartSticker.style.width = "130px";
-      heartSticker.style.transform = "rotate(0deg) translateY(-20px)";
+      heartSticker.style.top = "1155px";
+      heartSticker.style.left = "calc(82% - 30px)";
+      heartSticker.style.width = "90px";
+      heartSticker.style.transform = "rotate(22deg) translateY(-25px)";
       heartSticker.style.zIndex = "6";
       heartSticker.style.pointerEvents = "none";
 
-      const heartSticker2 = document.createElement("img");
-      heartSticker2.src = "./data/heart.png";
-      heartSticker2.alt = "heart Sticker";
-      heartSticker2.className = "heart-sticker2-row3"; // 클래스 추가로 중복 방지
-      heartSticker2.style.position = "absolute";
-      heartSticker2.style.top = "1000px";
-      heartSticker2.style.left = "calc(78% - 70px)";
-      heartSticker2.style.width = "130px";
-      heartSticker2.style.transform = "rotate(-12deg) translateY(-20px)";
-      heartSticker2.style.zIndex = "6";
-      heartSticker2.style.pointerEvents = "none";
-
       document.body.appendChild(heartSticker);
-      document.body.appendChild(heartSticker2);
     }
   }
 
@@ -316,18 +515,30 @@ function generateRow() {
     }
   }
 
-  const imagesPerRow = row % 2 === 0 ? 7 : 5;
+  const imagesPerRow = row % 2 === 0 ? 7 : 6;
   const rowWrapper = document.createElement("div");
   rowWrapper.className = "garland-row";
 
   if (row % 2 === 1) {
     rowWrapper.style.marginBottom = "100px";
-    rowWrapper.style.marginLeft = "60px";
+    rowWrapper.style.marginLeft = "70px";
     rowWrapper.style.marginTop = "50px";
+  } else {
+    if (row !== 0) rowWrapper.style.marginTop = "180px";
   }
 
   if (row == 1) {
     rowWrapper.style.marginTop = "-50px";
+    rowWrapper.style.marginLeft = "90px"; // 첫 번째 줄을 더 왼쪽으로
+
+    // couple.png 이미지 추가 (wrapper에 직접 추가)
+    const existingCouple = document.querySelector(".couple-image");
+    if (!existingCouple) {
+      const coupleImg = document.createElement("img");
+      coupleImg.src = "data/couple.png";
+      coupleImg.className = "couple-image";
+      wrapper.appendChild(coupleImg);
+    }
   }
 
   const rope = document.createElement("div");
@@ -479,6 +690,13 @@ function generateRow() {
       openDetailPopup(mediaList[i], mediaList);
     });
 
+    // 폴라로이드 위치 저장 (발자취 경로용)
+    photoPositions.push({
+      element: photo,
+      index: i,
+      row: row,
+    });
+
     rowWrapper.appendChild(photo);
     observer.observe(photo);
   });
@@ -486,6 +704,18 @@ function generateRow() {
   wrapper.appendChild(rowWrapper);
   pointer += imagesPerRow;
   row++;
+
+  // 각 행이 생성될 때 경로 업데이트 (저장하지 않음)
+  // 모든 행이 로드되기 전까지만 경로 업데이트
+  if (!savedPathElement && !isAllRowsLoaded) {
+    // 저장된 경로가 없고, 아직 모든 행이 로드되지 않았을 때만
+    if (pathUpdateTimer) clearTimeout(pathUpdateTimer);
+    pathUpdateTimer = setTimeout(() => {
+      createFootprintPath(false); // false = 저장하지 않음
+    }, 100); // 레이아웃 완료 후 실행
+  } else if (savedPathElement) {
+    console.log("🛤️ 저장된 경로가 있음 - 행 추가 시 경로 업데이트 스킵");
+  }
 }
 
 function setupLazyRender() {
@@ -552,3 +782,40 @@ Fancybox.bind("[data-fancybox='gallery']", {
   },
 });
 */
+
+// 벚꽃 애니메이션
+$(document).ready(function () {
+  const sakuraContainer = document.getElementById("sakura-container");
+
+  function createSakuraPetal() {
+    const petal = document.createElement("div");
+    petal.className = "sakura-petal";
+    // 랜덤 크기
+    const size = Math.random() * 15 + 10;
+    petal.style.width = size + "px";
+    petal.style.height = size + "px";
+    // 랜덤 시작 위치 (화면 전체 상단에서 시작)
+    petal.style.left = Math.random() * 100 + "%";
+    // 랜덤 애니메이션 지속 시간
+    petal.style.animationDuration = Math.random() * 10 + 10 + "s";
+    // 랜덤 애니메이션 지연
+    petal.style.animationDelay = Math.random() * 5 + "s";
+    // 투명도 설정
+    petal.style.opacity = Math.random() * 0.5 + 0.3;
+    sakuraContainer.appendChild(petal);
+    // 애니메이션 종료 후 제거
+    setTimeout(() => {
+      petal.remove();
+    }, 20000);
+  }
+
+  // 초기 꽃잎 생성
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      createSakuraPetal();
+    }, i * 300);
+  }
+
+  // 지속적으로 꽃잎 생성
+  setInterval(createSakuraPetal, 2000);
+});

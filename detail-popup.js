@@ -360,25 +360,14 @@ async function renderDetailPopupContent(media) {
           totalDurationEl.textContent = `${minutes}:${seconds}`;
 
           console.log(
-            "🎵 [디버그] 팝업 음악 메타데이터 로드 완료, 자동 재생 시작"
+            "🎵 [디버그] 팝업 음악 메타데이터 로드 완료 (자동 재생 안 함)"
           );
-          // 상세팝업 열릴 때 자동으로 재생
-          window.audio
-            .play()
-            .then(() => {
-              console.log("🎵 [디버그] 팝업 음악 재생 성공");
-            })
-            .catch((error) => {
-              console.log(
-                "❌ [디버그] 팝업 음악 자동 재생 실패 (브라우저 정책):",
-                error
-              );
-            });
-
-          // UI 업데이트
-          $("#play-pause-button i").attr("class", "fas fa-pause");
-          $("#player-track").addClass("active");
-          $("#album-art").addClass("active");
+          // 자동 재생하지 않음 - 사용자가 재생 버튼을 클릭할 때만 재생
+          
+          // UI 업데이트 (일시정지 상태로 표시)
+          $("#play-pause-button i").attr("class", "fas fa-play");
+          $("#player-track").removeClass("active");
+          $("#album-art").removeClass("active");
         };
       }
     } else {
@@ -911,6 +900,10 @@ function closeDetailPopup() {
   const overlay = document.getElementById("popup-overlay");
   if (overlay.style.display === "none") return;
 
+  // 팝업 닫기 완료 후 경로 복원을 위해 플래그 설정
+  document.body.classList.remove("modal-open");
+  overlay.style.display = "none";
+
   // 🎬 영상 재생 중지
   const mainImgContainer = document.getElementById(
     "popup-main-image-container"
@@ -943,21 +936,20 @@ function closeDetailPopup() {
     document.exitFullscreen();
   }
 
-  // 조회
-  // 기존 이미지, 행 제거 (스티커 제외하고)
-  // wrapper 안의 .garland-row와 .wall-graffiti만 제거
-  const elementsToRemove = wrapper.querySelectorAll(
-    ".garland-row, .wall-graffiti"
-  );
-  elementsToRemove.forEach((el) => el.remove());
-
-  // 전역 변수 초기화
-  pointer = 0;
-  row = 0;
-  mediaList = [];
-  rawMemories = [];
-
-  loadMediaFromSupabase();
+  // 팝업을 닫을 때는 갤러리를 다시 로드하지 않음
+  console.log("🛤️ 팝업 닫기 완료 - 갤러리 유지");
+  
+  // 🛤️ 저장된 발자취 경로 복원
+  console.log("🔍 팝업 닫기 - restoreSavedPath 존재 여부:", typeof window.restoreSavedPath);
+  if (typeof window.restoreSavedPath === "function") {
+    console.log("🔍 300ms 후 경로 복원 예정");
+    setTimeout(() => {
+      console.log("🔍 경로 복원 실행");
+      window.restoreSavedPath();
+    }, 300); // DOM이 완전히 안정화된 후 복원
+  } else {
+    console.log("⚠️ restoreSavedPath 함수를 찾을 수 없음");
+  }
 }
 
 
@@ -1267,6 +1259,7 @@ function initPlayer() {
           albumArt.addClass("active");
           checkBuffering();
           i.attr("class", "fas fa-pause");
+          pauseMainMusicForDetailMusic();
           audio.play();
         } else {
           playerTrack.removeClass("active");
@@ -2356,14 +2349,17 @@ function closeMusicChangeModal() {
 }
 
 // 음악변경 취소 버튼 이벤트
-document.getElementById("music-change-cancel").addEventListener("click", () => {
-  closeMusicChangeModal();
-});
+const musicChangeCancelBtn = document.getElementById("music-change-cancel");
+if (musicChangeCancelBtn) {
+  musicChangeCancelBtn.addEventListener("click", () => {
+    closeMusicChangeModal();
+  });
+}
 
 // 음악 파일 메타데이터 추출
-document
-  .getElementById("music-change-file")
-  .addEventListener("change", async (e) => {
+const musicChangeFileInput = document.getElementById("music-change-file");
+if (musicChangeFileInput) {
+  musicChangeFileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -2395,14 +2391,16 @@ document
       }
     }
   });
+}
 
 // 음악변경 폼 제출 처리
-document
-  .getElementById("music-change-form")
-  .addEventListener("submit", async (e) => {
+const musicChangeForm = document.getElementById("music-change-form");
+if (musicChangeForm) {
+  musicChangeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     await handleMusicChange();
   });
+}
 
 // 음악변경 처리 함수
 async function handleMusicChange() {
