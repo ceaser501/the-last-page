@@ -262,6 +262,11 @@
     display: block !important;
   }
   
+  /* 상세팝업 열렸을 때 토글 스위치 숨기기 */
+  body.popup-open .music-toggle-container {
+    display: none !important;
+  }
+  
   /* 토글 스위치 체크박스 숨기기 */
   .music-toggle-checkbox {
     display: none !important;

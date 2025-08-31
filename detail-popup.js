@@ -96,6 +96,7 @@ async function openDetailPopup(media, mediaList) {
     // 팝업 표시
     const overlay = document.getElementById("popup-overlay");
     overlay.style.display = "flex";
+    document.body.classList.add("popup-open");
     
     // 🔮 인접 슬라이드 프리로드 (백그라운드에서)
     preloadAdjacentSlides();
@@ -912,6 +913,7 @@ function closeDetailPopup() {
 
   // 팝업 닫기 완료 후 경로 복원을 위해 플래그 설정
   document.body.classList.remove("modal-open");
+  document.body.classList.remove("popup-open");
   overlay.style.display = "none";
 
   // 🎬 영상 재생 중지
