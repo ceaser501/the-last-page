@@ -980,6 +980,21 @@
 
           // 음악 데이터 로드
           await loadIntroMusic();
+          
+          // 모바일에서 첫 터치/클릭 시 자동재생
+          const startIntroMusic = () => {
+            if (introAudio.paused && introAudio.src) {
+              introAudio.play().then(() => {
+                console.log("🎵 Intro 음악 자동재생 시작");
+                document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-pause"></i>';
+              }).catch(console.log);
+            }
+          };
+          
+          // 사용자 상호작용 이벤트 등록
+          ['click', 'touchstart'].forEach(event => {
+            document.addEventListener(event, startIntroMusic, { once: true });
+          });
 
           // 이벤트 리스너 등록
           document
@@ -1008,21 +1023,46 @@
 
           musicIcon.addEventListener("click", function (e) {
             e.stopPropagation();
-            isIntroPlayerVisible = !isIntroPlayerVisible;
-
-            if (isIntroPlayerVisible) {
-              musicPlayer.style.opacity = "1";
-              musicPlayer.style.transform = "translateX(0)";
-              musicPlayer.style.pointerEvents = "auto";
-
-              // 처음 열 때 자동 재생 시도
-              if (introAudio.paused && introAudio.src) {
-                introAudio.play().catch(console.log);
+            
+            // 모바일 체크
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+              // 모바일: 플레이어 표시 없이 음악만 재생/정지
+              if (introAudio && introAudio.src) {
+                if (introAudio.paused) {
+                  introAudio.play().then(() => {
+                    document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-pause"></i>';
+                    // 아이콘 색상 변경으로 재생 상태 표시
+                    musicIcon.querySelector("i").style.color = "#ff8fa3";
+                    console.log("🎵 모바일 intro 음악 재생");
+                  }).catch(console.log);
+                } else {
+                  introAudio.pause();
+                  document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-play"></i>';
+                  // 아이콘 색상 원래대로
+                  musicIcon.querySelector("i").style.color = "";
+                  console.log("⏸️ 모바일 intro 음악 정지");
+                }
               }
             } else {
-              musicPlayer.style.opacity = "0";
-              musicPlayer.style.transform = "translateX(-20px)";
-              musicPlayer.style.pointerEvents = "none";
+              // PC: 기존대로 플레이어 표시/숨김
+              isIntroPlayerVisible = !isIntroPlayerVisible;
+
+              if (isIntroPlayerVisible) {
+                musicPlayer.style.opacity = "1";
+                musicPlayer.style.transform = "translateX(0)";
+                musicPlayer.style.pointerEvents = "auto";
+
+                // 처음 열 때 자동 재생 시도
+                if (introAudio.paused && introAudio.src) {
+                  introAudio.play().catch(console.log);
+                }
+              } else {
+                musicPlayer.style.opacity = "0";
+                musicPlayer.style.transform = "translateX(-20px)";
+                musicPlayer.style.pointerEvents = "none";
+              }
             }
           });
 

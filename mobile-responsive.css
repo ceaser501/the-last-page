@@ -99,6 +99,7 @@
     gap: 12px;
     min-height: 104px; /* 80px(이미지 높이) + 24px(위아래 패딩) */
     box-sizing: border-box;
+    text-align: left !important;
   }
 
   /* 이미지를 왼쪽에 작게 */
@@ -131,6 +132,11 @@
     line-height: 1.4;
     display: block !important;
     font-family: "Noto Sans KR", sans-serif !important;
+  }
+  
+  /* 날짜 요소 왼쪽 정렬 */
+  .date-element {
+    text-align: left !important;
   }
 
   /* 테이프 효과 제거 */
@@ -239,35 +245,72 @@
     margin: 20px auto;
   }
 
-  /* intro 페이지에서만 음표 아이콘 숨기기 */
+  /* intro 페이지 음표 아이콘 표시 */
   #intro-music-icon {
-    display: none !important;
-  }
-  
-  /* main 페이지 음표 아이콘 - 홈 아이콘과 동일한 스타일 */
-  #music-icon {
-    display: block !important;
-    width: 30px !important;
-    height: 30px !important;
+    display: flex !important;
     position: fixed !important;
     top: 15px !important;
     right: 15px !important;
+    width: 30px !important;
+    height: 30px !important;
     opacity: 0.7 !important;
     z-index: 100 !important;
     cursor: pointer !important;
-    color: inherit !important;  /* 홈 아이콘과 동일한 색상 상속 */
+    color: inherit !important;
     font-size: 20px !important;
     background: transparent !important;
     border: none !important;
-    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
+
+  /* intro 음표 아이콘 호버/터치 시 강조 */
+  #intro-music-icon:hover,
+  #intro-music-icon:active {
+    opacity: 1 !important;
+  }
+
+  /* intro 음악 플레이어 숨기기 (음표 아이콘 클릭 시 표시) */
+  .intro-music-wrapper {
+    display: none !important;
+  }
+
+  /* main 페이지 음표 아이콘 - 홈 아이콘과 완전 동일한 스타일 */
+  #music-icon {
+    display: flex !important;
+    width: 35px !important;
+    height: 35px !important;
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 10001 !important;
+    cursor: pointer !important;
+    border-radius: 8px !important;
+    background-color: var(--popup-bg) !important;
+    border: 2px solid var(--popup-border) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+  }
   
+  #music-icon i {
+    color: var(--text-color) !important;
+    font-size: 16px !important;
+    transition: color 0.3s ease, transform 0.3s ease !important;
+  }
+
   /* 음표 아이콘 호버/터치 시 강조 */
   #music-icon:hover,
   #music-icon:active {
-    opacity: 1 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  #music-icon:hover i,
+  #music-icon:active i {
+    transform: scale(1.1) !important;
   }
 }
 
@@ -791,8 +834,11 @@
   .photo {
     min-height: 100px;
     cursor: pointer;
-    text-align: left !important;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .date-element {
+    text-align: left !important;
   }
 
   /* 스크롤 성능 최적화 */

@@ -581,39 +581,72 @@ $(document).ready(function() {
   let hoverTimeout;
   let isPlayerPinned = false; // 고정 상태 추적
   
+  // 모바일 체크
+  const isMobile = window.innerWidth <= 768;
+  
   // 클릭으로 고정/해제
   musicIcon.on("click", function(e) {
     e.stopPropagation();
-    isPlayerPinned = !isPlayerPinned;
     
-    if (isPlayerPinned) {
-      // 플레이어 고정하고 음악 재생 시작
-      clearTimeout(hoverTimeout);
-      musicPlayer.css({
-        "opacity": "1",
-        "transform": "translateX(0)",
-        "pointer-events": "auto"
-      });
-      
-      // 플레이어 고정하고 자동재생 시작
-      if (mainAudio && mainAudio.src && mainAudio.paused) {
-        mainAudio.play().then(() => {
-          $("#main-player-track").addClass("active");
-          $("#main-album-art").addClass("active");
-          $("#main-play-pause-button i").attr("class", "fas fa-pause");
-          $("#main-music-player").addClass("playing");
-          console.log("🎵 음표 아이콘 클릭 - 자동재생 시작");
-        }).catch((error) => {
-          console.log("🔇 재생 실패:", error.name);
-        });
+    if (isMobile) {
+      // 모바일: 플레이어 표시 없이 음악만 재생/정지
+      if (mainAudio && mainAudio.src) {
+        if (mainAudio.paused) {
+          mainAudio.play().then(() => {
+            $("#main-player-track").addClass("active");
+            $("#main-album-art").addClass("active");
+            $("#main-play-pause-button i").attr("class", "fas fa-pause");
+            $("#main-music-player").addClass("playing");
+            // 아이콘 색상 변경으로 재생 상태 표시
+            musicIcon.find("i").css("color", "#ff8fa3");
+            console.log("🎵 모바일 음악 재생");
+          }).catch((error) => {
+            console.log("🔇 재생 실패:", error.name);
+          });
+        } else {
+          mainAudio.pause();
+          $("#main-player-track").removeClass("active");
+          $("#main-album-art").removeClass("active");
+          $("#main-play-pause-button i").attr("class", "fas fa-play");
+          $("#main-music-player").removeClass("playing");
+          // 아이콘 색상 원래대로
+          musicIcon.find("i").css("color", "");
+          console.log("⏸️ 모바일 음악 정지");
+        }
       }
     } else {
-      // 플레이어 숨김
-      musicPlayer.css({
-        "opacity": "0",
-        "transform": "translateX(-20px)",
-        "pointer-events": "none"
-      });
+      // PC: 기존대로 플레이어 표시/숨김
+      isPlayerPinned = !isPlayerPinned;
+      
+      if (isPlayerPinned) {
+        // 플레이어 고정하고 음악 재생 시작
+        clearTimeout(hoverTimeout);
+        musicPlayer.css({
+          "opacity": "1",
+          "transform": "translateX(0)",
+          "pointer-events": "auto"
+        });
+        
+        // 플레이어 고정하고 자동재생 시작
+        if (mainAudio && mainAudio.src && mainAudio.paused) {
+          mainAudio.play().then(() => {
+            $("#main-player-track").addClass("active");
+            $("#main-album-art").addClass("active");
+            $("#main-play-pause-button i").attr("class", "fas fa-pause");
+            $("#main-music-player").addClass("playing");
+            console.log("🎵 음표 아이콘 클릭 - 자동재생 시작");
+          }).catch((error) => {
+            console.log("🔇 재생 실패:", error.name);
+          });
+        }
+      } else {
+        // 플레이어 숨김
+        musicPlayer.css({
+          "opacity": "0",
+          "transform": "translateX(-20px)",
+          "pointer-events": "none"
+        });
+      }
     }
   });
   

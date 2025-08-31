@@ -876,25 +876,26 @@ function generateMobileCategories() {
       textContainer.style.display = "flex";
       textContainer.style.flexDirection = "column";
       textContainer.style.gap = "4px";
-      
+
       // 타이틀
       const title = document.createElement("div");
       title.className = "photo-title";
       title.textContent = media.thumbnail_title || media.title || "";
       title.style.marginBottom = "0";
       textContainer.appendChild(title);
-      
+
       // 날짜
       if (media.date) {
         const dateElement = document.createElement("div");
+        dateElement.className = "date-element";
         dateElement.style.fontSize = "11px";
         dateElement.style.color = "#888";
         dateElement.style.fontFamily = "'Noto Sans KR', sans-serif";
-        const formattedDate = media.date.replace(/-/g, '.');
+        const formattedDate = media.date.replace(/-/g, ".");
         dateElement.textContent = formattedDate;
         textContainer.appendChild(dateElement);
       }
-      
+
       // 태그
       if (media.tags) {
         const tagsElement = document.createElement("div");
@@ -902,13 +903,16 @@ function generateMobileCategories() {
         tagsElement.style.color = "#999";
         tagsElement.style.fontFamily = "'Noto Sans KR', sans-serif";
         tagsElement.style.marginTop = "2px";
-        
+
         // 태그를 쉼표로 구분하고 # 붙이기
-        const tagList = media.tags.split(',').map(tag => `#${tag.trim()}`).join(' ');
+        const tagList = media.tags
+          .split(",")
+          .map((tag) => `#${tag.trim()}`)
+          .join(" ");
         tagsElement.textContent = tagList;
         textContainer.appendChild(tagsElement);
       }
-      
+
       card.appendChild(textContainer);
 
       // 클릭 이벤트
