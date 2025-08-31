@@ -239,10 +239,35 @@
     margin: 20px auto;
   }
 
-  /* 음표 아이콘 숨기기 - 360px에서도 적용 */
-  #music-icon,
+  /* intro 페이지에서만 음표 아이콘 숨기기 */
   #intro-music-icon {
     display: none !important;
+  }
+  
+  /* main 페이지 음표 아이콘 - 홈 아이콘과 동일한 스타일 */
+  #music-icon {
+    display: block !important;
+    width: 30px !important;
+    height: 30px !important;
+    position: fixed !important;
+    top: 15px !important;
+    right: 15px !important;
+    opacity: 0.7 !important;
+    z-index: 100 !important;
+    cursor: pointer !important;
+    color: inherit !important;  /* 홈 아이콘과 동일한 색상 상속 */
+    font-size: 20px !important;
+    background: transparent !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* 음표 아이콘 호버/터치 시 강조 */
+  #music-icon:hover,
+  #music-icon:active {
+    opacity: 1 !important;
   }
 }
 
@@ -294,8 +319,8 @@
   }
 
   .popup-controls button {
-    width: 24px !important;
-    height: 24px !important;
+    width: 30px !important;
+    height: 30px !important;
     background: rgba(255, 255, 255, 0.95) !important;
     color: #333 !important;
     border: none !important;

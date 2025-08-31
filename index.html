@@ -818,6 +818,9 @@
         showCustomAlert(
           "좋아🙂 <br> 그런데 우린 어떻게 연애 해 왔을까?",
           function () {
+            // 사용자 상호작용 표시 - main.html에서 자동재생 가능하도록
+            sessionStorage.setItem('userInteracted', 'true');
+            sessionStorage.setItem('fromIndex', 'true');
             window.location.href = "main.html";
           }
         );

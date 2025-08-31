@@ -555,6 +555,20 @@ $(document).ready(function() {
   initMainMusicPlayer();
   loadMainMusic();
   
+  // index.html에서 YES 버튼을 통해 왔는지 확인
+  const fromIndex = sessionStorage.getItem('fromIndex');
+  const userInteracted = sessionStorage.getItem('userInteracted');
+  
+  if (fromIndex === 'true' && userInteracted === 'true') {
+    // index에서 온 경우 즉시 자동재생 시도
+    console.log("🎵 index.html에서 사용자 상호작용 후 이동 - 자동재생 시도");
+    setTimeout(() => {
+      startMusicOnFirstInteraction();
+      // 한 번 사용 후 삭제
+      sessionStorage.removeItem('fromIndex');
+    }, 500);
+  }
+  
   // 사용자 첫 상호작용 감지 (클릭, 터치, 키보드)
   const interactionEvents = ['click', 'touchstart', 'keydown'];
   interactionEvents.forEach(event => {
