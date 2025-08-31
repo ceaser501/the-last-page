@@ -816,11 +816,11 @@
         isYesClicked = true;
 
         showCustomAlert(
-          "좋아🙂 <br> 그런데 우린 어떻게 연애 해 왔을까?",
+          "고마워요😍 평생 내가 더 잘할게! <br> 우리가 함께 보낸 이 시간들처럼 분명 행복 할거야",
           function () {
             // 사용자 상호작용 표시 - main.html에서 자동재생 가능하도록
-            sessionStorage.setItem('userInteracted', 'true');
-            sessionStorage.setItem('fromIndex', 'true');
+            sessionStorage.setItem("userInteracted", "true");
+            sessionStorage.setItem("fromIndex", "true");
             window.location.href = "main.html";
           }
         );
@@ -953,7 +953,7 @@
         // 모바일에서는 간격을 늘려서 자연스럽게
         const sakuraInterval = window.innerWidth <= 768 ? 2500 : 1000;
         setInterval(createSakuraPetal, sakuraInterval);
-        
+
         // 초기 꽃잎들을 시간차를 두고 생성
         if (window.innerWidth <= 768) {
           for (let i = 0; i < 5; i++) {
@@ -980,19 +980,23 @@
 
           // 음악 데이터 로드
           await loadIntroMusic();
-          
+
           // 모바일에서 첫 터치/클릭 시 자동재생
           const startIntroMusic = () => {
             if (introAudio.paused && introAudio.src) {
-              introAudio.play().then(() => {
-                console.log("🎵 Intro 음악 자동재생 시작");
-                document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-pause"></i>';
-              }).catch(console.log);
+              introAudio
+                .play()
+                .then(() => {
+                  console.log("🎵 Intro 음악 자동재생 시작");
+                  document.getElementById("intro-play-btn").innerHTML =
+                    '<i class="fas fa-pause"></i>';
+                })
+                .catch(console.log);
             }
           };
-          
+
           // 사용자 상호작용 이벤트 등록
-          ['click', 'touchstart'].forEach(event => {
+          ["click", "touchstart"].forEach((event) => {
             document.addEventListener(event, startIntroMusic, { once: true });
           });
 
@@ -1023,23 +1027,28 @@
 
           musicIcon.addEventListener("click", function (e) {
             e.stopPropagation();
-            
+
             // 모바일 체크
             const isMobile = window.innerWidth <= 768;
-            
+
             if (isMobile) {
               // 모바일: 플레이어 표시 없이 음악만 재생/정지
               if (introAudio && introAudio.src) {
                 if (introAudio.paused) {
-                  introAudio.play().then(() => {
-                    document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-pause"></i>';
-                    // 아이콘 색상 변경으로 재생 상태 표시
-                    musicIcon.querySelector("i").style.color = "#ff8fa3";
-                    console.log("🎵 모바일 intro 음악 재생");
-                  }).catch(console.log);
+                  introAudio
+                    .play()
+                    .then(() => {
+                      document.getElementById("intro-play-btn").innerHTML =
+                        '<i class="fas fa-pause"></i>';
+                      // 아이콘 색상 변경으로 재생 상태 표시
+                      musicIcon.querySelector("i").style.color = "#ff8fa3";
+                      console.log("🎵 모바일 intro 음악 재생");
+                    })
+                    .catch(console.log);
                 } else {
                   introAudio.pause();
-                  document.getElementById("intro-play-btn").innerHTML = '<i class="fas fa-play"></i>';
+                  document.getElementById("intro-play-btn").innerHTML =
+                    '<i class="fas fa-play"></i>';
                   // 아이콘 색상 원래대로
                   musicIcon.querySelector("i").style.color = "";
                   console.log("⏸️ 모바일 intro 음악 정지");
@@ -1273,13 +1282,13 @@
 
         // 페이지 로드 시 초기화
         initIntroMusicPlayer();
-        
+
         // 모바일에서 button-container를 text-section 안의 가장 마지막으로 이동
         function rearrangeButtonsForMobile() {
-          const buttonContainer = document.querySelector('.button-container');
-          const textSection = document.querySelector('.text-section');
-          const cardContainer = document.querySelector('.card-container');
-          
+          const buttonContainer = document.querySelector(".button-container");
+          const textSection = document.querySelector(".text-section");
+          const cardContainer = document.querySelector(".card-container");
+
           if (buttonContainer && textSection && cardContainer) {
             if (window.innerWidth <= 768) {
               // 모바일: text-section의 가장 마지막에 button-container 추가
@@ -1290,12 +1299,12 @@
             }
           }
         }
-        
+
         // 페이지 로드 시 실행
         rearrangeButtonsForMobile();
-        
+
         // 화면 크기 변경 시에도 실행
-        window.addEventListener('resize', rearrangeButtonsForMobile);
+        window.addEventListener("resize", rearrangeButtonsForMobile);
 
         // 사용자 첫 상호작용 시 자동재생
         let hasUserInteracted = false;
