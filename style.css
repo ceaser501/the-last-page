@@ -262,7 +262,7 @@ h1,
   opacity: 0.3;
   z-index: -1;
   pointer-events: none;
-  font-family: 'Nanum Myeongjo', serif;
+  font-family: "Nanum Myeongjo", serif;
 }
 
 .garland-line {
@@ -301,7 +301,8 @@ h1,
 /* 상단위치 조정 되어야할 사진들 */
 .photo img.photo-img[src*="19_001"],
 .photo img.photo-img[src*="23_001"],
-.photo img.photo-img[src*="24_001"] {
+.photo img.photo-img[src*="24_001"],
+.photo img.photo-img[src*="30_009"] {
   object-position: center 10%; /* 기본 중앙 위치 */
 }
 
@@ -607,6 +608,24 @@ body.modal-open #dark-mode-toggle {
   pointer-events: auto;
   opacity: 1;
   cursor: pointer;
+}
+
+/* 팝업이 열려있을 때도 음표 아이콘은 사용 가능하도록 */
+body.popup-open #music-icon,
+body.modal-open #music-icon {
+  pointer-events: auto !important;
+}
+
+/* 음악 플레이어가 실제로 표시된 상태(opacity: 1)일 때만 클릭 가능 */
+body.popup-open .main-music-wrapper[style*="opacity: 1"],
+body.modal-open .main-music-wrapper[style*="opacity: 1"] {
+  pointer-events: auto !important;
+}
+
+/* 음악 플레이어 내부의 모든 버튼과 컨트롤도 클릭 가능하도록 */
+body.popup-open .main-music-wrapper[style*="opacity: 1"] *,
+body.modal-open .main-music-wrapper[style*="opacity: 1"] * {
+  pointer-events: auto !important;
 }
 
 #dark-mode-toggle:hover {
@@ -985,7 +1004,7 @@ body.modal-open #dark-mode-toggle {
   width: 100%;
   height: 100%;
   background: var(--modal-bg);
-  z-index: 999;
+  z-index: 10002; /* 상세 팝업(9999)보다 위로 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1208,7 +1227,7 @@ h2 {
   position: fixed;
   top: 20px;
   left: 107px; /* 홈 아이콘과 음표 아이콘 옆에 배치 */
-  z-index: 100;
+  z-index: 10000; /* 팝업(9999)과 동일 레벨로 설정하여 팝업 위에서도 접근 가능 */
   width: 480px; /* 450px -> 480px로 증가 */
   transition: all 0.3s ease;
   opacity: 0;
@@ -2807,7 +2826,7 @@ h2 {
   height: 100%;
   pointer-events: none;
   overflow: hidden;
-  z-index: 10;
+  z-index: 10001; /* 팝업(9999)보다 위 */
 }
 
 .sakura-petal {

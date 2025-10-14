@@ -338,8 +338,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const beforeLogin = document.getElementById("before-login");
   const afterLogin = document.getElementById("after-login");
 
+  // 팝업 상태 저장용 변수
+  let savedPopupState = null;
+
   // 로그인 버튼 클릭 이벤트
   loginBtn.addEventListener("click", () => {
+    // 현재 열려있는 팝업이 있으면 저장
+    const detailPopup = document.querySelector(".detail-popup");
+    if (detailPopup && detailPopup.style.display === "flex") {
+      // 현재 열린 미디어 정보와 전체 리스트 저장
+      savedPopupState = {
+        media: window.currentPopupMedia,
+        mediaList: window.currentPopupMediaList
+      };
+    }
+
     loginModal.style.display = "flex";
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
@@ -474,6 +487,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (id === "taesu") {
         document.getElementById("bgm-upload-btn").style.display =
           "inline-block";
+      }
+
+      // 저장된 팝업이 있으면 다시 열기
+      if (savedPopupState && savedPopupState.media && savedPopupState.mediaList) {
+        if (typeof openDetailPopup === "function") {
+          setTimeout(() => {
+            openDetailPopup(savedPopupState.media, savedPopupState.mediaList);
+            savedPopupState = null; // 복원 후 초기화
+          }, 100); // 로그인 모달이 완전히 닫힌 후 팝업 열기
+        }
       }
 
       // 글 등록 폼은 자동으로 열지 않음

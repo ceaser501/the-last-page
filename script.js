@@ -979,13 +979,13 @@ $(document).ready(function () {
     }, 20000);
   }
 
-  // 초기 꽃잎 생성
-  for (let i = 0; i < 20; i++) {
+  // 초기 꽃잎 생성 (20개 -> 40개로 증가)
+  for (let i = 0; i < 40; i++) {
     setTimeout(() => {
       createSakuraPetal();
-    }, i * 300);
+    }, i * 200); // 300ms -> 200ms로 줄여서 더 빠르게 생성
   }
 
-  // 지속적으로 꽃잎 생성
-  setInterval(createSakuraPetal, 2000);
+  // 지속적으로 꽃잎 생성 (2초 -> 1초로 변경하여 더 자주 생성)
+  setInterval(createSakuraPetal, 1000);
 });

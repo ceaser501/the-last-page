@@ -837,7 +837,7 @@
     width: 100% !important;
     height: 100% !important;
     pointer-events: none !important;
-    z-index: 50 !important;
+    z-index: 10001 !important; /* 팝업보다 위 */
   }
 
   .sakura-petal {

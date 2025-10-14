@@ -39,8 +39,6 @@ function initMainMusicPlayer() {
 
   // 메인 음악 재생/일시정지 함수
   function mainPlayPause() {
-    if (isPopupOpen) return;
-    
     setTimeout(function () {
       if (mainAudio.paused) {
         mainPlayerTrack.addClass("active");

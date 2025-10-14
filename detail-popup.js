@@ -57,6 +57,10 @@ async function openDetailPopup(media, mediaList) {
   currentMedia = media;
   isEditMode = false;
 
+  // 로그인 후 복원을 위해 전역에 저장
+  window.currentPopupMedia = media;
+  window.currentPopupMediaList = mediaList;
+
   console.log("🔍 팝업 열기 - media.id:", media.id, "currentIndex:", currentIndex);
 
   try {
@@ -236,6 +240,9 @@ async function renderDetailPopupContent(media) {
             <div class="popup-title-row">
               <div id="popup-title" class="popup-meta-title"></div>
               <div class="popup-action-buttons">
+                <button id="popup-main-image-change-btn" class="auth-btn control-btn-group primary" style="display: none">
+                  대표이미지 변경
+                </button>
                 <button id="popup-music-change-btn" class="auth-btn control-btn-group primary" style="display: none">
                   음악변경
                 </button>
@@ -275,22 +282,25 @@ async function renderDetailPopupContent(media) {
   // 폴라로이드 번호 계산 (배열 인덱스 + 1)
   const polaroidNumber = currentIndex + 1;
 
-  // 로그인 상태 확인하여 수정/삭제/미디어 추가/음악변경 버튼 표시/숨김
+  // 로그인 상태 확인하여 수정/삭제/미디어 추가/음악변경/대표이미지 변경 버튼 표시/숨김
   const editBtn = document.getElementById("popup-edit-btn");
   const addMediaBtn = document.getElementById("popup-add-media-btn");
   const deleteBtn = document.getElementById("popup-delete-btn");
   const musicChangeBtn = document.getElementById("popup-music-change-btn");
+  const mainImageChangeBtn = document.getElementById("popup-main-image-change-btn");
   const afterLogin = document.getElementById("after-login");
   if (afterLogin && afterLogin.style.display === "flex") {
     editBtn.style.display = "block";
     addMediaBtn.style.display = "block";
     deleteBtn.style.display = "block";
     musicChangeBtn.style.display = "block";
+    mainImageChangeBtn.style.display = "block";
   } else {
     editBtn.style.display = "none";
     addMediaBtn.style.display = "none";
     deleteBtn.style.display = "none";
     musicChangeBtn.style.display = "none";
+    mainImageChangeBtn.style.display = "none";
   }
 
   const mainImgContainer = document.getElementById("popup-main-image-container");
@@ -740,7 +750,7 @@ function setupPopupEventListeners() {
     }
   });
 
-  // 수정/삭제/미디어 추가/음악변경 버튼
+  // 수정/삭제/미디어 추가/음악변경/대표이미지 변경 버튼
   document.getElementById("popup-edit-btn").addEventListener("click", () => {
     toggleEditMode();
   });
@@ -755,6 +765,10 @@ function setupPopupEventListeners() {
 
   document.getElementById("popup-music-change-btn").addEventListener("click", () => {
     showMusicChangeModal();
+  });
+
+  document.getElementById("popup-main-image-change-btn").addEventListener("click", () => {
+    changeMainImage();
   });
 }
 
@@ -1058,10 +1072,12 @@ async function deleteMemory() {
     return;
   }
 
+  // 로딩 표시를 위한 원본 내용 저장 (try 블록 밖에서 선언)
+  const overlay = document.getElementById("popup-overlay");
+  const originalContent = overlay.innerHTML;
+
   try {
     // 로딩 표시
-    const overlay = document.getElementById("popup-overlay");
-    const originalContent = overlay.innerHTML;
     overlay.innerHTML = `
       <div style="
         display: flex; 
@@ -1126,17 +1142,21 @@ async function deleteMemory() {
           .from("memory_music")
           .select("music_path, album_path")
           .eq("memory_id", currentMedia.id)
-          .single()
+          // .single() 제거 - 음악이 여러 개 있거나 없을 수 있음
       );
 
-    if (musicSelectError && musicSelectError.code !== "PGRST116") {
-      // PGRST116은 "not found" 에러
+    if (musicSelectError) {
       console.error("❌ memory_music 조회 오류:", musicSelectError);
-    } else if (musicData) {
+    } else if (musicData && musicData.length > 0) {
+      // 배열로 처리 (여러 음악 파일 가능)
       console.log("✅ memory_music 조회 성공:", musicData);
       const musicFilesToDelete = [];
-      if (musicData.music_path) musicFilesToDelete.push(musicData.music_path);
-      if (musicData.album_path) musicFilesToDelete.push(musicData.album_path);
+
+      // 배열의 각 음악 항목에서 파일 경로 추출
+      musicData.forEach(music => {
+        if (music.music_path) musicFilesToDelete.push(music.music_path);
+        if (music.album_path) musicFilesToDelete.push(music.album_path);
+      });
 
       if (musicFilesToDelete.length > 0) {
         console.log("🎵 삭제할 음악 파일:", musicFilesToDelete);
@@ -1388,14 +1408,23 @@ function initPlayer() {
 
     $(audio).on("timeupdate", updateCurrTime);
 
-    // 이전/다음 버튼은 메모리 이동으로 대체되었으므로 비활성화 또는 다른 기능 할당 가능
-    playPreviousTrackButton.on("click", function () {
-      // 이전 메모리로 이동하는 기능 호출
-      document.getElementById("popup-prev-btn").click();
+    // 곡이 끝나면 자동으로 처음부터 다시 재생 (반복 재생)
+    $(audio).on("ended", function () {
+      audio.currentTime = 0;
+      audio.play();
     });
+
+    // 이전 버튼: 현재 곡을 처음부터 재생
+    playPreviousTrackButton.on("click", function () {
+      audio.currentTime = 0;
+      audio.play();
+      // 재생 버튼 아이콘을 일시정지로 변경
+      playPauseButton.find("i").removeClass("fa-play").addClass("fa-pause");
+    });
+
+    // 다음 버튼: 다음 곡 없음 알림
     playNextTrackButton.on("click", function () {
-      // 다음 메모리로 이동하는 기능 호출
-      document.getElementById("popup-next-btn").click();
+      alert("다음 노래가 없습니다.");
     });
 }
 
@@ -1502,6 +1531,7 @@ function enableEditMode() {
   titleWrapper.style.display = "flex";
   titleWrapper.style.alignItems = "center";
   titleWrapper.style.gap = "10px";
+  titleWrapper.style.flex = "1"; // 버튼 영역 전까지 늘어나도록 설정
 
   const titleLabel = document.createElement("label");
   titleLabel.textContent = "제목";
@@ -2570,5 +2600,116 @@ async function handleMusicChange() {
     // UI 복구
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
+  }
+}
+
+// ==================== 대표이미지 변경 기능 ====================
+
+async function changeMainImage() {
+  try {
+    // 1. 현재 선택된 썸네일 찾기 (핑크 보더가 있는 것)
+    const selectedThumb = document.querySelector('.popup-thumb.selected-thumb');
+    if (!selectedThumb) {
+      alert("변경할 이미지를 선택해주세요.");
+      return;
+    }
+
+    // 2. 현재 선택된 이미지의 인덱스 가져오기
+    const thumbs = Array.from(document.querySelectorAll('.popup-thumb'));
+    const selectedIndex = thumbs.indexOf(selectedThumb);
+
+    if (selectedIndex === -1) {
+      alert("선택된 이미지를 찾을 수 없습니다.");
+      return;
+    }
+
+    console.log("🖼️ 대표이미지 변경 시작 - 선택된 인덱스:", selectedIndex);
+
+    // 3. 현재 메모리의 모든 media_files 가져오기
+    if (!currentMedia || !currentMedia.id) {
+      alert("현재 메모리 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    const memoryId = currentMedia.id;
+
+    // 4. 해당 메모리의 모든 media_files 조회
+    const { data: mediaFiles, error: selectError } = await retrySupabaseOperation(() =>
+      window.sbClient
+        .from("media_files")
+        .select("id, media_url, file_order, is_main")
+        .eq("memory_id", memoryId)
+        .order("file_order", { ascending: true })
+    );
+
+    if (selectError) {
+      console.error("❌ media_files 조회 오류:", selectError);
+      alert("미디어 파일 정보를 불러오는데 실패했습니다.");
+      return;
+    }
+
+    if (!mediaFiles || mediaFiles.length === 0) {
+      alert("미디어 파일을 찾을 수 없습니다.");
+      return;
+    }
+
+    console.log("📦 조회된 media_files:", mediaFiles);
+
+    // 5. 선택된 인덱스에 해당하는 media_file 찾기
+    if (selectedIndex >= mediaFiles.length) {
+      alert("선택된 이미지 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    const selectedMediaFile = mediaFiles[selectedIndex];
+    console.log("✅ 선택된 미디어 파일:", selectedMediaFile);
+
+    // 6. 모든 이미지의 is_main을 false로 설정
+    const { error: resetError } = await retrySupabaseOperation(() =>
+      window.sbClient
+        .from("media_files")
+        .update({ is_main: false })
+        .eq("memory_id", memoryId)
+    );
+
+    if (resetError) {
+      console.error("❌ is_main 초기화 오류:", resetError);
+      alert("대표이미지 초기화 중 오류가 발생했습니다.");
+      return;
+    }
+
+    console.log("🔄 모든 이미지의 is_main을 false로 설정 완료");
+
+    // 7. 선택된 이미지만 is_main을 true로 설정
+    const { error: updateError } = await retrySupabaseOperation(() =>
+      window.sbClient
+        .from("media_files")
+        .update({ is_main: true })
+        .eq("id", selectedMediaFile.id)
+    );
+
+    if (updateError) {
+      console.error("❌ 대표이미지 설정 오류:", updateError);
+      alert("대표이미지 설정 중 오류가 발생했습니다.");
+      return;
+    }
+
+    console.log("✅ 대표이미지 설정 완료 - 파일 ID:", selectedMediaFile.id);
+
+    // 8. 캐시 무효화 (메인 화면이 새로운 썸네일을 보여주도록)
+    if (typeof mediaDataCache !== 'undefined' && mediaDataCache.has(memoryId)) {
+      mediaDataCache.delete(memoryId);
+      console.log("🗑️ 캐시 삭제 완료");
+    }
+
+    // 9. 성공 메시지
+    alert("대표이미지가 변경되었습니다.\n메인 화면에서 변경된 썸네일을 확인하실 수 있습니다.");
+
+    // 10. 팝업 새로고침 (업데이트된 데이터로 다시 로드)
+    await refreshPopupContent();
+
+  } catch (error) {
+    console.error("대표이미지 변경 오류:", error);
+    alert("대표이미지 변경 중 오류가 발생했습니다: " + error.message);
   }
 }
