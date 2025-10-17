@@ -485,23 +485,8 @@ function generateRow() {
   }
 
   if (row === 4) {
-    // 중복 방지: 기존 스티커가 있는지 확인
-    if (
-      !document.querySelector(".love-sticker-row4") &&
-      !wrapper.querySelector(".date-tape")
-    ) {
-      const loveSticker = document.createElement("img");
-      loveSticker.src = "./data/love.png";
-      loveSticker.alt = "heart Sticker";
-      loveSticker.className = "love-sticker-row4"; // 클래스 추가로 중복 방지
-      loveSticker.style.position = "absolute";
-      loveSticker.style.top = "1360px";
-      loveSticker.style.left = "calc(21% - 60px)";
-      loveSticker.style.width = "100px";
-      loveSticker.style.transform = "rotate(0deg) translateY(-20px)";
-      loveSticker.style.zIndex = "6";
-      loveSticker.style.pointerEvents = "none";
-
+    // 중복 방지: 기존 날짜 테이프가 있는지 확인
+    if (!wrapper.querySelector(".date-tape")) {
       const dateTape = document.createElement("div");
       dateTape.className = "date-tape";
       dateTape.textContent = "2024.09.28 ~ 2026.04.12";
@@ -518,7 +503,6 @@ function generateRow() {
       dateTape.style.transform = "translateX(180px) rotate(-2deg)";
       dateTape.style.maxWidth = "fit-content";
 
-      wrapper.appendChild(loveSticker);
       wrapper.appendChild(dateTape);
     }
   }

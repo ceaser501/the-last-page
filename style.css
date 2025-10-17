@@ -302,7 +302,8 @@ h1,
 .photo img.photo-img[src*="19_001"],
 .photo img.photo-img[src*="23_001"],
 .photo img.photo-img[src*="24_001"],
-.photo img.photo-img[src*="30_009"] {
+.photo img.photo-img[src*="30_009"],
+.photo img.photo-img[src*="32_001"] {
   object-position: center 10%; /* 기본 중앙 위치 */
 }
 

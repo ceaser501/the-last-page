@@ -1224,6 +1224,12 @@ async function deleteMemory() {
 
     console.log("🎉 메모리 삭제 완료:", currentMedia.id);
 
+    // 🗑️ 캐시에서 삭제된 메모리 제거 (중요: 페이지 새로고침 전에 실행)
+    if (typeof mediaDataCache !== 'undefined' && mediaDataCache.has(currentMedia.id)) {
+      mediaDataCache.delete(currentMedia.id);
+      console.log("🗑️ 캐시에서 삭제된 메모리 제거 완료:", currentMedia.id);
+    }
+
     // 성공 시 팝업 닫고 페이지 새로고침
     closeDetailPopup();
     alert("메모리가 성공적으로 삭제되었습니다.");
@@ -2372,7 +2378,7 @@ function closeMediaUploadModal() {
 // 음악변경 모달 표시
 function showMusicChangeModal() {
   let modal = document.getElementById("music-change-modal");
-  
+
   // 모달이 없으면 생성
   if (!modal) {
     const modalHTML = `
@@ -2394,7 +2400,7 @@ function showMusicChangeModal() {
             </div>
             <div class="form-actions">
               <button type="submit" id="music-change-submit">변경</button>
-              <button type="button" id="music-change-cancel" onclick="closeMusicChangeModal()">닫기</button>
+              <button type="button" id="music-change-cancel">닫기</button>
             </div>
           </form>
         </div>
@@ -2402,31 +2408,78 @@ function showMusicChangeModal() {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     modal = document.getElementById("music-change-modal");
-    
+
     // 폼 제출 이벤트 추가
-    document.getElementById("music-change-form").addEventListener("submit", handleMusicChange);
-    
+    const form = document.getElementById("music-change-form");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await handleMusicChange();
+      });
+    }
+
+    // 취소 버튼 이벤트 추가
+    const cancelBtn = document.getElementById("music-change-cancel");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", closeMusicChangeModal);
+    }
+
     // 파일 선택 이벤트 추가 - 메타데이터 추출
-    document.getElementById("music-change-file").addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      if (file && typeof musicmetadata !== 'undefined') {
-        musicmetadata(file, function(err, metadata) {
-          if (!err && metadata) {
-            const titleInput = document.getElementById("music-change-title");
-            const artistInput = document.getElementById("music-change-artist");
-            
-            if (titleInput && metadata.title) {
-              titleInput.value = metadata.title;
-            }
-            if (artistInput && metadata.artist && metadata.artist[0]) {
-              artistInput.value = metadata.artist[0];
-            }
+    const fileInput = document.getElementById("music-change-file");
+    if (fileInput) {
+      fileInput.addEventListener("change", async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const titleInput = document.getElementById("music-change-title");
+        const artistInput = document.getElementById("music-change-artist");
+
+        // input 활성화
+        if (titleInput) titleInput.disabled = false;
+        if (artistInput) artistInput.disabled = false;
+
+        try {
+          // musicmetadata.js를 사용하여 메타데이터 추출
+          if (typeof musicmetadata !== 'undefined') {
+            musicmetadata(file, function(err, metadata) {
+              if (!err && metadata) {
+                if (titleInput && metadata.title) {
+                  titleInput.value = metadata.title;
+                }
+                if (artistInput) {
+                  if (metadata.artist && Array.isArray(metadata.artist) && metadata.artist[0]) {
+                    artistInput.value = metadata.artist[0];
+                  } else if (metadata.artist && typeof metadata.artist === 'string') {
+                    artistInput.value = metadata.artist;
+                  } else {
+                    artistInput.value = "알 수 없는 아티스트";
+                  }
+                }
+              } else {
+                // 메타데이터 추출 실패 시 파일명에서 추출
+                extractFromFilename(file, titleInput, artistInput);
+              }
+
+              // 다시 disabled 처리
+              if (titleInput) titleInput.disabled = true;
+              if (artistInput) artistInput.disabled = true;
+            });
+          } else {
+            // musicmetadata 라이브러리가 없으면 파일명에서 추출
+            extractFromFilename(file, titleInput, artistInput);
+            if (titleInput) titleInput.disabled = true;
+            if (artistInput) artistInput.disabled = true;
           }
-        });
-      }
-    });
+        } catch (error) {
+          console.error("메타데이터 추출 실패:", error);
+          extractFromFilename(file, titleInput, artistInput);
+          if (titleInput) titleInput.disabled = true;
+          if (artistInput) artistInput.disabled = true;
+        }
+      });
+    }
   }
-  
+
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
   document.body.classList.add("modal-open");
@@ -2440,6 +2493,19 @@ function showMusicChangeModal() {
   if (artistInput) artistInput.value = "";
 }
 
+// 파일명에서 제목/아티스트 추출 헬퍼 함수
+function extractFromFilename(file, titleInput, artistInput) {
+  const fileName = file.name.replace(/\.[^/.]+$/, "");
+  if (fileName.includes(" - ")) {
+    const parts = fileName.split(" - ");
+    if (artistInput) artistInput.value = parts[0].trim();
+    if (titleInput) titleInput.value = parts[1].trim();
+  } else {
+    if (titleInput) titleInput.value = fileName;
+    if (artistInput) artistInput.value = "알 수 없는 아티스트";
+  }
+}
+
 // 음악변경 모달 닫기
 function closeMusicChangeModal() {
   const modal = document.getElementById("music-change-modal");
@@ -2450,59 +2516,8 @@ function closeMusicChangeModal() {
   }
 }
 
-// 음악변경 취소 버튼 이벤트
-const musicChangeCancelBtn = document.getElementById("music-change-cancel");
-if (musicChangeCancelBtn) {
-  musicChangeCancelBtn.addEventListener("click", () => {
-    closeMusicChangeModal();
-  });
-}
-
-// 음악 파일 메타데이터 추출
-const musicChangeFileInput = document.getElementById("music-change-file");
-if (musicChangeFileInput) {
-  musicChangeFileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      // musicmetadata.js를 사용하여 메타데이터 추출
-      const metadata = await new Promise((resolve, reject) => {
-        window.musicmetadata(file, (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-      });
-
-      document.getElementById("music-change-title").value =
-        metadata.title || file.name.replace(/\.[^/.]+$/, "");
-      document.getElementById("music-change-artist").value =
-        metadata.artist?.[0] || "알 수 없는 아티스트";
-    } catch (error) {
-      console.error("메타데이터 추출 실패:", error);
-      // 파일명에서 추출 시도
-      const fileName = file.name.replace(/\.[^/.]+$/, "");
-      if (fileName.includes(" - ")) {
-        const parts = fileName.split(" - ");
-        document.getElementById("music-change-artist").value = parts[0].trim();
-        document.getElementById("music-change-title").value = parts[1].trim();
-      } else {
-        document.getElementById("music-change-title").value = fileName;
-        document.getElementById("music-change-artist").value =
-          "알 수 없는 아티스트";
-      }
-    }
-  });
-}
-
-// 음악변경 폼 제출 처리
-const musicChangeForm = document.getElementById("music-change-form");
-if (musicChangeForm) {
-  musicChangeForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await handleMusicChange();
-  });
-}
+// 음악변경 관련 이벤트 리스너는 showMusicChangeModal() 함수 내에서 모달 생성 시 추가됩니다.
+// 중복 등록 방지를 위해 전역 이벤트 리스너 제거됨
 
 // 음악변경 처리 함수
 async function handleMusicChange() {
