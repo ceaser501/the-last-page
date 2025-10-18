@@ -604,20 +604,32 @@ function generateRow() {
     } else {
       const img = document.createElement("img");
       img.className = "photo-img";
-      img.loading = "lazy";
+      // 초기 화면 이미지는 즉시 로드, 나머지는 lazy
+      img.loading = i < 21 ? "eager" : "lazy";
 
-      // 🔥 이미지 로딩 에러 핸들링 추가
+      // 이미지 로딩 재시도 로직
+      let retryCount = 0;
+      const maxRetries = 2;
+
+      const loadImage = () => {
+        img.src = media.mainSrc;
+      };
+
+      // 🔥 이미지 로딩 에러 핸들링 + 빠른 재시도
       img.addEventListener("error", () => {
-        console.error("❌ 메인 이미지 로딩 실패:", media.mainSrc);
-        img.src =
-          "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='150' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='11'>이미지 로딩실패</text></svg>";
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.warn(`⚠️ 이미지 로딩 재시도 ${retryCount}/${maxRetries}:`, media.mainSrc);
+          // 500ms 후 빠른 재시도
+          setTimeout(loadImage, 500);
+        } else {
+          console.error("❌ 메인 이미지 로딩 최종 실패:", media.mainSrc);
+          img.src =
+            "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='150' fill='%23ddd'><rect width='100%25' height='100%25' fill='%23ffebee'/><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23c62828' font-family='Arial' font-size='11'>이미지 로딩실패</text></svg>";
+        }
       });
 
-      img.addEventListener("load", () => {
-        console.log("✅ 메인 이미지 로딩 완료:", media.mainSrc);
-      });
-
-      img.src = media.mainSrc;
+      loadImage();
       photoVideoWrapper.appendChild(img);
     }
 
@@ -694,6 +706,7 @@ function generateRow() {
   });
 
   wrapper.appendChild(rowWrapper);
+
   pointer += imagesPerRow;
   row++;
 
@@ -723,12 +736,37 @@ function setupLazyRender() {
 
   scrollObserver.observe(sentinel);
 
-  // 최초 2줄만 먼저 렌더
+  // 초기에 3줄 즉시 렌더링 (빠른 초기 로딩)
+  generateRow();
   generateRow();
   generateRow();
 
   // 첫 번째와 두 번째 줄 사이에 로맨틱 멘트 추가
   addRomanticMessage();
+
+  // 추가 줄 빠르게 렌더링
+  let preloadCount = 0;
+  const preloadInterval = setInterval(() => {
+    if (preloadCount < 2 && currentIndex < mediaList.length) {
+      generateRow();
+      preloadCount++;
+    } else {
+      clearInterval(preloadInterval);
+      // 모든 줄 로드 후 스크롤
+      setTimeout(() => {
+        initializeScrollTo2024September();
+      }, 300);
+    }
+  }, 100); // 100ms 간격으로 빠른 순차 로딩
+
+  // 월별 타임라인 빠르게 생성
+  setTimeout(() => {
+    createMonthlyTimeline();
+    // 타임라인 생성 후 다시 업데이트
+    setTimeout(() => {
+      updateTimelineOnScroll();
+    }, 50);
+  }, 200);
 }
 
 // 벽 낙서 스타일 로맨틱 멘트 추가 함수
@@ -751,6 +789,299 @@ function addRomanticMessage() {
     wrapper.appendChild(message);
   }
 }
+
+// 전체 월별 타임라인 생성
+function createMonthlyTimeline() {
+  const timelineMarkers = document.getElementById("timeline-markers");
+  if (!timelineMarkers) {
+    console.error("❌ 타임라인 마커 컨테이너를 찾을 수 없음");
+    return;
+  }
+
+  // 모든 미디어의 날짜 수집
+  const dates = mediaList
+    .map((m) => m.date)
+    .filter(Boolean)
+    .map((d) => new Date(d));
+
+  console.log("📅 미디어 리스트:", mediaList.length, "개");
+  console.log("📅 날짜가 있는 미디어:", dates.length, "개");
+
+  if (dates.length === 0) {
+    console.error("❌ 날짜가 있는 미디어가 없음");
+    return;
+  }
+
+  // 최소/최대 날짜 찾기
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+
+  console.log("📅 최소 날짜:", minDate.toLocaleDateString());
+  console.log("📅 최대 날짜:", maxDate.toLocaleDateString());
+
+  // 시작 월과 끝 월 설정
+  const startYear = minDate.getFullYear();
+  const startMonth = minDate.getMonth();
+  const endYear = maxDate.getFullYear();
+  const endMonth = maxDate.getMonth();
+
+  // 전체 월 리스트 생성
+  const months = [];
+  let currentYear = startYear;
+  let currentMonth = startMonth;
+
+  while (
+    currentYear < endYear ||
+    (currentYear === endYear && currentMonth <= endMonth)
+  ) {
+    months.push({
+      year: currentYear,
+      month: currentMonth + 1, // 1-based
+      label: `${currentYear}.${String(currentMonth + 1).padStart(2, "0")}`,
+    });
+
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+  }
+
+  console.log(
+    `📅 타임라인 생성: ${months.length}개월 (${months[0].label} ~ ${
+      months[months.length - 1].label
+    })`
+  );
+
+  // 타임라인 높이 계산
+  const containerHeight = window.innerHeight - 200; // top: 120px, bottom: 80px
+  const markerSpacing =
+    months.length > 1 ? containerHeight / (months.length - 1) : 0;
+
+  console.log(
+    `📐 타임라인 높이: ${containerHeight}px, 마커 간격: ${markerSpacing}px`
+  );
+
+  // 각 월마다 마커 생성
+  months.forEach((monthData, index) => {
+    const marker = document.createElement("div");
+    marker.className = "timeline-marker";
+    marker.style.top = `${index * markerSpacing}px`;
+    marker.setAttribute("data-year", monthData.year);
+    marker.setAttribute("data-month", monthData.month);
+    marker.setAttribute("data-label", monthData.label);
+
+    // 점 생성
+    const dot = document.createElement("div");
+    dot.className = "timeline-dot";
+
+    // 날짜 레이블 생성
+    const dateLabel = document.createElement("div");
+    dateLabel.className = "timeline-date";
+    dateLabel.textContent = monthData.label;
+
+    // 클릭 시 해당 월의 첫 사진으로 스크롤
+    marker.addEventListener("click", () => {
+      scrollToMonth(monthData.year, monthData.month);
+    });
+
+    marker.appendChild(dot);
+    marker.appendChild(dateLabel);
+    timelineMarkers.appendChild(marker);
+  });
+
+  console.log(`✅ 타임라인 마커 ${months.length}개 생성 완료`);
+}
+
+// 초기 스크롤을 2024.09로 설정하는 함수
+function initializeScrollTo2024September() {
+  const photos = document.querySelectorAll(".photo");
+
+  for (let photo of photos) {
+    const index = parseInt(photo.getAttribute("data-index"));
+    const media = mediaList[index];
+
+    if (media && media.date) {
+      const photoDate = new Date(media.date);
+      if (photoDate.getFullYear() === 2024 && photoDate.getMonth() + 1 === 9) {
+        // 즉시 스크롤 (부드러운 애니메이션 없이)
+        window.scrollTo({
+          top: photo.offsetTop - 200,
+          behavior: "auto",
+        });
+        console.log("✅ 초기 스크롤: 2024.09로 이동 완료");
+
+        // 스크롤 후 타임라인 업데이트 및 초기 로드 플래그 해제
+        setTimeout(() => {
+          updateTimelineOnScroll();
+          isInitialLoad = false; // 초기 로드 완료
+          console.log("✅ 초기 로드 완료, 스크롤 이벤트 활성화");
+        }, 200);
+        return;
+      }
+    }
+  }
+}
+
+// 특정 월의 첫 사진으로 스크롤
+function scrollToMonth(year, month) {
+  // 해당 월의 사진 찾기
+  const photos = document.querySelectorAll(".photo");
+
+  for (let photo of photos) {
+    const index = parseInt(photo.getAttribute("data-index"));
+    const media = mediaList[index];
+
+    if (media && media.date) {
+      const photoDate = new Date(media.date);
+      if (
+        photoDate.getFullYear() === year &&
+        photoDate.getMonth() + 1 === month
+      ) {
+        photo.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+    }
+  }
+}
+
+// 스크롤에 따라 타임라인 업데이트
+function updateTimelineOnScroll() {
+  const markers = document.querySelectorAll(".timeline-marker");
+  const photos = document.querySelectorAll(".photo");
+
+  if (!markers.length || !photos.length) return;
+
+  // 현재 viewport에 보이는 사진들의 날짜 수집
+  const viewportTop = window.scrollY;
+  const viewportBottom = viewportTop + window.innerHeight;
+  // viewport 상단 1/3 지점을 기준으로 (중앙보다 위쪽)
+  const viewportReference = viewportTop + window.innerHeight / 3;
+
+  let visibleMonths = new Set();
+  let centerMonth = null;
+  let minDistance = Infinity;
+  let latestMonth = null;
+  let latestDate = null;
+  let earliestMonth = null;
+  let earliestDate = null;
+
+  // 페이지 상단/하단 근처 확인
+  const documentHeight = document.documentElement.scrollHeight;
+  const isNearTop = viewportTop <= 100;
+  const isNearBottom = viewportBottom >= documentHeight - 100;
+
+  photos.forEach((photo) => {
+    const rect = photo.getBoundingClientRect();
+    const photoTop = rect.top + window.scrollY;
+    const photoBottom = photoTop + rect.height;
+    const photoCenter = photoTop + rect.height / 2;
+
+    // viewport에 보이는지 확인
+    if (photoBottom >= viewportTop && photoTop <= viewportBottom) {
+      const index = parseInt(photo.getAttribute("data-index"));
+      const media = mediaList[index];
+
+      if (media && media.date) {
+        const photoDate = new Date(media.date);
+        const year = photoDate.getFullYear();
+        const month = photoDate.getMonth() + 1;
+        const monthKey = `${year}-${month}`;
+
+        visibleMonths.add(monthKey);
+
+        // 가장 오래된 월 추적
+        if (!earliestDate || photoDate < earliestDate) {
+          earliestDate = photoDate;
+          earliestMonth = monthKey;
+        }
+
+        // 가장 최신 월 추적
+        if (!latestDate || photoDate > latestDate) {
+          latestDate = photoDate;
+          latestMonth = monthKey;
+        }
+
+        // viewport 상단 1/3 지점에 가장 가까운 사진의 월 찾기
+        const distance = Math.abs(photoCenter - viewportReference);
+        if (distance < minDistance) {
+          minDistance = distance;
+          centerMonth = monthKey;
+        }
+      }
+    }
+  });
+
+  // 페이지 상단 근처면 가장 오래된 월을 active로 설정
+  if (isNearTop && earliestMonth) {
+    centerMonth = earliestMonth;
+  }
+  // 페이지 하단 근처면 가장 최신 월을 active로 설정
+  else if (isNearBottom && latestMonth) {
+    centerMonth = latestMonth;
+  }
+
+  // 디버깅: 보이는 월 출력
+  if (visibleMonths.size > 0) {
+    console.log(
+      "📍 현재 화면에 보이는 월:",
+      Array.from(visibleMonths).sort().join(", ")
+    );
+    console.log("📍 중앙 월 (active):", centerMonth);
+  }
+
+  // 모든 마커 업데이트
+  let visibleCount = 0;
+  let activeCount = 0;
+
+  markers.forEach((marker) => {
+    const year = parseInt(marker.getAttribute("data-year"));
+    const month = parseInt(marker.getAttribute("data-month"));
+    const monthKey = `${year}-${month}`;
+
+    // 클래스 초기화
+    marker.classList.remove("active", "passed", "visible");
+
+    // 화면에 보이는 월만 표시
+    if (visibleMonths.has(monthKey)) {
+      marker.classList.add("visible");
+      visibleCount++;
+
+      if (monthKey === centerMonth) {
+        // 현재 중앙에 있는 월
+        marker.classList.add("active");
+        activeCount++;
+      } else {
+        // viewport에 보이는 월이지만 중앙은 아님
+        marker.classList.add("passed");
+      }
+    }
+  });
+
+  if (visibleCount > 0) {
+    console.log(
+      `📍 타임라인 업데이트: visible ${visibleCount}개, active ${activeCount}개`
+    );
+  }
+}
+
+// 스크롤 이벤트 리스너 등록 (throttle 적용)
+let scrollTimeout;
+let isInitialLoad = true; // 초기 로드 플래그
+
+window.addEventListener("scroll", () => {
+  // 초기 로드 중에는 스크롤 이벤트 무시
+  if (isInitialLoad) {
+    return;
+  }
+
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+  scrollTimeout = setTimeout(() => {
+    updateTimelineOnScroll();
+  }, 50); // 50ms throttle
+});
 
 // 모바일 카테고리 생성 함수
 function generateMobileCategories() {

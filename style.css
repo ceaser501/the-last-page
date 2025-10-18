@@ -303,13 +303,15 @@ h1,
 .photo img.photo-img[src*="23_001"],
 .photo img.photo-img[src*="24_001"],
 .photo img.photo-img[src*="30_009"],
-.photo img.photo-img[src*="32_001"] {
+.photo img.photo-img[src*="32_001"],
+.photo img.photo-img[src*="33_001"] {
   object-position: center 10%; /* 기본 중앙 위치 */
 }
 
 /* 상단위치 조정 되어야할 사진들 */
 .photo img.photo-img[src*="21_001"],
-.photo img.photo-img[src*="22_001"] {
+.photo img.photo-img[src*="22_001"],
+.photo img.photo-img[src*="34_001"] {
   object-position: center 10%; /* 기본 중앙 위치 */
   height: 190px;
 }
@@ -2878,5 +2880,213 @@ h2 {
     top: 110%;
     transform: translateX(30px) rotateZ(360deg);
     opacity: 0;
+  }
+}
+
+/* ==================== 타임라인 스타일 ==================== */
+.timeline-container {
+  position: fixed;
+  right: 20px;
+  top: 220px;
+  bottom: 80px;
+  width: 250px;
+  z-index: 10;
+  pointer-events: none;
+  display: block;
+}
+
+/* 모바일에서는 타임라인 숨김 */
+@media (max-width: 768px) {
+  .timeline-container {
+    display: none;
+  }
+}
+
+.timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: transparent;
+  border-left: 2px dashed rgba(0, 0, 0, 0.3);
+}
+
+.timeline-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.timeline-marker {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.timeline-marker.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+/* 홀수 번째 마커 (왼쪽) - 기본 비활성 상태 */
+.timeline-marker:nth-child(odd) .timeline-dot {
+  background: rgba(200, 200, 200, 0.6);
+  border: 1px solid rgba(180, 180, 180, 0.8);
+}
+
+.timeline-marker:nth-child(odd) .timeline-date {
+  left: 0;
+  right: auto;
+  text-align: right;
+  padding-right: 20px;
+  color: rgba(70, 70, 70, 1);
+  opacity: 1;
+}
+
+/* 짝수 번째 마커 (오른쪽) - 기본 비활성 상태 */
+.timeline-marker:nth-child(even) .timeline-dot {
+  background: rgba(200, 200, 200, 0.6);
+  border: 1px solid rgba(180, 180, 180, 0.8);
+}
+
+.timeline-marker:nth-child(even) .timeline-date {
+  right: 0;
+  left: auto;
+  text-align: left;
+  padding-left: 20px;
+  color: rgba(70, 70, 70, 1);
+  opacity: 1;
+}
+
+/* 활성화된 마커 (홀수) */
+.timeline-marker.active:nth-child(odd) .timeline-dot {
+  background: rgba(120, 120, 120, 0.85);
+  border: 2px solid rgba(100, 100, 100, 0.9);
+  box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
+  transform: translateX(-50%) scale(1.3);
+}
+
+.timeline-marker.active:nth-child(odd) .timeline-date {
+  color: rgba(60, 60, 60, 1);
+  opacity: 1;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* 활성화된 마커 (짝수) */
+.timeline-marker.active:nth-child(even) .timeline-dot {
+  background: rgba(120, 120, 120, 0.85);
+  border: 2px solid rgba(100, 100, 100, 0.9);
+  box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
+  transform: translateX(-50%) scale(1.3);
+}
+
+.timeline-marker.active:nth-child(even) .timeline-date {
+  color: rgba(60, 60, 60, 1);
+  opacity: 1;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* 지나간 마커 (홀수) */
+.timeline-marker.passed:nth-child(odd) .timeline-dot {
+  background: rgba(210, 210, 210, 0.5);
+  border: 1px solid rgba(190, 190, 190, 0.7);
+}
+
+.timeline-marker.passed:nth-child(odd) .timeline-date {
+  color: rgba(90, 90, 90, 0.85);
+  opacity: 1;
+}
+
+/* 지나간 마커 (짝수) */
+.timeline-marker.passed:nth-child(even) .timeline-dot {
+  background: rgba(210, 210, 210, 0.5);
+  border: 1px solid rgba(190, 190, 190, 0.7);
+}
+
+.timeline-marker.passed:nth-child(even) .timeline-date {
+  color: rgba(90, 90, 90, 0.85);
+  opacity: 1;
+}
+
+.timeline-marker:hover .timeline-dot {
+  transform: translateX(-50%) scale(1.4);
+  box-shadow: 0 0 15px rgba(248, 136, 136, 0.6);
+}
+
+.timeline-date {
+  position: absolute;
+  font-family: "Patrick Hand", cursive;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 45%;
+  letter-spacing: 0.5px;
+}
+
+.timeline-marker:hover .timeline-date {
+  font-size: 19px;
+  opacity: 1 !important;
+  font-weight: 700;
+}
+
+/* 다크모드 타임라인 스타일 */
+[data-theme="dark"] .timeline-line {
+  border-left-color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-marker .timeline-dot {
+  border-color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-marker .timeline-date {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-marker.active .timeline-dot {
+  background: #e0e0e0;
+  border-color: #e0e0e0;
+  box-shadow: 0 0 10px rgba(224, 224, 224, 0.4);
+}
+
+[data-theme="dark"] .timeline-marker.active .timeline-date {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-marker.passed .timeline-dot {
+  background: rgba(224, 224, 224, 0.3);
+  border-color: #e0e0e0;
+}
+
+[data-theme="dark"] .timeline-marker.passed .timeline-date {
+  color: #e0e0e0;
+}
+
+/* 모바일에서 타임라인 숨김 */
+@media (max-width: 768px) {
+  .timeline-container {
+    display: none;
   }
 }

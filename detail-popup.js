@@ -349,13 +349,21 @@ async function renderDetailPopupContent(media) {
       $("#album-name").text(music.music_title || "제목 없음");
       $("#track-name").text(music.artist_name || "아티스트 없음");
 
-      // 자켓 이미지 설정
+      // 자켓 이미지 설정 (캐시 초기화)
       const albumImg = $("#album-art img");
       const coverUrl = music.album_cover_url || DEFAULT_ALBUM_COVER_URL;
-      albumImg.attr("src", coverUrl);
+
+      // 캐시 우회를 위해 먼저 src를 비우고 다시 설정
+      albumImg.attr("src", "");
+      // timestamp를 추가하여 캐시 우회
+      const cacheBustUrl = coverUrl + (coverUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+      albumImg.attr("src", cacheBustUrl);
+
       $("#album-art .active").removeClass("active"); // 기존 active 제거
       albumImg.first().addClass("active"); // 첫번째 이미지에 active 추가
-      $("#player-bg-artwork").css("background-image", `url(${coverUrl})`);
+
+      // 배경 이미지도 캐시 우회 적용
+      $("#player-bg-artwork").css("background-image", `url(${cacheBustUrl})`);
 
       // 음악 재생 경로 설정
       if (music.music_url) {
@@ -1457,6 +1465,9 @@ function resetMusicPlayer() {
   $("#current-time").text("00:00");
   $("#track-length").text("00:00");
   $("#seek-bar").width(0);
+
+  // 이미지 캐시 초기화
+  $("#album-art img").attr("src", "");
   $("#album-art img").attr("src", DEFAULT_ALBUM_COVER_URL);
   $("#player-bg-artwork").css("background-image", "none");
 
@@ -2355,6 +2366,56 @@ async function refreshPopupContent() {
       }
     });
 
+    // 음악 플레이어 업데이트
+    const musicWrapper = document.querySelector(".music-wrapper");
+    resetMusicPlayer();
+
+    fetchMusicByMemoryId(currentMedia.id).then((music) => {
+      if (music) {
+        musicWrapper.style.display = "flex";
+
+        $("#album-name").text(music.music_title || "제목 없음");
+        $("#track-name").text(music.artist_name || "아티스트 없음");
+
+        // 자켓 이미지 설정 (캐시 초기화)
+        const albumImg = $("#album-art img");
+        const coverUrl = music.album_cover_url || DEFAULT_ALBUM_COVER_URL;
+
+        // 캐시 우회를 위해 먼저 src를 비우고 다시 설정
+        albumImg.attr("src", "");
+        // timestamp를 추가하여 캐시 우회
+        const cacheBustUrl = coverUrl + (coverUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        albumImg.attr("src", cacheBustUrl);
+
+        $("#album-art .active").removeClass("active");
+        albumImg.first().addClass("active");
+
+        // 배경 이미지도 캐시 우회 적용
+        $("#player-bg-artwork").css("background-image", `url(${cacheBustUrl})`);
+
+        // 음악 재생 경로 설정
+        if (music.music_url) {
+          window.audio.src = music.music_url;
+          window.audio.load();
+
+          window.audio.onloadedmetadata = () => {
+            const totalDurationEl = document.getElementById("track-length");
+            const duration = window.audio.duration;
+            const minutes = Math.floor(duration / 60);
+            const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
+            totalDurationEl.textContent = `${minutes}:${seconds}`;
+
+            console.log("🎵 [새로고침] 음악 메타데이터 로드 완료");
+            $("#play-pause-button i").attr("class", "fas fa-play");
+            $("#player-track").removeClass("active");
+            $("#album-art").removeClass("active");
+          };
+        }
+      } else {
+        musicWrapper.style.display = "none";
+      }
+    });
+
     console.log("팝업 콘텐츠 새로고침 완료");
   } catch (error) {
     console.error("팝업 새로고침 중 오류:", error);
@@ -2562,6 +2623,48 @@ async function handleMusicChange() {
       .from("media")
       .getPublicUrl(filePath);
 
+    // 앨범 커버 추출 및 업로드
+    let albumPath = null;
+    try {
+      await new Promise((resolve) => {
+        musicmetadata(file, async function (err, metadata) {
+          try {
+            if (metadata?.picture && metadata.picture.length > 0) {
+              const picture = metadata.picture[0];
+              const blob = new Blob([new Uint8Array(picture.data)], {
+                type: picture.format,
+              });
+
+              const albumFileName = `album_${Date.now()}.jpg`;
+              const albumFilePath = `album/${albumFileName}`;
+
+              const { data: albumData, error: albumError } = await window.supabaseClient.storage
+                .from("media")
+                .upload(albumFilePath, blob, {
+                  cacheControl: "3600",
+                  upsert: true,
+                  contentType: "image/jpeg",
+                });
+
+              if (albumData?.path && !albumError) {
+                albumPath = albumData.path;
+                console.log("✅ 앨범 커버 업로드 성공:", albumPath);
+              } else {
+                console.warn("⚠️ 앨범 커버 업로드 실패:", albumError);
+              }
+            } else {
+              console.log("ℹ️ MP3에 앨범 커버가 없습니다");
+            }
+          } catch (albumError) {
+            console.warn("⚠️ 앨범 커버 처리 실패:", albumError);
+          }
+          resolve();
+        });
+      });
+    } catch (error) {
+      console.warn("⚠️ 앨범 커버 추출 실패:", error);
+    }
+
     // memory_music 테이블에서 기존 음악 데이터 확인
     const { data: existingMusic } = await window.supabaseClient
       .from("memory_music")
@@ -2572,13 +2675,20 @@ async function handleMusicChange() {
     let dbError;
     if (existingMusic) {
       // 기존 음악 데이터 업데이트
+      const updateData = {
+        music_title: musicTitle,
+        artist_name: artistName,
+        music_path: filePath,
+      };
+
+      // 앨범 커버가 추출되었으면 업데이트
+      if (albumPath) {
+        updateData.album_path = albumPath;
+      }
+
       const { error } = await window.supabaseClient
         .from("memory_music")
-        .update({
-          music_title: musicTitle,
-          artist_name: artistName,
-          music_path: filePath,
-        })
+        .update(updateData)
         .eq("memory_id", currentMedia.id);
       dbError = error;
     } else {
@@ -2591,7 +2701,7 @@ async function handleMusicChange() {
           artist_name: artistName,
           music_path: filePath,
           duration_seconds: 0, // 기본값 설정
-          album_path: null, // 앨범 커버는 일단 null로
+          album_path: albumPath, // 추출된 앨범 커버 경로
         });
       dbError = error;
     }
