@@ -2751,6 +2751,16 @@ h2 {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+  /* 모바일 스크롤바 숨김 */
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    -ms-overflow-style: none;  /* IE, Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
   .dday-counter {
     min-width: 160px;
     padding: 6px 10px;
