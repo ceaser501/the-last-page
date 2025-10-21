@@ -289,7 +289,9 @@ h1,
 .photo img.photo-img[src*="8_001"],
 .photo img.photo-img[src*="11_001"],
 .photo img.photo-img[src*="12_001"],
-.photo img.photo-img[src*="20_001"] {
+.photo img.photo-img[src*="20_001"],
+.photo img.photo-img[src*="36_001"],
+.photo img.photo-img[src*="37_001"] {
   object-position: center 30%; /* 기본 중앙 위치 */
 }
 
@@ -2937,20 +2939,28 @@ h2 {
 }
 
 .timeline-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 14px;
+  height: 14px;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   transition: all 0.3s ease;
   z-index: 2;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-dot::before {
+  content: "♡";
+  display: block;
+  transition: all 0.3s ease;
 }
 
 /* 홀수 번째 마커 (왼쪽) - 기본 비활성 상태 */
-.timeline-marker:nth-child(odd) .timeline-dot {
-  background: rgba(200, 200, 200, 0.6);
-  border: 1px solid rgba(180, 180, 180, 0.8);
+.timeline-marker:nth-child(odd) .timeline-dot::before {
+  color: #ffd7e0;
 }
 
 .timeline-marker:nth-child(odd) .timeline-date {
@@ -2963,9 +2973,8 @@ h2 {
 }
 
 /* 짝수 번째 마커 (오른쪽) - 기본 비활성 상태 */
-.timeline-marker:nth-child(even) .timeline-dot {
-  background: rgba(200, 200, 200, 0.6);
-  border: 1px solid rgba(180, 180, 180, 0.8);
+.timeline-marker:nth-child(even) .timeline-dot::before {
+  color: #ffd7e0;
 }
 
 .timeline-marker:nth-child(even) .timeline-date {
@@ -2978,11 +2987,11 @@ h2 {
 }
 
 /* 활성화된 마커 (홀수) */
-.timeline-marker.active:nth-child(odd) .timeline-dot {
-  background: rgba(120, 120, 120, 0.85);
-  border: 2px solid rgba(100, 100, 100, 0.9);
-  box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
-  transform: translateX(-50%) scale(1.3);
+.timeline-marker.active:nth-child(odd) .timeline-dot::before {
+  content: "♥";
+  color: #ffb6c1;
+  filter: drop-shadow(0 0 8px rgba(255, 182, 193, 0.6));
+  transform: scale(1.3);
 }
 
 .timeline-marker.active:nth-child(odd) .timeline-date {
@@ -2993,11 +3002,11 @@ h2 {
 }
 
 /* 활성화된 마커 (짝수) */
-.timeline-marker.active:nth-child(even) .timeline-dot {
-  background: rgba(120, 120, 120, 0.85);
-  border: 2px solid rgba(100, 100, 100, 0.9);
-  box-shadow: 0 0 12px rgba(100, 100, 100, 0.4);
-  transform: translateX(-50%) scale(1.3);
+.timeline-marker.active:nth-child(even) .timeline-dot::before {
+  content: "♥";
+  color: #ffb6c1;
+  filter: drop-shadow(0 0 8px rgba(255, 182, 193, 0.6));
+  transform: scale(1.3);
 }
 
 .timeline-marker.active:nth-child(even) .timeline-date {
@@ -3008,9 +3017,8 @@ h2 {
 }
 
 /* 지나간 마커 (홀수) */
-.timeline-marker.passed:nth-child(odd) .timeline-dot {
-  background: rgba(210, 210, 210, 0.5);
-  border: 1px solid rgba(190, 190, 190, 0.7);
+.timeline-marker.passed:nth-child(odd) .timeline-dot::before {
+  color: #ffe4e1;
 }
 
 .timeline-marker.passed:nth-child(odd) .timeline-date {
@@ -3019,9 +3027,8 @@ h2 {
 }
 
 /* 지나간 마커 (짝수) */
-.timeline-marker.passed:nth-child(even) .timeline-dot {
-  background: rgba(210, 210, 210, 0.5);
-  border: 1px solid rgba(190, 190, 190, 0.7);
+.timeline-marker.passed:nth-child(even) .timeline-dot::before {
+  color: #ffe4e1;
 }
 
 .timeline-marker.passed:nth-child(even) .timeline-date {
@@ -3029,9 +3036,9 @@ h2 {
   opacity: 1;
 }
 
-.timeline-marker:hover .timeline-dot {
-  transform: translateX(-50%) scale(1.4);
-  box-shadow: 0 0 15px rgba(248, 136, 136, 0.6);
+.timeline-marker:hover .timeline-dot::before {
+  filter: drop-shadow(0 0 12px rgba(255, 182, 193, 0.8));
+  transform: scale(1.4);
 }
 
 .timeline-date {
@@ -3057,27 +3064,27 @@ h2 {
   border-left-color: #e0e0e0;
 }
 
-[data-theme="dark"] .timeline-marker .timeline-dot {
-  border-color: #e0e0e0;
+[data-theme="dark"] .timeline-marker .timeline-dot::before {
+  color: #ffd7e0;
 }
 
 [data-theme="dark"] .timeline-marker .timeline-date {
   color: #e0e0e0;
 }
 
-[data-theme="dark"] .timeline-marker.active .timeline-dot {
-  background: #e0e0e0;
-  border-color: #e0e0e0;
-  box-shadow: 0 0 10px rgba(224, 224, 224, 0.4);
+[data-theme="dark"] .timeline-marker.active .timeline-dot::before {
+  content: "♥";
+  color: #ffb6c1;
+  filter: drop-shadow(0 0 8px rgba(255, 182, 193, 0.6));
+  transform: scale(1.3);
 }
 
 [data-theme="dark"] .timeline-marker.active .timeline-date {
   color: #e0e0e0;
 }
 
-[data-theme="dark"] .timeline-marker.passed .timeline-dot {
-  background: rgba(224, 224, 224, 0.3);
-  border-color: #e0e0e0;
+[data-theme="dark"] .timeline-marker.passed .timeline-dot::before {
+  color: #ffe4e1;
 }
 
 [data-theme="dark"] .timeline-marker.passed .timeline-date {

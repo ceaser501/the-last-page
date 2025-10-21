@@ -554,12 +554,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const memory_id = memoryInsert.id;
 
-        // 현재 총 메모리 개수를 구해서 순서 번호 생성 (1, 2, 3, 4...)
-        const { count: memoryCount } = await sb
-          .from("memories")
-          .select("*", { count: "exact", head: true });
+        // 기존 업로드 파일에서 가장 큰 숫자 시퀀스 찾기
+        let sequentialId = 1;
+        try {
+          const { data: existingFiles } = await sb.storage
+            .from("media")
+            .list("uploads", {
+              limit: 1000,
+              sortBy: { column: "name", order: "desc" }
+            });
 
-        const sequentialId = memoryCount || 1; // 1, 2, 3, 4... 순서
+          if (existingFiles && existingFiles.length > 0) {
+            // 파일명에서 숫자 추출 (예: "35_001.jpg" -> 35)
+            const numbers = existingFiles
+              .map(file => {
+                const match = file.name.match(/^(\d+)_/);
+                return match ? parseInt(match[1]) : 0;
+              })
+              .filter(n => n > 0);
+
+            if (numbers.length > 0) {
+              sequentialId = Math.max(...numbers) + 1;
+            }
+          }
+          console.log(`🔢 새 파일 시퀀스 ID: ${sequentialId}`);
+        } catch (err) {
+          console.warn("⚠️ 기존 파일 조회 실패, 기본값 1 사용:", err);
+        }
 
         // 2. 파일 업로드 후 URL 리스트 만들기
         const uploadedList = [];
@@ -567,7 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const originalName = file.name;
-          // 순차적 ID와 파일 순서를 사용한 파일명 생성
+          // 숫자 시퀀스를 사용한 파일명 생성 (중복 방지)
           const fileNumber = String(i + 1).padStart(3, "0"); // 001, 002, 003...
           const fileExtension = originalName.split(".").pop();
           const fileName = `${sequentialId}_${fileNumber}.${fileExtension}`;

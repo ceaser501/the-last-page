@@ -619,7 +619,10 @@ function generateRow() {
       img.addEventListener("error", () => {
         if (retryCount < maxRetries) {
           retryCount++;
-          console.warn(`⚠️ 이미지 로딩 재시도 ${retryCount}/${maxRetries}:`, media.mainSrc);
+          console.warn(
+            `⚠️ 이미지 로딩 재시도 ${retryCount}/${maxRetries}:`,
+            media.mainSrc
+          );
           // 500ms 후 빠른 재시도
           setTimeout(loadImage, 500);
         } else {
@@ -777,7 +780,7 @@ function addRomanticMessage() {
   const message = document.createElement("div");
   message.className = "wall-graffiti";
   message.innerHTML =
-    "<span class='graffiti-heart-left'>♥</span> 우리가 함께 했던 이 타임라인들 처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
+    "<span class='graffiti-heart-left'>♥</span> 우리가 함께 했던 이 시간들처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
 
   // 첫 번째 줄과 두 번째 줄 사이에 삽입
   const rows = wrapper.querySelectorAll(".garland-row");
@@ -1089,7 +1092,7 @@ function generateMobileCategories() {
   const mobileMessage = document.createElement("div");
   mobileMessage.className = "mobile-romantic-message";
   mobileMessage.innerHTML =
-    '<span class="mobile-heart-left">♥</span> 우리가 함께 했던 이 타임라인들 처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class="mobile-heart-right">♥</span>';
+    '<span class="mobile-heart-left">♥</span> 우리가 함께 했던 이 시간들처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class="mobile-heart-right">♥</span>';
   mobileMessage.style.fontSize = "13px";
   mobileMessage.style.lineHeight = "1.6";
   mobileMessage.style.padding = "40px 15px";
@@ -1294,13 +1297,18 @@ $(document).ready(function () {
     }, 20000);
   }
 
-  // 초기 꽃잎 생성 (20개 -> 40개로 증가)
-  for (let i = 0; i < 40; i++) {
+  // 화면 크기에 따라 꽃잎 개수 조정
+  const isMobile = window.innerWidth <= 768;
+  const initialCount = isMobile ? 60 : 40; // 모바일에서 더 많이
+  const interval = isMobile ? 700 : 1000; // 모바일에서 더 자주
+
+  // 초기 꽃잎 생성
+  for (let i = 0; i < initialCount; i++) {
     setTimeout(() => {
       createSakuraPetal();
-    }, i * 200); // 300ms -> 200ms로 줄여서 더 빠르게 생성
+    }, i * 150); // 더 빠르게 생성
   }
 
-  // 지속적으로 꽃잎 생성 (2초 -> 1초로 변경하여 더 자주 생성)
-  setInterval(createSakuraPetal, 1000);
+  // 지속적으로 꽃잎 생성
+  setInterval(createSakuraPetal, interval);
 });
