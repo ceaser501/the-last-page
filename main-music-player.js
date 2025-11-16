@@ -299,7 +299,19 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
   }
 
   // UI 업데이트
-  $("#main-track-name").text(musicData.music_title || "알 수 없는 제목");
+  const trackNameElement = $("#main-track-name");
+  trackNameElement.text(musicData.music_title || "알 수 없는 제목");
+
+  // 텍스트가 넘치는지 체크하여 롤링 애니메이션 적용
+  setTimeout(() => {
+    const element = trackNameElement[0];
+    if (element && element.scrollWidth > element.clientWidth) {
+      trackNameElement.addClass("marquee-enabled");
+    } else {
+      trackNameElement.removeClass("marquee-enabled");
+    }
+  }, 100);
+
   $("#main-album-name").text(musicData.artist_name || "알 수 없는 가수");
   $("#main-album-img").attr("src", albumUrl || DEFAULT_MAIN_ALBUM_COVER_URL);
   $("#main-player-bg-artwork").css("background-image", `url(${albumUrl || DEFAULT_MAIN_ALBUM_COVER_URL})`);

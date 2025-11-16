@@ -424,6 +424,28 @@ function generateRow() {
           createFootprintPath(true); // true = 저장함
         }, 500); // DOM 안정화를 위해 대기
       }
+
+      // 맨 마지막에 날짜 테이프 추가
+      if (!wrapper.querySelector(".date-tape")) {
+        const dateTape = document.createElement("div");
+        dateTape.className = "date-tape";
+        dateTape.textContent = "2024.09.28 ~ 2026.04.12";
+        dateTape.style.background = "#f2d9c6dc";
+        dateTape.style.opacity = "0.8";
+        dateTape.style.position = "relative";
+        dateTape.style.margin = "150px auto 100px auto";
+        dateTape.style.zIndex = "5";
+        dateTape.style.fontFamily = "'Gloria Hallelujah', cursive";
+        dateTape.style.fontSize = "22px";
+        dateTape.style.fontWeight = "bold";
+        dateTape.style.color = "#222";
+        dateTape.style.transform = "rotate(-2deg)";
+        dateTape.style.maxWidth = "fit-content";
+        dateTape.style.padding = "10px 30px";
+        dateTape.style.textAlign = "center";
+
+        wrapper.appendChild(dateTape);
+      }
     }
     return;
   }
@@ -485,25 +507,30 @@ function generateRow() {
   }
 
   if (row === 4) {
-    // 중복 방지: 기존 날짜 테이프가 있는지 확인
-    if (!wrapper.querySelector(".date-tape")) {
-      const dateTape = document.createElement("div");
-      dateTape.className = "date-tape";
-      dateTape.textContent = "2024.09.28 ~ 2026.04.12";
-      dateTape.style.background = "#f2d9c6dc";
-      dateTape.style.opacity = "0.8";
-      dateTape.style.position = "absolute";
-      dateTape.style.right = "500px";
-      dateTape.style.margin = "10px auto -60px auto";
-      dateTape.style.zIndex = "5";
-      dateTape.style.fontFamily = "'Gloria Hallelujah', cursive";
-      dateTape.style.fontSize = "22px";
-      dateTape.style.fontWeight = "bold";
-      dateTape.style.color = "#222";
-      dateTape.style.transform = "translateX(180px) rotate(-2deg)";
-      dateTape.style.maxWidth = "fit-content";
+    // 중복 방지: 기존 로맨틱 멘트가 있는지 확인
+    if (!wrapper.querySelector(".romantic-message-row4")) {
+      // 첫 번째 멘트
+      const message1 = document.createElement("div");
+      message1.className = "romantic-message-row4 wall-graffiti";
+      message1.innerHTML =
+        "<span class='graffiti-heart-left'>♥</span> 처음 본 그날부터 지금까지, 이 모든 순간이 우리의 이야기야";
+      message1.style.position = "absolute";
+      message1.style.right = "350px";
+      message1.style.margin = "10px auto -60px auto";
+      message1.style.textAlign = "left";
+      wrapper.appendChild(message1);
 
-      wrapper.appendChild(dateTape);
+      // 두 번째 멘트
+      const message2 = document.createElement("div");
+      message2.className = "romantic-message-row4-2 wall-graffiti";
+      message2.innerHTML =
+        "매 순간 너와 함께여서, 평범한 오늘도 특별한 추억이 되어가 <span class='graffiti-heart-right'>♥</span>";
+      message2.style.position = "absolute";
+      message2.style.right = "320px";
+      message2.style.margin = "60px auto -60px auto";
+      message2.style.marginLeft = "30px";
+      message2.style.textAlign = "left";
+      wrapper.appendChild(message2);
     }
   }
 
@@ -648,8 +675,15 @@ function generateRow() {
     caption.innerText = media.thumbnail_title || `추억 ${i + 1}`;
 
     // 테이프 배치 로직
+    // 하트 스티커가 붙는 폴라로이드(13번째, 26번째)는 상단 중앙 테이프만
+    if (i === 12 || i === 25) {
+      // 상단 중앙 테이프 1개
+      prevDoubleTape = false;
 
-    if (!prevDoubleTape && Math.random() < 0.4) {
+      const tape = document.createElement("div");
+      tape.className = "tape";
+      photo.appendChild(tape);
+    } else if (!prevDoubleTape && Math.random() < 0.4) {
       // 40% 확률 - 대각선 테이프 2개
       prevDoubleTape = true;
 
@@ -683,6 +717,22 @@ function generateRow() {
 
     photo.appendChild(photoVideoWrapper);
     photo.appendChild(caption);
+
+    // 13번째(인덱스 12)와 26번째(인덱스 25) 폴라로이드에 하트 스티커 추가
+    if (i === 12 || i === 25) {
+      const heartSticker = document.createElement("img");
+      heartSticker.src = "./data/heart.png";
+      heartSticker.alt = "heart Sticker";
+      heartSticker.className = `heart-sticker-photo${i}`;
+      heartSticker.style.position = "absolute";
+      heartSticker.style.top = "-20px";
+      heartSticker.style.left = "-20px";
+      heartSticker.style.width = "80px";
+      heartSticker.style.transform = "rotate(-15deg)";
+      heartSticker.style.zIndex = "6";
+      heartSticker.style.pointerEvents = "none";
+      photo.appendChild(heartSticker);
+    }
 
     photo.addEventListener("click", () => {
       // 메인 화면에서는 현재 미디어와 전체 미디어 리스트를 넘김

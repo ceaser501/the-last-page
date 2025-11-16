@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Last Page - Intro</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Homemade+Apple&family=Dancing+Script:wght@400;700&family=Pacifico&family=Satisfy&family=Playfair+Display:wght@400;700;900&family=Noto+Serif+KR:wght@300;400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Homemade+Apple&family=Dancing+Script:wght@400;700&family=Pacifico&family=Satisfy&family=Playfair+Display:wght@400;700;900&family=Noto+Serif+KR:wght@300;400;700&family=Poor+Story&family=Gaegu:wght@300;400;700&display=swap"
       rel="stylesheet"
     />
     <link
@@ -244,7 +244,8 @@
         border-radius: 12px;
         padding: 12px;
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-        width: 300px;
+        width: 320px;
+        max-width: 90vw;
         backdrop-filter: blur(10px);
       }
 
@@ -270,6 +271,8 @@
 
       .intro-track-info {
         flex: 1;
+        min-width: 0;
+        overflow: hidden;
       }
 
       .intro-track-name {
@@ -281,6 +284,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        width: 100%;
       }
 
       .intro-artist-name {
@@ -290,6 +294,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        width: 100%;
       }
 
       .intro-controls {
@@ -559,14 +564,7 @@
         background: #f0f0f0;
         color: #666;
         border-color: #ccc;
-      }
-
-      .intro-button.no:hover {
-        background: #999;
-        color: white;
-        border-color: #999;
-        transform: translateY(-2px) scale(1.1);
-        box-shadow: 0 4px 15px rgba(153, 153, 153, 0.3);
+        transition: transform 0.2s ease;
       }
 
       /* 커스텀 알림 메시지 */
@@ -832,8 +830,42 @@
         );
       }
 
+      // NO 버튼 도망가는 효과
+      function initNoButtonEscape() {
+        const noButton = document.querySelector('.intro-button.no');
+        if (!noButton) return;
+
+        // 마우스 감지
+        document.addEventListener('mousemove', function(e) {
+          const buttonRect = noButton.getBoundingClientRect();
+          const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+          const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+          const distance = Math.sqrt(Math.pow(e.clientX - buttonCenterX, 2) + Math.pow(e.clientY - buttonCenterY, 2));
+
+          // 마우스가 80px 이내로 접근하면 도망
+          if (distance < 80) {
+            // 8방향 중 랜덤 선택
+            const directions = [
+              { x: -150, y: -100 },   // 왼쪽 위
+              { x: 0, y: -120 },      // 위
+              { x: 150, y: -100 },    // 오른쪽 위
+              { x: -180, y: 0 },      // 왼쪽
+              { x: 200, y: 0 },       // 오른쪽 (멀리)
+              { x: -150, y: 100 },    // 왼쪽 아래
+              { x: 0, y: 120 },       // 아래
+              { x: 150, y: 100 }      // 오른쪽 아래
+            ];
+
+            const randomDir = directions[Math.floor(Math.random() * directions.length)];
+            noButton.style.transform = `translate(${randomDir.x}px, ${randomDir.y}px)`;
+          }
+        });
+      }
+
       // 타이핑 효과 텍스트
       window.addEventListener("DOMContentLoaded", function () {
+        // NO 버튼 초기화
+        initNoButtonEscape();
         const text = "Will you marry me?";
         const loveTextElement = document.getElementById("loveText");
 

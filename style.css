@@ -101,7 +101,7 @@ h1,
   top: 1080px; /* 두 번째 줄 바로 아래 */
   left: 55%;
   transform: translateX(-50%) rotate(-1deg);
-  font-family: "Patrick Hand", cursive;
+  font-family: "Poor Story", "Gaegu", "Patrick Hand", cursive;
   font-size: 28px;
   color: var(--text-color);
   opacity: 0.55;
@@ -122,8 +122,8 @@ h1,
 .wall-graffiti {
   position: relative;
   text-align: left;
-  font-family: "Patrick Hand", cursive;
-  font-size: 18px;
+  font-family: "Poor Story", "Gaegu", "Patrick Hand", cursive;
+  font-size: 19px;
   color: var(--text-color);
   opacity: 0.6;
   margin: 30px 0 0;
@@ -152,6 +152,12 @@ h1,
   opacity: 1;
   transform: rotate(-20deg) scale(1.1);
   color: #ff5722;
+}
+
+/* 모바일 로맨틱 메시지 */
+.mobile-romantic-message {
+  font-family: "Poor Story", "Gaegu", "Patrick Hand", cursive !important;
+  font-size: 14px !important;
 }
 
 /* 낙서 하트 장식 - 오른쪽 */
@@ -206,9 +212,9 @@ h1,
 
 .footprint-path path {
   fill: none;
-  stroke: var(--path-color);
-  stroke-width: 1.5;
-  stroke-dasharray: 2, 5;
+  stroke: rgba(0, 0, 0, 0.25);
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
   stroke-linecap: round;
   opacity: 0;
   animation: fadeInPath 0.5s ease-in-out forwards;
@@ -306,7 +312,8 @@ h1,
 .photo img.photo-img[src*="24_001"],
 .photo img.photo-img[src*="30_009"],
 .photo img.photo-img[src*="32_001"],
-.photo img.photo-img[src*="33_001"] {
+.photo img.photo-img[src*="33_001"],
+.photo img.photo-img[src*="39_001"] {
   object-position: center 10%; /* 기본 중앙 위치 */
 }
 
@@ -1233,7 +1240,10 @@ h2 {
   top: 20px;
   left: 107px; /* 홈 아이콘과 음표 아이콘 옆에 배치 */
   z-index: 10000; /* 팝업(9999)과 동일 레벨로 설정하여 팝업 위에서도 접근 가능 */
-  width: 480px; /* 450px -> 480px로 증가 */
+  width: 450px; /* 고정 너비 */
+  max-width: calc(
+    100vw - 107px - 280px
+  ); /* 화면 너비 - 좌측(107px) - 타임라인+여백(280px) */
   transition: all 0.3s ease;
   opacity: 0;
   transform: translateX(-20px);
@@ -1290,18 +1300,19 @@ h2 {
 #main-player-container {
   position: relative;
   z-index: 3;
+  width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
 }
 
 #main-player {
-  width: 100%;
+  width: 96%;
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 12px; /* 10px -> 12px로 증가 */
-  padding: 0 12px; /* 8px -> 12px로 증가 */
+  gap: 10px;
+  padding: 0 10px;
 }
 
 #main-player-track {
@@ -1311,6 +1322,7 @@ h2 {
   justify-content: center;
   color: white;
   min-width: 0;
+  overflow: hidden;
 }
 
 #main-track-info {
@@ -1320,15 +1332,41 @@ h2 {
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
+  width: 100%;
+  position: relative;
 }
 
 #main-track-name {
   font-size: 13px;
   font-weight: bold;
   white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 1;
+}
+
+/* 긴 제목일 때만 롤링 애니메이션 적용 */
+#main-track-name.marquee-enabled {
+  animation: marquee-track 12s linear infinite;
+  overflow: visible;
+}
+
+/* 텍스트 롤링 애니메이션 */
+@keyframes marquee-track {
+  0%,
+  15% {
+    transform: translateX(0%);
+  }
+  85%,
+  100% {
+    transform: translateX(calc(-100% + 140px));
+  }
+}
+
+#main-track-name.marquee-enabled:hover {
+  animation-play-state: paused;
 }
 
 #main-album-name {
@@ -1338,6 +1376,7 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 2;
+  min-width: 0;
 }
 
 #main-album-name:before {
@@ -2757,8 +2796,8 @@ h2 {
   }
 
   body {
-    -ms-overflow-style: none;  /* IE, Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE, Edge */
+    scrollbar-width: none; /* Firefox */
   }
 
   .dday-counter {
@@ -2911,6 +2950,11 @@ h2 {
 @media (max-width: 768px) {
   .timeline-container {
     display: none;
+  }
+
+  /* 모바일에서는 타임라인이 없으므로 음악 플레이어 max-width 조정 */
+  .main-music-wrapper {
+    max-width: calc(100vw - 107px - 30px); /* 좌측 + 우측 여백만 고려 */
   }
 }
 
@@ -3072,6 +3116,14 @@ h2 {
 /* 다크모드 타임라인 스타일 */
 [data-theme="dark"] .timeline-line {
   border-left-color: #e0e0e0;
+}
+
+[data-theme="dark"] .garland-line {
+  border-top-color: #e0e0e0;
+}
+
+[data-theme="dark"] .footprint-path path {
+  stroke: rgba(224, 224, 224, 0.25);
 }
 
 [data-theme="dark"] .timeline-marker .timeline-dot::before {
