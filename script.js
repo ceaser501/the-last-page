@@ -875,7 +875,7 @@ function addRomanticMessage() {
   const message = document.createElement("div");
   message.className = "main-romantic-message wall-graffiti";
   message.innerHTML =
-    "<span class='graffiti-heart-left'>♥</span> 처음 본 그날부터 지금까지, 이 모든 순간이 우리의 이야기야 <br> 매 순간 너와 함께여서, 평범한 오늘도 특별한 추억이 되어가 <span class='graffiti-heart-right'>♥</span>";
+    "<span class='graffiti-heart-left'>♥</span> 처음 본 그날부터 지금까지, 이 모든 순간이 우리의 이야기야 <br> 매 순간 자기와 함께여서, 평범한 나의 오늘도 특별한 추억이 되어가 <span class='graffiti-heart-right'>♥</span>";
 
   // 첫 번째 줄과 두 번째 줄 사이에 삽입
   const rows = wrapper.querySelectorAll(".garland-row");
