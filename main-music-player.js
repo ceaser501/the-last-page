@@ -367,26 +367,8 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
   // 곡이 끝나면 자동으로 다음 곡 재생 (1곡일 때는 loop가 처리함)
   mainAudio.onended = () => {
     if (playlist.length > 1) {
-      console.log("🎵 곡 재생 완료 - 다음 곡 재생");
-      playNextTrack();
-      // 다음 곡 자동 재생
-      setTimeout(() => {
-        if (!isPopupOpen && mainAudio.src) {
-          mainAudio.play().then(() => {
-            $("#main-player-track").addClass("active");
-            $("#main-album-art").addClass("active");
-            $("#main-play-pause-button i").attr("class", "fas fa-pause");
-            $("#main-music-player").addClass("playing");
-            console.log("🎵 다음 곡 자동 재생 시작");
-          }).catch((error) => {
-            console.log("🔇 다음 곡 자동 재생 실패:", error.name);
-            $("#main-player-track").removeClass("active");
-            $("#main-album-art").removeClass("active");
-            $("#main-play-pause-button i").attr("class", "fas fa-play");
-            $("#main-music-player").removeClass("playing");
-          });
-        }
-      }, 100);
+      console.log("🎵 곡 재생 완료 - 다음 곡 자동 재생");
+      playNextTrack(true); // autoPlay = true로 다음 곡 자동 재생
     }
   };
 
@@ -408,17 +390,17 @@ function playPreviousTrack() {
 }
 
 // 다음 곡 재생
-function playNextTrack() {
+function playNextTrack(autoPlay = false) {
   if (playlist.length === 0) return;
-  
+
   // 플레이리스트가 1개만 있어도 다시 재생 (처음부터)
   if (playlist.length === 1) {
-    loadTrackByIndex(0, false); // 자동재생 안함
+    loadTrackByIndex(0, autoPlay);
     return;
   }
-  
+
   const nextIndex = currentTrackIndex < playlist.length - 1 ? currentTrackIndex + 1 : 0;
-  loadTrackByIndex(nextIndex, false); // 자동재생 안함
+  loadTrackByIndex(nextIndex, autoPlay);
 }
 
 // 플레이리스트 모달 표시
