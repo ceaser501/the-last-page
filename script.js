@@ -437,7 +437,7 @@ function generateRow() {
         if (lastRow) {
           const dateTape = document.createElement("div");
           dateTape.className = "date-tape";
-          dateTape.innerHTML = `<strong style="font-size: 19px;">2024.09.28 ~ 2026.04.12</strong><br><br>연애의 시작부터 연애의 끝, 그리고 '결혼'이라는 이름의 시작까지<br><br>우리가 함께 한 <strong>561일</strong>은 매 순간이 행복이었고 반짝이는 순간들로 가득했어<br><br>나와 평생을 함께 해주길 바래, 사랑해❤️`;
+          dateTape.innerHTML = `<strong style="font-size: 19px;">2024.09.28 ~ 2025.11.28</strong><br><br>연애의 시작부터 연애의 끝, 그리고 '결혼'이라는 이름의 시작까지<br><br>우리가 함께 한 <strong>426일</strong>은 매 순간이 행복이었고 반짝이는 순간들로 가득했어<br><br>나와 평생을 함께 해주길 바래, 사랑해❤️`;
           dateTape.style.background = "#f2d9c6dc";
           dateTape.style.opacity = "0.8";
           dateTape.style.position = "absolute";
@@ -541,7 +541,8 @@ function generateRow() {
     if (!wrapper.querySelector(".romantic-message-row6")) {
       const message2 = document.createElement("div");
       message2.className = "romantic-message-row6 wall-graffiti";
-      message2.innerHTML = "< 떠든 사람 > <br><br> 젤이쁘고 말안듣는 김보연";
+      message2.innerHTML =
+        "< 떠든 사람 > <br><br> 젤이쁘고 말안듣는 <span class='chalk-circle'>김보연</span>";
       message2.style.position = "absolute";
       message2.style.right = "380px";
       message2.style.margin = "20px auto -60px auto";
@@ -553,7 +554,8 @@ function generateRow() {
       // 날짜 낙서 추가
       const dateGraffiti = document.createElement("div");
       dateGraffiti.className = "date-graffiti-row6";
-      dateGraffiti.innerHTML = "2025.11.26<br>태수♥보연 왔다감";
+      dateGraffiti.innerHTML =
+        "2025.11.26<br>태수♥보연 왔다감<br>100년 후에 꼭 같이 오기<br>우리 사랑 뽀레버♥";
       dateGraffiti.style.position = "absolute";
       dateGraffiti.style.right = "180px";
       dateGraffiti.style.margin = "-40px auto -60px auto";
