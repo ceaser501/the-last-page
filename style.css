@@ -1634,6 +1634,37 @@ h2 {
   flex-shrink: 0;
 }
 
+/* 플레이리스트 드래그 핸들 */
+.playlist-item-drag-handle {
+  cursor: grab;
+  padding: 0 10px;
+  font-size: 18px;
+  color: var(--meta-color);
+  opacity: 0.5;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.playlist-item-drag-handle:hover {
+  opacity: 1;
+}
+
+.playlist-item-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* 드래그 중인 아이템 */
+.playlist-item.dragging {
+  opacity: 0.5;
+  background-color: var(--tag-bg);
+}
+
+/* 드래그 오버 상태 */
+.playlist-item.drag-over {
+  border-top: 2px solid var(--button-bg);
+  background-color: rgba(248, 136, 136, 0.15);
+}
+
 /* BGM 설정 모달 스타일 */
 .bgm-description {
   font-size: 14px;

@@ -437,7 +437,8 @@ function renderPlaylist() {
 
     const isCurrentTrack = index === currentTrackIndex;
     const item = $(`
-      <div class="playlist-item ${isCurrentTrack ? 'playing' : ''}" data-index="${index}">
+      <div class="playlist-item ${isCurrentTrack ? 'playing' : ''}" data-index="${index}" draggable="true">
+        <div class="playlist-item-drag-handle">≡</div>
         <div class="playlist-item-cover">
           <img src="${albumUrl || DEFAULT_MAIN_ALBUM_COVER_URL}" alt="앨범 커버">
         </div>
@@ -449,11 +450,58 @@ function renderPlaylist() {
       </div>
     `);
 
-    // 클릭 이벤트
-    item.on("click", function() {
+    // 클릭 이벤트 (드래그 핸들 제외)
+    item.on("click", function(e) {
+      if ($(e.target).hasClass("playlist-item-drag-handle")) return;
       const clickedIndex = parseInt($(this).data("index"));
       loadTrackByIndex(clickedIndex, true); // 플레이리스트에서 선택 시 자동재생
       renderPlaylist(); // 현재 재생 곡 표시 업데이트
+    });
+
+    // 드래그 이벤트
+    item.on("dragstart", function(e) {
+      e.originalEvent.dataTransfer.setData("text/plain", index);
+      $(this).addClass("dragging");
+    });
+
+    item.on("dragend", function() {
+      $(this).removeClass("dragging");
+      $(".playlist-item").removeClass("drag-over");
+    });
+
+    item.on("dragover", function(e) {
+      e.preventDefault();
+      $(this).addClass("drag-over");
+    });
+
+    item.on("dragleave", function() {
+      $(this).removeClass("drag-over");
+    });
+
+    item.on("drop", function(e) {
+      e.preventDefault();
+      $(this).removeClass("drag-over");
+
+      const fromIndex = parseInt(e.originalEvent.dataTransfer.getData("text/plain"));
+      const toIndex = parseInt($(this).data("index"));
+
+      if (fromIndex !== toIndex) {
+        // 플레이리스트 순서 변경
+        const movedItem = playlist.splice(fromIndex, 1)[0];
+        playlist.splice(toIndex, 0, movedItem);
+
+        // 현재 재생 중인 트랙 인덱스 업데이트
+        if (currentTrackIndex === fromIndex) {
+          currentTrackIndex = toIndex;
+        } else if (fromIndex < currentTrackIndex && toIndex >= currentTrackIndex) {
+          currentTrackIndex--;
+        } else if (fromIndex > currentTrackIndex && toIndex <= currentTrackIndex) {
+          currentTrackIndex++;
+        }
+
+        console.log(`🎵 플레이리스트 순서 변경: ${fromIndex} → ${toIndex}`);
+        renderPlaylist();
+      }
     });
 
     playlistContainer.append(item);
