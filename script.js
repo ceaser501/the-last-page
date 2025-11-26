@@ -302,7 +302,10 @@ const observer = new IntersectionObserver(
       }
     });
   },
-  { threshold: 0.1 }
+  {
+    threshold: 0.01,
+    rootMargin: "200px", // 뷰포트 200px 전에 미리 로드
+  }
 );
 
 // 비디오 썸네일 생성 함수 - 개선된 에러 핸들링 및 타이머 관리
@@ -425,26 +428,37 @@ function generateRow() {
         }, 500); // DOM 안정화를 위해 대기
       }
 
-      // 맨 마지막에 날짜 테이프 추가
+      // 맨 마지막에 날짜 테이프 추가 (마지막 row 왼쪽 빈 공간)
       if (!wrapper.querySelector(".date-tape")) {
-        const dateTape = document.createElement("div");
-        dateTape.className = "date-tape";
-        dateTape.textContent = "2024.09.28 ~ 2026.04.12";
-        dateTape.style.background = "#f2d9c6dc";
-        dateTape.style.opacity = "0.8";
-        dateTape.style.position = "relative";
-        dateTape.style.margin = "150px auto 100px auto";
-        dateTape.style.zIndex = "5";
-        dateTape.style.fontFamily = "'Gloria Hallelujah', cursive";
-        dateTape.style.fontSize = "22px";
-        dateTape.style.fontWeight = "bold";
-        dateTape.style.color = "#222";
-        dateTape.style.transform = "rotate(-2deg)";
-        dateTape.style.maxWidth = "fit-content";
-        dateTape.style.padding = "10px 30px";
-        dateTape.style.textAlign = "center";
+        // 마지막 row 찾기
+        const allRows = wrapper.querySelectorAll(".garland-row");
+        const lastRow = allRows[allRows.length - 1];
 
-        wrapper.appendChild(dateTape);
+        if (lastRow) {
+          const dateTape = document.createElement("div");
+          dateTape.className = "date-tape";
+          dateTape.innerHTML = `<strong style="font-size: 19px;">2024.09.28 ~ 2026.04.12</strong><br><br>연애의 시작부터 연애의 끝, 그리고 '결혼'이라는 이름의 시작까지<br><br>우리가 함께 한 <strong>561일</strong>은 매 순간이 행복이었고 반짝이는 순간들로 가득했어<br><br>나와 평생을 함께 해주길 바래, 사랑해❤️`;
+          dateTape.style.background = "#f2d9c6dc";
+          dateTape.style.opacity = "0.8";
+          dateTape.style.position = "absolute";
+          dateTape.style.zIndex = "5";
+          dateTape.style.fontFamily =
+            "'Poor Story', 'Gaegu', 'Patrick Hand', cursive";
+          dateTape.style.fontSize = "17px";
+          dateTape.style.fontWeight = "normal";
+          dateTape.style.color = "#222";
+          dateTape.style.transform = "rotate(-2deg)";
+          dateTape.style.padding = "10px 40px";
+          dateTape.style.textAlign = "center";
+          dateTape.style.width = "fit-content";
+          dateTape.style.lineHeight = "1.4";
+
+          // 마지막 row의 위치 기준으로 왼쪽 빈 공간에 배치
+          dateTape.style.top = `${lastRow.offsetTop + 40}px`;
+          dateTape.style.left = "350px";
+
+          wrapper.appendChild(dateTape);
+        }
       }
     }
     return;
@@ -513,24 +527,44 @@ function generateRow() {
       const message1 = document.createElement("div");
       message1.className = "romantic-message-row4 wall-graffiti";
       message1.innerHTML =
-        "<span class='graffiti-heart-left'>♥</span> 처음 본 그날부터 지금까지, 이 모든 순간이 우리의 이야기야";
+        "<span class='graffiti-heart-left'>♥</span> 우리가 함께 했던 이 시간들처럼, 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
       message1.style.position = "absolute";
       message1.style.right = "350px";
-      message1.style.margin = "10px auto -60px auto";
+      message1.style.margin = "60px auto -60px auto";
       message1.style.textAlign = "left";
       wrapper.appendChild(message1);
+    }
+  }
 
-      // 두 번째 멘트
+  if (row === 6) {
+    // 중복 방지: 기존 멘트가 있는지 확인
+    if (!wrapper.querySelector(".romantic-message-row6")) {
       const message2 = document.createElement("div");
-      message2.className = "romantic-message-row4-2 wall-graffiti";
-      message2.innerHTML =
-        "매 순간 너와 함께여서, 평범한 오늘도 특별한 추억이 되어가 <span class='graffiti-heart-right'>♥</span>";
+      message2.className = "romantic-message-row6 wall-graffiti";
+      message2.innerHTML = "< 떠든 사람 > <br><br> 젤이쁘고 말안듣는 김보연";
       message2.style.position = "absolute";
-      message2.style.right = "320px";
-      message2.style.margin = "60px auto -60px auto";
-      message2.style.marginLeft = "30px";
+      message2.style.right = "380px";
+      message2.style.margin = "20px auto -60px auto";
       message2.style.textAlign = "left";
+      message2.style.transform = "rotate(-1deg)";
+      message2.style.fontSize = "19px";
       wrapper.appendChild(message2);
+
+      // 날짜 낙서 추가
+      const dateGraffiti = document.createElement("div");
+      dateGraffiti.className = "date-graffiti-row6";
+      dateGraffiti.innerHTML = "2025.11.26<br>태수♥보연 왔다감";
+      dateGraffiti.style.position = "absolute";
+      dateGraffiti.style.right = "180px";
+      dateGraffiti.style.margin = "-40px auto -60px auto";
+      dateGraffiti.style.textAlign = "left";
+      dateGraffiti.style.transform = "rotate(3deg)";
+      dateGraffiti.style.fontSize = "19px";
+      dateGraffiti.style.fontFamily =
+        "'Poor Story', 'Gaegu', 'Patrick Hand', cursive";
+      dateGraffiti.style.color = "#222";
+      dateGraffiti.style.opacity = "0.6";
+      wrapper.appendChild(dateGraffiti);
     }
   }
 
@@ -631,8 +665,8 @@ function generateRow() {
     } else {
       const img = document.createElement("img");
       img.className = "photo-img";
-      // 초기 화면 이미지는 즉시 로드, 나머지는 lazy
-      img.loading = i < 21 ? "eager" : "lazy";
+      // 초기 화면 이미지는 즉시 로드, 나머지는 lazy (첫 50장은 eager)
+      img.loading = i < 50 ? "eager" : "lazy";
 
       // 이미지 로딩 재시도 로직
       let retryCount = 0;
@@ -718,8 +752,8 @@ function generateRow() {
     photo.appendChild(photoVideoWrapper);
     photo.appendChild(caption);
 
-    // 13번째(인덱스 12)와 26번째(인덱스 25) 폴라로이드에 하트 스티커 추가
-    if (i === 12 || i === 25) {
+    // 하트 스티커 추가 (13번, 26번, 35번, 42번, 48번)
+    if (i === 12 || i === 25 || i === 34 || i === 41 || i === 47) {
       const heartSticker = document.createElement("img");
       heartSticker.src = "./data/heart.png";
       heartSticker.alt = "heart Sticker";
@@ -781,18 +815,29 @@ function setupLazyRender() {
   sentinel.id = "scroll-sentinel";
   document.body.appendChild(sentinel);
 
-  const scrollObserver = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      generateRow();
+  const scrollObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) {
+        // 한 번에 2줄씩 렌더링 (더 빠른 로딩)
+        generateRow();
+        if (currentIndex < mediaList.length) {
+          generateRow();
+        }
+      }
+    },
+    {
+      rootMargin: "400px", // 화면 하단 400px 전에 미리 로드
     }
-  });
+  );
 
   scrollObserver.observe(sentinel);
 
-  // 초기에 3줄 즉시 렌더링 (빠른 초기 로딩)
-  generateRow();
-  generateRow();
-  generateRow();
+  // 초기에 6줄 즉시 렌더링 (빠른 초기 로딩)
+  for (let i = 0; i < 6; i++) {
+    if (currentIndex < mediaList.length) {
+      generateRow();
+    }
+  }
 
   // 첫 번째와 두 번째 줄 사이에 로맨틱 멘트 추가
   addRomanticMessage();
@@ -800,7 +845,7 @@ function setupLazyRender() {
   // 추가 줄 빠르게 렌더링
   let preloadCount = 0;
   const preloadInterval = setInterval(() => {
-    if (preloadCount < 2 && currentIndex < mediaList.length) {
+    if (preloadCount < 4 && currentIndex < mediaList.length) {
       generateRow();
       preloadCount++;
     } else {
@@ -825,12 +870,12 @@ function setupLazyRender() {
 // 벽 낙서 스타일 로맨틱 멘트 추가 함수
 function addRomanticMessage() {
   // 이미 추가되었으면 중복 방지
-  if (document.querySelector(".wall-graffiti")) return;
+  if (document.querySelector(".main-romantic-message")) return;
 
   const message = document.createElement("div");
-  message.className = "wall-graffiti";
+  message.className = "main-romantic-message wall-graffiti";
   message.innerHTML =
-    "<span class='graffiti-heart-left'>♥</span> 우리가 함께 했던 이 시간들처럼, <br> 나의 오늘 그리고 모든 내일을 함께 하고 싶어 <span class='graffiti-heart-right'>♥</span>";
+    "<span class='graffiti-heart-left'>♥</span> 처음 본 그날부터 지금까지, 이 모든 순간이 우리의 이야기야 <br> 매 순간 너와 함께여서, 평범한 오늘도 특별한 추억이 되어가 <span class='graffiti-heart-right'>♥</span>";
 
   // 첫 번째 줄과 두 번째 줄 사이에 삽입
   const rows = wrapper.querySelectorAll(".garland-row");

@@ -126,7 +126,7 @@
     display: block !important;
     font-family: "Noto Sans KR", sans-serif !important;
   }
-  
+
   /* 날짜 요소 왼쪽 정렬 */
   .date-element {
     text-align: left !important;
@@ -233,7 +233,7 @@
 
   /* 날짜 문구 폰트 크기 조정 */
   .date-graffiti {
-    font-size: 14px;
+    font-size: 12px;
     padding: 15px;
     margin: 20px auto;
   }
@@ -252,7 +252,7 @@
   #music-icon {
     display: none !important;
   }
-  
+
   /* 음악 토글 스위치 컨테이너 */
   .music-toggle-container {
     position: fixed !important;
@@ -261,17 +261,17 @@
     z-index: 10001 !important;
     display: block !important;
   }
-  
+
   /* 상세팝업 열렸을 때 토글 스위치 숨기기 */
   body.popup-open .music-toggle-container {
     display: none !important;
   }
-  
+
   /* 토글 스위치 체크박스 숨기기 */
   .music-toggle-checkbox {
     display: none !important;
   }
-  
+
   /* 토글 스위치 라벨 */
   .music-toggle-label {
     display: inline-block !important;
@@ -284,7 +284,7 @@
     transition: background-color 0.3s !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
   }
-  
+
   /* 토글 스위치 원형 버튼 */
   .music-toggle-switch {
     position: absolute !important;
@@ -297,7 +297,7 @@
     transition: transform 0.3s !important;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) !important;
   }
-  
+
   /* ON/OFF 텍스트 */
   .music-toggle-inner::before,
   .music-toggle-inner::after {
@@ -308,35 +308,39 @@
     font-weight: bold !important;
     transition: opacity 0.3s !important;
   }
-  
+
   .music-toggle-inner::before {
     content: "ON" !important;
     left: 6px !important;
     color: white !important;
     opacity: 0 !important;
   }
-  
+
   .music-toggle-inner::after {
     content: "OFF" !important;
     right: 5px !important;
     color: white !important;
     opacity: 1 !important;
   }
-  
+
   /* 체크 시 스타일 (ON 상태) */
   .music-toggle-checkbox:checked + .music-toggle-label {
-    background-color: #4CAF50 !important;
+    background-color: #4caf50 !important;
   }
-  
+
   .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-switch {
     transform: translateX(24px) !important;
   }
-  
-  .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-inner::before {
+
+  .music-toggle-checkbox:checked
+    + .music-toggle-label
+    .music-toggle-inner::before {
     opacity: 1 !important;
   }
-  
-  .music-toggle-checkbox:checked + .music-toggle-label .music-toggle-inner::after {
+
+  .music-toggle-checkbox:checked
+    + .music-toggle-label
+    .music-toggle-inner::after {
     opacity: 0 !important;
   }
 }

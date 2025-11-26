@@ -34,32 +34,39 @@ const { data: defaultCoverData } = window.supabaseClient.storage
 const DEFAULT_ALBUM_COVER_URL = defaultCoverData.publicUrl;
 
 // 상세 팝업 열기
-async function openDetailPopup(media, mediaList) {
-  // 메인 음악 일시정지
-  if (typeof pauseMainMusic === "function") {
-    pauseMainMusic();
+async function openDetailPopup(media, mediaList, isNavigation = false) {
+  // 네비게이션이 아닐 때만 초기화 작업 수행 (메인에서 직접 클릭 시)
+  if (!isNavigation) {
+    // 메인 음악 일시정지
+    if (typeof pauseMainMusic === "function") {
+      pauseMainMusic();
+    }
+
+    currentMediaList = mediaList;
+    // 팝업 표시
+    const overlay = document.getElementById("popup-overlay");
+    overlay.style.display = "flex";
+    document.body.classList.add("popup-open");
   }
 
   // 🎵 기존 팝업 음악 정지 (슬라이드 전환 시 중복 재생 방지)
   if (window.audio) {
     window.audio.pause();
     window.audio.currentTime = 0;
-    console.log("🎵 기존 팝업 음악 정지");
   }
 
   // 🔥 기존 썸네일 로딩 작업 정리 (네트워크 리소스 절약)
   clearThumbnailQueue();
 
-  currentMediaList = mediaList;
   // ID 기반으로 인덱스 찾기 (객체 참조 문제 해결)
-  currentIndex = mediaList.findIndex(m => m.id === media.id);
+  currentIndex = currentMediaList.findIndex(m => m.id === media.id);
   currentImageIndex = 0;
   currentMedia = media;
   isEditMode = false;
 
   // 로그인 후 복원을 위해 전역에 저장
   window.currentPopupMedia = media;
-  window.currentPopupMediaList = mediaList;
+  window.currentPopupMediaList = currentMediaList;
 
   console.log("🔍 팝업 열기 - media.id:", media.id, "currentIndex:", currentIndex);
 
@@ -96,15 +103,10 @@ async function openDetailPopup(media, mediaList) {
 
     // 팝업 내용 렌더링 (로딩 메시지 없이 바로 표시)
     await renderDetailPopupContent(fullMedia);
-    
-    // 팝업 표시
-    const overlay = document.getElementById("popup-overlay");
-    overlay.style.display = "flex";
-    document.body.classList.add("popup-open");
-    
+
     // 🔮 인접 슬라이드 프리로드 (백그라운드에서)
     preloadAdjacentSlides();
-    
+
   } catch (error) {
     console.error("상세 팝업 로드 중 오류:", error);
     alert("미디어 정보를 불러오는데 실패했습니다.");
@@ -279,8 +281,8 @@ async function renderDetailPopupContent(media) {
   // 음악 플레이어 초기화 (HTML이 새로 생성되었으므로 다시 초기화 필요)
   initPlayer();
 
-  // 폴라로이드 번호 계산 (배열 인덱스 + 1)
-  const polaroidNumber = currentIndex + 1;
+  // 폴라로이드 번호 계산 (실제 노출 순서 사용)
+  const polaroidNumber = media.order || currentIndex + 1;
 
   // 로그인 상태 확인하여 수정/삭제/미디어 추가/음악변경/대표이미지 변경 버튼 표시/숨김
   const editBtn = document.getElementById("popup-edit-btn");
@@ -708,7 +710,7 @@ function setupPopupEventListeners() {
     if (currentIndex > 0) {
       const prevMedia = currentMediaList[currentIndex - 1];
       console.log("🔍 이전 미디어로 이동:", prevMedia.id, "index:", currentIndex - 1);
-      openDetailPopup(prevMedia, currentMediaList);
+      openDetailPopup(prevMedia, currentMediaList, true); // isNavigation = true
     }
   });
 
@@ -717,7 +719,7 @@ function setupPopupEventListeners() {
     if (currentIndex < currentMediaList.length - 1) {
       const nextMedia = currentMediaList[currentIndex + 1];
       console.log("🔍 다음 미디어로 이동:", nextMedia.id, "index:", currentIndex + 1);
-      openDetailPopup(nextMedia, currentMediaList);
+      openDetailPopup(nextMedia, currentMediaList, true); // isNavigation = true
     }
   });
 
@@ -2125,8 +2127,8 @@ async function handleMediaUpload() {
     submitBtn.textContent = "업로드 중...";
     submitBtn.disabled = true;
 
-    // 현재 폴라로이드 번호 계산
-    const polaroidNumber = currentIndex + 1;
+    // 현재 폴라로이드 번호 계산 (실제 노출 순서 사용)
+    const polaroidNumber = currentMedia.order || currentIndex + 1;
 
     // 시작 번호 가져오기
     let nextNumber = await getNextFileNumber(polaroidNumber);
@@ -2224,8 +2226,8 @@ async function refreshPopupContent() {
     // file_order 순서대로 정렬 (대표이미지는 맨 앞)
     let mediaFiles = refreshedMemory.media_files || [];
 
-    // 현재 폴라로이드 번호를 기준으로 예상 접두사 설정
-    const polaroidNumber = currentIndex + 1;
+    // 현재 폴라로이드 번호를 기준으로 예상 접두사 설정 (실제 노출 순서 사용)
+    const polaroidNumber = refreshedMemory.order || currentIndex + 1;
     let expectedPrefix = polaroidNumber.toString();
 
     // 기존 파일에서 접두사를 확인하여 일치하는지 검증
