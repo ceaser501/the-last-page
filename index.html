@@ -1168,19 +1168,22 @@
 
             console.log("BGM memories 발견:", mainMemories.length);
 
-            const playlistData = [];
-            for (const memory of mainMemories) {
-              const { data: musicData, error } = await window.supabaseClient
-                .from("memory_music")
-                .select("*")
-                .eq("memory_id", memory.id);
+            // 모든 BGM memory_id 수집
+            const memoryIds = mainMemories.map(m => m.id);
 
-              if (!error && musicData && musicData.length > 0) {
-                playlistData.push(...musicData);
-              }
+            // 한 번의 쿼리로 모든 음악 데이터 로드 (play_order로 정렬)
+            const { data: playlistData, error } = await window.supabaseClient
+              .from("memory_music")
+              .select("*")
+              .in("memory_id", memoryIds)
+              .order("play_order", { ascending: true, nullsFirst: false });
+
+            if (error) {
+              console.error("음악 데이터 조회 오류:", error);
+              return;
             }
 
-            if (playlistData.length === 0) {
+            if (!playlistData || playlistData.length === 0) {
               console.log("음악 데이터 없음");
               return;
             }

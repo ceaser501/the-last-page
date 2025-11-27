@@ -1049,8 +1049,22 @@ function scrollToMonth(year, month) {
 function updateTimelineOnScroll() {
   const markers = document.querySelectorAll(".timeline-marker");
   const photos = document.querySelectorAll(".photo");
+  const timelineContainer = document.getElementById("timeline-container");
+  const proposalSection = document.getElementById("proposal-section");
 
   if (!markers.length || !photos.length) return;
+
+  // 프로포즈 섹션이 화면에 보이면 타임라인 숨기기
+  if (proposalSection && timelineContainer) {
+    const proposalRect = proposalSection.getBoundingClientRect();
+    if (proposalRect.top < window.innerHeight) {
+      timelineContainer.style.opacity = "0";
+      timelineContainer.style.pointerEvents = "none";
+    } else {
+      timelineContainer.style.opacity = "1";
+      timelineContainer.style.pointerEvents = "auto";
+    }
+  }
 
   // 현재 viewport에 보이는 사진들의 날짜 수집
   const viewportTop = window.scrollY;
@@ -1408,4 +1422,82 @@ $(document).ready(function () {
 
   // 지속적으로 꽃잎 생성
   setInterval(createSakuraPetal, interval);
+});
+
+// 프로포즈 영상 초기화
+$(document).ready(function () {
+  const videoWrapper = document.getElementById("proposal-video-wrapper");
+  const thumbnail = document.getElementById("proposal-thumbnail");
+  const playButton = document.getElementById("proposal-play-button");
+  const video = document.getElementById("proposal-video");
+
+  if (!videoWrapper || !thumbnail || !playButton || !video) return;
+
+  const videoSrc = "https://lbjqzhqqxuqyvglslpne.supabase.co/storage/v1/object/public/media/video/propose.mp4";
+
+  // 비디오에서 썸네일 생성
+  const tempVideo = document.createElement("video");
+  tempVideo.src = videoSrc;
+  tempVideo.crossOrigin = "anonymous";
+  tempVideo.muted = true;
+  tempVideo.playsInline = true;
+  tempVideo.preload = "metadata";
+
+  tempVideo.addEventListener("loadedmetadata", function () {
+    tempVideo.currentTime = 1; // 1초 지점 캡처
+  });
+
+  tempVideo.addEventListener("seeked", function () {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = tempVideo.videoWidth;
+      canvas.height = tempVideo.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+      thumbnail.src = canvas.toDataURL("image/jpeg", 0.8);
+      console.log("✅ 프로포즈 영상 썸네일 생성 완료");
+    } catch (e) {
+      console.error("❌ 썸네일 생성 실패:", e);
+      // 실패 시 기본 배경 유지
+    }
+  });
+
+  // 플레이 버튼 클릭 시 영상 재생
+  playButton.addEventListener("click", function () {
+    // 배경음악 일시정지
+    if (typeof window.pauseMainMusicForDetailMusic === "function") {
+      window.pauseMainMusicForDetailMusic();
+    }
+
+    videoWrapper.classList.add("playing");
+    video.style.display = "block";
+    video.play();
+  });
+
+  // 영상 끝나면 썸네일로 돌아가기 + 배경음악 재개
+  video.addEventListener("ended", function () {
+    videoWrapper.classList.remove("playing");
+    video.style.display = "none";
+
+    // 배경음악 재개
+    if (typeof window.resumeMainMusic === "function") {
+      window.resumeMainMusic();
+    }
+  });
+
+  // 영상 일시정지 시에도 배경음악 재개
+  video.addEventListener("pause", function () {
+    if (video.ended) return; // ended 이벤트에서 처리하므로 무시
+    // 사용자가 직접 일시정지한 경우 배경음악 재개
+    if (typeof window.resumeMainMusic === "function") {
+      window.resumeMainMusic();
+    }
+  });
+
+  // 영상 다시 재생 시 배경음악 정지
+  video.addEventListener("play", function () {
+    if (typeof window.pauseMainMusicForDetailMusic === "function") {
+      window.pauseMainMusicForDetailMusic();
+    }
+  });
 });
