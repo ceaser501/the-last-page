@@ -678,7 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let albumPath = "album/default.jpg";
 
             try {
-              // 🎵 파일명에서 추출
+              // 🎵 파일명에서 추출 (파일명 형식: "제목 - 가수.mp3")
               const baseName = musicFile.name.replace(/\.mp3$/i, "");
               let [rawTitle = "", rawArtist = ""] = baseName.split(" - ");
 
@@ -689,33 +689,35 @@ document.addEventListener("DOMContentLoaded", () => {
                 .trim();
               rawArtist = rawArtist?.replace(/\s*\(\d+\)\s*$/, "").trim();
 
-              let artist = "알 수 없음";
-              if (typeof metadata.artist === "string") {
-                artist = metadata.artist.trim();
-              } else if (
-                metadata.artist?.text &&
-                typeof metadata.artist.text === "string"
-              ) {
-                artist = metadata.artist.text.trim();
-              } else if (Array.isArray(metadata.artist)) {
-                // 가끔 배열로 들어오는 경우 첫 항목 사용
-                artist = metadata.artist[0]?.trim?.() || rawArtist;
-              } else {
-                artist = rawArtist;
+              // 파일명에서 파싱된 값을 우선 사용 (메타데이터보다 파일명이 더 정확함)
+              let artist = rawArtist || "알 수 없음";
+              let title = rawTitle || "제목 없음";
+
+              // 파일명에서 못 가져온 경우에만 메타데이터 사용
+              if (!rawArtist) {
+                if (typeof metadata.artist === "string") {
+                  artist = metadata.artist.trim();
+                } else if (
+                  metadata.artist?.text &&
+                  typeof metadata.artist.text === "string"
+                ) {
+                  artist = metadata.artist.text.trim();
+                } else if (Array.isArray(metadata.artist)) {
+                  artist = metadata.artist[0]?.trim?.() || "알 수 없음";
+                }
               }
 
-              let title = "제목 없음";
-              if (typeof metadata.title === "string") {
-                title = metadata.title.replace(/\s*\(\d+\)\s*$/, "").trim();
-              } else if (
-                metadata.title?.text &&
-                typeof metadata.title.text === "string"
-              ) {
-                title = metadata.title.text
-                  .replace(/\s*\(\d+\)\s*$/, "")
-                  .trim();
-              } else {
-                title = rawTitle;
+              if (!rawTitle) {
+                if (typeof metadata.title === "string") {
+                  title = metadata.title.replace(/\s*\(\d+\)\s*$/, "").trim();
+                } else if (
+                  metadata.title?.text &&
+                  typeof metadata.title.text === "string"
+                ) {
+                  title = metadata.title.text
+                    .replace(/\s*\(\d+\)\s*$/, "")
+                    .trim();
+                }
               }
 
               const picture = metadata?.picture?.[0];
