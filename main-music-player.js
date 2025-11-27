@@ -195,6 +195,19 @@ function initMainMusicPlayer() {
     showPlaylistModal();
   });
 
+  // 곡이 끝나면 자동으로 다음 곡 재생
+  mainAudio.onended = () => {
+    if (playlist.length > 1) {
+      console.log("🎵 곡 재생 완료 - 다음 곡 자동 재생");
+      playNextTrack(true);
+    } else if (playlist.length === 1) {
+      // 1곡일 때는 처음부터 다시 재생
+      console.log("🎵 곡 재생 완료 - 처음부터 다시 재생");
+      mainAudio.currentTime = 0;
+      mainAudio.play();
+    }
+  };
+
   console.log("✅ 메인 음악 플레이어 초기화 완료");
 }
 
@@ -222,26 +235,23 @@ async function loadMainMusic() {
     
     console.log(`✅ BGM memories 발견: ${mainMemories.length}개`, mainMemories);
 
-    // 모든 BGM 데이터 로드
-    const playlistData = [];
-    for (const memory of mainMemories) {
-      const { data: musicData, error } = await window.supabaseClient
-        .from("memory_music")
-        .select("*")
-        .eq("memory_id", memory.id);
+    // 모든 BGM memory_id 수집
+    const memoryIds = mainMemories.map(m => m.id);
 
-      if (error) {
-        console.error(`Memory ${memory.id}의 음악 데이터 조회 오류:`, error);
-        continue;
-      }
+    // 한 번의 쿼리로 모든 음악 데이터 로드 (play_order로 정렬)
+    const { data: playlistData, error } = await window.supabaseClient
+      .from("memory_music")
+      .select("*")
+      .in("memory_id", memoryIds)
+      .order("play_order", { ascending: true, nullsFirst: false });
 
-      if (musicData && musicData.length > 0) {
-        console.log(`Memory ${memory.id}에서 ${musicData.length}개 음악 발견:`, musicData);
-        playlistData.push(...musicData);
-      } else {
-        console.log(`Memory ${memory.id}에 음악 데이터 없음`);
-      }
+    if (error) {
+      console.error("음악 데이터 조회 오류:", error);
+      $("#main-music-player").hide();
+      return;
     }
+
+    console.log(`음악 데이터 ${playlistData?.length || 0}개 발견:`, playlistData);
 
     if (playlistData.length === 0) {
       console.log("❌ 메인 음악 데이터 없음 - memory_music 테이블에 해당하는 데이터가 없습니다");
@@ -264,6 +274,39 @@ async function loadMainMusic() {
   } catch (error) {
     console.error("메인 음악 로드 실패:", error);
     $("#main-music-player").hide();
+  }
+}
+
+// 플레이리스트 순서 저장
+async function savePlaylistOrder() {
+  try {
+    // 각 트랙의 play_order를 현재 playlist 배열 인덱스로 업데이트
+    const updates = playlist.map((track, index) => ({
+      id: track.id,
+      play_order: index
+    }));
+
+    console.log("🎵 플레이리스트 순서 저장 중...", updates);
+
+    // 각 트랙을 개별적으로 업데이트
+    for (const update of updates) {
+      const { data, error, count } = await window.supabaseClient
+        .from("memory_music")
+        .update({ play_order: update.play_order })
+        .eq("id", update.id)
+        .select();
+
+      if (error) {
+        console.error(`트랙 ${update.id} 순서 저장 오류:`, error);
+        throw error;
+      }
+      console.log(`트랙 ${update.id} → play_order: ${update.play_order}, 결과:`, data);
+    }
+
+    console.log("✅ 플레이리스트 순서 저장 완료");
+  } catch (error) {
+    console.error("❌ 플레이리스트 순서 저장 실패:", error);
+    alert("순서 저장에 실패했습니다. 다시 시도해주세요.");
   }
 }
 
@@ -317,16 +360,8 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
   $("#main-player-bg-artwork").css("background-image", `url(${albumUrl || DEFAULT_MAIN_ALBUM_COVER_URL})`);
 
   // 오디오 설정
-  const wasPlaying = !mainAudio.paused;
   mainAudio.src = musicUrl;
   mainAudio.load();
-  
-  // 플레이리스트가 1곡만 있으면 루프 설정
-  if (playlist.length === 1) {
-    mainAudio.loop = true;
-  } else {
-    mainAudio.loop = false;
-  }
 
   mainAudio.onloadedmetadata = () => {
     const duration = mainAudio.duration;
@@ -334,8 +369,8 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
     const seconds = String(Math.floor(duration % 60)).padStart(2, "0");
     $("#main-track-length").text(`${minutes}:${seconds}`);
 
-    // 자동 재생 요청이 있는 경우 재생 시도 (페이지 로드 시 자동재생 포함)
-    if (shouldAutoPlay && !isPopupOpen) {
+    // 자동 재생 요청이 있는 경우 재생 시도
+    if (shouldAutoPlay) {
       // 브라우저 자동재생 정책으로 인해 실패할 수 있음
       mainAudio.play().then(() => {
         $("#main-player-track").addClass("active");
@@ -346,14 +381,12 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
       }).catch((error) => {
         console.log("🔇 자동 재생 실패 (브라우저 정책):", error.name);
         console.log("💡 사용자가 직접 재생 버튼을 눌러주세요.");
-        
+
         // 자동재생 실패 시 UI 설정
         $("#main-player-track").removeClass("active");
         $("#main-album-art").removeClass("active");
         $("#main-play-pause-button i").attr("class", "fas fa-play");
         $("#main-music-player").removeClass("playing");
-        
-        // 자동재생 실패 - 조용히 로그만 출력
       });
     } else {
       // 자동재생 안 할 때는 정지 상태로 UI 설정
@@ -361,14 +394,6 @@ function loadTrackByIndex(index, shouldAutoPlay = false) {
       $("#main-album-art").removeClass("active");
       $("#main-play-pause-button i").attr("class", "fas fa-play");
       $("#main-music-player").removeClass("playing");
-    }
-  };
-
-  // 곡이 끝나면 자동으로 다음 곡 재생 (1곡일 때는 loop가 처리함)
-  mainAudio.onended = () => {
-    if (playlist.length > 1) {
-      console.log("🎵 곡 재생 완료 - 다음 곡 자동 재생");
-      playNextTrack(true); // autoPlay = true로 다음 곡 자동 재생
     }
   };
 
@@ -478,7 +503,7 @@ function renderPlaylist() {
       $(this).removeClass("drag-over");
     });
 
-    item.on("drop", function(e) {
+    item.on("drop", async function(e) {
       e.preventDefault();
       $(this).removeClass("drag-over");
 
@@ -500,6 +525,13 @@ function renderPlaylist() {
         }
 
         console.log(`🎵 플레이리스트 순서 변경: ${fromIndex} → ${toIndex}`);
+
+        // 순서 저장 먼저
+        console.log("savePlaylistOrder 호출 직전");
+        savePlaylistOrder();
+        console.log("savePlaylistOrder 호출 완료");
+
+        // 그 다음 렌더링
         renderPlaylist();
       }
     });
